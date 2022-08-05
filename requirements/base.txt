@@ -15,7 +15,7 @@ charset-normalizer==2.0.3
 commandRunner==0.8.6
 coverage==5.5
 defusedxml==0.7.1
-Django==3.2.5
+Django==3.2.14
 django-admin-bootstrapped==2.5.6
 django-bootstrap3==15.0.0
 django-celery-beat==1.6.0
@@ -49,9 +49,9 @@ kombu==4.6.11
 MarkupSafe==2.0.1
 mod-wsgi==4.8.0
 mod-wsgi-httpd==2.4.46.1
-numpy==1.19.5
+numpy==1.22.0
 packaging==21.0
-Pillow==8.3.1
+Pillow==9.0.1
 pluggy==0.13.1
 prometheus-client==0.8.0
 psycopg2==2.9.1
@@ -80,7 +80,7 @@ sphinxcontrib-htmlhelp==2.0.0
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
-sqlparse==0.4.1
+sqlparse==0.4.2
 text-unidecode==1.3
 toml==0.10.2
 tornado==6.1
