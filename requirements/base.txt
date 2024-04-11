@@ -47,8 +47,8 @@ iniconfig==1.1.1
 Jinja2==3.0.1
 kombu==4.6.11
 MarkupSafe==2.0.1
-mod-wsgi==4.8.0
-mod-wsgi-httpd==2.4.46.1
+mod-wsgi
+mod-wsgi-httpd
 numpy
 packaging==21.0
 Pillow
