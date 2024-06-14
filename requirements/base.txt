@@ -47,16 +47,16 @@ iniconfig==1.1.1
 Jinja2==3.0.1
 kombu==4.6.11
 MarkupSafe==2.0.1
-mod-wsgi
-mod-wsgi-httpd
-numpy>=1.22.4
+# mod-wsgi
+# mod-wsgi-httpd
+# numpy>=1.22.4
 packaging==21.0
 Pillow
 pluggy==0.13.1
 prometheus-client==0.8.0
 psycopg2==2.9.1
 py==1.10.0
-pyaml==20.4.0
+pyaml
 pycparser==2.20
 Pygments==2.9.0
 pyparsing==2.4.7
@@ -65,7 +65,7 @@ pytest==6.2.4
 python-crontab==2.5.1
 python-dateutil==2.8.2
 pytz==2021.1
-PyYAML
+PyYAML==5.3.1
 redis==3.5.3
 requests==2.26.0
 rpy2>=3.1.0
