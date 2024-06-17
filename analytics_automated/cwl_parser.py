@@ -1,5 +1,6 @@
 import yaml
 
+
 def read_cwl_file(cwl_path):
     with open(cwl_path, 'r') as cwl_file:
         cwl_data = yaml.safe_load(cwl_file)
@@ -7,15 +8,19 @@ def read_cwl_file(cwl_path):
     cwl_class = cwl_data.get("class")
 
     if cwl_class == "Workflow":
+        # print(f'[Detected] Workflow {cwl_file}')
         return parse_cwl_workflow(cwl_data)
     elif cwl_class == "CommandLineTool":
+        # print(f'[Detected] CommandLineTool {cwl_file} ')
         return parse_cwl_clt(cwl_data)
     else:
         #TODO: Add error handling
         return "Unknown CWL class"
 
+
 def parse_cwl_clt(cwl_data):
     return None
+
 
 def parse_cwl_workflow(cwl_data):
     inputs = cwl_data.get("inputs")
