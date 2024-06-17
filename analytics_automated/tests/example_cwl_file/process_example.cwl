@@ -1,23 +1,17 @@
 cwlVersion: v1.2
 class: CommandLineTool
 
-baseCommand: bash
-
+baseCommand: echo
+arguments:
+  - valueFrom: "$(inputs.message)"
 inputs:
-  input_file:
-    type: File
+  message:
+    type: string
     inputBinding:
       position: 1
-
 outputs:
-  processed_files:
+  output_file:
     type: File
     outputBinding:
-      glob: "*.processed.txt"
-
-arguments:
-  - valueFrom: |
-      input_file=$1
-      output_file=$(basename $input_file .txt).processed.txt
-      head -n -1 $input_file > $output_file
-    shellQuote: false
+      glob: "*.txt"
+stdout: "$(inputs.message)_stdout.log"
