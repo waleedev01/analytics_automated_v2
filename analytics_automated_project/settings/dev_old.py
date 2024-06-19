@@ -26,7 +26,7 @@ CORS_ORIGIN_WHITELIST = (
 
 SECRET_KEY = get_secret("SECRET_KEY", secrets)
 
-DEBUG = True
+DEBUG = False
 
 INSTALLED_APPS = INSTALLED_APPS + ('debug_toolbar',)
 
