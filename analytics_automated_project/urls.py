@@ -22,6 +22,8 @@ from django.conf.urls.static import static
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from analytics_automated import api
+from analytics_automated.views import CWLUploadPageView  
+
 
 urlpatterns = [
      url(r'^admin/', include('smuggler.urls')),
@@ -46,7 +48,9 @@ urlpatterns = [
      url(r'^analytics_automated/jobtimes/$',
          api.JobTimes.as_view(), name="jobtimes"),
      url(r'^analytics_automated/uploadcwl/$',
-         api.CWLUploadView.as_view(), name="uploadcwl"),  # New CWL upload pattern
+         api.CWLUploadView.as_view(), name="uploadcwl"),  # Existing CWL upload pattern
+     url(r'^analytics_automated/uploadcwlpage/$',
+         CWLUploadPageView.as_view(), name="uploadcwlpage"),  # New view for the cwl upload page
      url(r'^login/$', auth_views.LoginView),
      url(r'^logout/$', auth_views.LogoutView),
 

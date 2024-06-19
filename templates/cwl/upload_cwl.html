@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload CWL File</title>
+</head>
+<body>
+    <h1>Upload CWL File</h1>
+    <form action="{% url 'uploadcwl' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="file">Select CWL file:</label>
+        <input type="file" name="file" id="file" required>
+        <br><br>
+        <input type="submit" value="Upload">
+    </form>
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+</body>
+</html>
