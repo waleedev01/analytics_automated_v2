@@ -124,8 +124,8 @@ def parse_cwl_clt(cwl_data, name):
     # pp = pprint.PrettyPrinter(width=60)
     # pp.pprint(task)
 
-    save_ctl_task(task)
-    return task
+    t = save_ctl_task(task)
+    return t.id
 
 
 def save_ctl_task(task_data: dict):
@@ -155,11 +155,12 @@ def save_ctl_task(task_data: dict):
     t.out_glob = task_data['out_glob']
     t.executable = task_data['executable']
     t.stdout_glob = task_data['stdout_glob']
-    # t.save()
+    t.save()
     for idx, input_data in enumerate(task_data['inputs']):
         if input_data['type'] != 'File':
             # print(input_data, input_data['input_binding'].get('prefix'))
             save_task_parameter(input_data, t)
+    return t
 
 
 def parse_cwl_workflow(cwl_data):
