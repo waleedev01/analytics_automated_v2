@@ -45,6 +45,8 @@ urlpatterns = [
          api.Endpoints.as_view(), name="endpoints"),
      url(r'^analytics_automated/jobtimes/$',
          api.JobTimes.as_view(), name="jobtimes"),
+     url(r'^analytics_automated/uploadcwl/$',
+         api.CWLUploadView.as_view(), name="uploadcwl"),  # New CWL upload pattern
      url(r'^login/$', auth_views.LoginView),
      url(r'^logout/$', auth_views.LogoutView),
 
