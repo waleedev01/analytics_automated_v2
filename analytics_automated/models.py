@@ -222,8 +222,6 @@ class Step(models.Model):
 
     class Meta:
         ordering = ['ordering']
-
-    class Meta:
         app_label = 'analytics_automated'
 
 
