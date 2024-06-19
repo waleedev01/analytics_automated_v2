@@ -1,47 +1,72 @@
-import yaml
 import os
-import pprint
+import yaml
+import logging
+from django.core.exceptions import ObjectDoesNotExist
 from .models import Backend, Task, Parameter, Job, Step
-from django.db import IntegrityError
-from .cwl_schema_validator import CWLSchemaValidator  # Import the validator
 
+logging.basicConfig(filename='cwl_parser.log', level=logging.INFO, 
+                    format='%(asctime)s %(levelname)s %(message)s')
+
+class CWLSchemaValidator:
+    def validate_cwl(self, cwl_path):
+        try:
+            with open(cwl_path, 'r') as file:
+                cwl_data = yaml.safe_load(file)
+
+            if not cwl_data.get('cwlVersion'):
+                raise ValueError("Missing 'cwlVersion' in CWL file")
+
+            if not cwl_data.get('class'):
+                raise ValueError("Missing 'class' in CWL file")
+
+            return True, "CWL file is valid."
+        except Exception as e:
+            logging.error(f"Validation failed: {str(e)}")
+            return False, f"Validation failed: {str(e)}"
+
+def scan_cwl_directory(directory_path):
+    cwl_files = [os.path.join(directory_path, f) for f in os.listdir(directory_path) if f.endswith('.cwl')]
+    workflow_files = {}
+    clt_files = []
+
+    for cwl_file in cwl_files:
+        try:
+            with open(cwl_file, 'r') as file:
+                cwl_data = yaml.safe_load(file)
+                cwl_class = cwl_data.get("class")
+
+                if cwl_class == "Workflow":
+                    workflow_files[cwl_file] = cwl_data
+                elif cwl_class == "CommandLineTool":
+                    clt_files.append(cwl_file)
+        except Exception as e:
+            logging.error(f"Failed to read {cwl_file}: {str(e)}")
+
+    return workflow_files, clt_files
 
 def read_cwl_file(cwl_path):
-    # Initialize the validator
     validator = CWLSchemaValidator()
     is_valid, message = validator.validate_cwl(cwl_path)
     
     if not is_valid:
-        print(f"Validation Failed: {message}")
-        return None  # Stop further processing if validation fails
+        logging.error(f"Validation Failed: {message}")
+        return None
 
     with open(cwl_path, 'r') as cwl_file:
         cwl_data = yaml.safe_load(cwl_file)
     base_name = os.path.splitext(os.path.basename(cwl_path))[0]
     cwl_class = cwl_data.get("class")
 
-    # TODO: Transfer filename as Job/Task name
     if cwl_class == "Workflow":
-        # print(f'[Detected] Workflow {cwl_file}')
         return parse_cwl_workflow(cwl_data, base_name)
     elif cwl_class == "CommandLineTool":
-        # print(f'[Detected] CommandLineTool {cwl_file} ')
         return parse_cwl_clt(cwl_data, base_name)
     else:
-        # TODO: Add error handling
+        logging.error(f"Unknown CWL class for file {cwl_path}")
         return "Unknown CWL class"
 
-
 def parse_cwl_clt(cwl_data, name):
-    """
-    Create a new task and return the generated task id.
-    :param cwl_data: dict, content of the cwl dict
-    :param name: str, name of the task
-    """
     def map_format(format_uri):
-        """
-        Return extract file suffix based on the format uri
-        """
         EDAM_FORMAT_MAPPING = {
             "http://edamontology.org/format_1929": ".fasta",
             "http://edamontology.org/format_2330": ".fasta",
@@ -51,12 +76,7 @@ def parse_cwl_clt(cwl_data, name):
             "http://edamontology.org/format_3752": ".csv",
             "http://edamontology.org/format_3464": ".json",
         }
-
-        # Check if format_uri is empty or not in the mapping
-        if not format_uri or format_uri not in EDAM_FORMAT_MAPPING:
-            return ".input"  # Default format if not found or empty
-        else:
-            return EDAM_FORMAT_MAPPING[format_uri]
+        return EDAM_FORMAT_MAPPING.get(format_uri, ".input")
 
     def parse_cwl_inputs(inputs: dict):
         parsed_inputs = []
@@ -65,12 +85,14 @@ def parse_cwl_clt(cwl_data, name):
             input_format = input_data.get("format")
             input_binding = input_data.get("inputBinding", {})
             default_value = input_data.get("default")
+            secondary_files = input_data.get("secondaryFiles", [])
             parsed_input = {
                 "name": input_name,
                 "type": input_type,
                 "format": input_format,
                 "default": default_value,
-                "input_binding": input_binding
+                "input_binding": input_binding,
+                "secondary_files": secondary_files
             }
             parsed_inputs.append(parsed_input)
         return parsed_inputs
@@ -80,49 +102,68 @@ def parse_cwl_clt(cwl_data, name):
         for output_name, output_data in outputs.items():
             output_type = output_data.get("type")
             output_binding = output_data.get("outputBinding", {})
-
+            secondary_files = output_data.get("secondaryFiles", [])
             parsed_output = {
                 "name": output_name,
                 "type": output_type,
-                "output_binding": output_binding
+                "output_binding": output_binding,
+                "secondary_files": secondary_files
             }
-
             parsed_outputs.append(parsed_output)
-
         return parsed_outputs
 
     base_command = cwl_data.get("baseCommand")
     inputs = cwl_data.get("inputs", [])
-    outpus = cwl_data.get("outputs", [])
+    outputs = cwl_data.get("outputs", [])
+    requirements = cwl_data.get("requirements", [])
+    hints = cwl_data.get("hints", [])
+    arguments = cwl_data.get("arguments", [])
+    stdin = cwl_data.get("stdin")
+    stdout = cwl_data.get("stdout")
+    stderr = cwl_data.get("stderr")
+    success_codes = cwl_data.get("successCodes", [])
+    temporary_fail_codes = cwl_data.get("temporaryFailCodes", [])
+    permanent_fail_codes = cwl_data.get("permanentFailCodes", [])
+    label = cwl_data.get("label")
+    doc = cwl_data.get("doc")
+    initial_work_dir = cwl_data.get("initialWorkDir")
+    shell_quote = cwl_data.get("shellQuote", False)
 
     task = {
-        # TODO: Add method to handle backend_id,
-        #  incomplete_outputs_behaviour, custom_exit_status, custom_exit_behaviour
-        "backend_id": 1,  # LOCALHOST
         "name": name,
         "base_command": base_command,
         "inputs": parse_cwl_inputs(inputs),
-        "outputs": parse_cwl_outputs(outpus)
+        "outputs": parse_cwl_outputs(outputs),
+        "requirements": requirements,
+        "hints": hints,
+        "arguments": arguments,
+        "stdin": stdin,
+        "stdout": stdout,
+        "stderr": stderr,
+        "success_codes": success_codes,
+        "temporary_fail_codes": temporary_fail_codes,
+        "permanent_fail_codes": permanent_fail_codes,
+        "label": label,
+        "doc": doc,
+        "initial_work_dir": initial_work_dir,
+        "shell_quote": shell_quote,
     }
 
-    # Extract stdout
-    if 'stdout' in cwl_data:
-        task['stdout_glob'] = f".{cwl_data.get('stdout').split('.')[-1]}"
+    if stdout:
+        task['stdout_glob'] = f".{stdout.split('.')[-1]}"
     else:
         task['stdout_glob'] = ""
 
-    # Extract executable command
-    if isinstance(task['base_command'], list):
-        executable_parts = task['base_command']
+    if isinstance(base_command, list):
+        executable_parts = base_command
     else:
-        executable_parts = [task['base_command']]
+        executable_parts = [base_command]
 
     in_globs = []
-    for idx, input_data in enumerate(task['inputs']):  # Extract parameters to executable command
+    for idx, input_data in enumerate(task['inputs']):
         input_position = 1
-        position = input_data['input_binding']['position']
+        position = input_data['input_binding'].get('position')
         type = input_data['type']
-        # TODO: Need Error Handling of possible messy positions
         if type != 'File':
             executable_parts.append(f"$P{position}")
         else:
@@ -147,110 +188,91 @@ def parse_cwl_clt(cwl_data, name):
     task['in_glob'] = in_glob
     task['out_glob'] = out_glob
 
-    # pp = pprint.PrettyPrinter(width=60)
-    # pp.pprint(task)
+    return task
 
-    t = save_ctl_task(task)
-    return t.id
-
-
-def save_ctl_task(task_data: dict):
-    def save_task_parameter(input_data: dict, task: object):
-        if input_data['type'] == 'boolean':
-            input_data['bool_valued'] = True
-        else:
-            input_data['bool_valued'] = False
-        # TODO: Add method to manage rest_alias, spacing, switchless
-        input_data["spacing"] = True
-        input_data["switchless"] = False
-        rest_alias = f"{task.name}_{input_data['name']}"
-        flag = input_data['input_binding'].get('prefix')
-        p = Parameter.objects.create(task=task)
-        p.flag = flag
-        p.default = input_data['default']
-        p.bool_valued = input_data['bool_valued']
-        p.rest_alias = rest_alias
-        p.spacing = input_data["spacing"]
-        p.switchless = input_data["switchless"]
-        p.save()
-
-    # TODO: Expect receive backend id from outer function
-    backend = Backend.objects.get(id=1)
-    t = Task.objects.create(backend=backend)
-    t.name = task_data['name']
-    t.in_glob = task_data['in_glob']
-    t.out_glob = task_data['out_glob']
-    t.executable = task_data['executable']
-    t.stdout_glob = task_data['stdout_glob']
-    t.save()
-    for idx, input_data in enumerate(task_data['inputs']):
-        if input_data['type'] != 'File':
-            # print(input_data, input_data['input_binding'].get('prefix'))
-            save_task_parameter(input_data, t)
-    return t
-
+def save_task_to_db(task_data):
+    try:
+        backend = Backend.objects.get(id=1)  # Assuming a default backend ID
+        task = Task.objects.create(
+            backend=backend,
+            name=task_data['name'],
+            description=task_data.get('doc'),
+            in_glob=task_data['in_glob'],
+            out_glob=task_data['out_glob'],
+            stdout_glob=task_data['stdout_glob'],
+            executable=task_data['executable'],
+            requirements=task_data['requirements'],
+            hints=task_data['hints'],
+            arguments=task_data['arguments'],
+            stdin=task_data['stdin'],
+            stdout=task_data['stdout'],
+            stderr=task_data['stderr'],
+            success_codes=task_data['success_codes'],
+            temporary_fail_codes=task_data['temporary_fail_codes'],
+            permanent_fail_codes=task_data['permanent_fail_codes'],
+            label=task_data['label'],
+            doc=task_data['doc'],
+            initial_work_dir=task_data['initial_work_dir'],
+            shell_quote=task_data['shell_quote']
+        )
+        for input_data in task_data['inputs']:
+            Parameter.objects.create(
+                task=task,
+                flag=input_data['name'],
+                default=input_data.get('default'),
+                bool_valued=(input_data['type'] == 'boolean'),
+                rest_alias=input_data['name'],
+                spacing=input_data['input_binding'].get('separate', True),
+                switchless=input_data['input_binding'].get('prefix', None) is None,
+                secondary_files=input_data['secondary_files']
+            )
+        return task
+    except Exception as e:
+        logging.error(f"Failed to save task to database: {str(e)}")
+        return None
 
 def parse_cwl_workflow(cwl_data, filename):
-    # Create new job
     try:
-        j = Job.objects.create(name=filename, runnable=True)
-        j.save()
+        job = Job.objects.create(name=filename, runnable=True, cwl_version=cwl_data['cwlVersion'])
     except IntegrityError:
-        # TODO: Update implementation to: Update existing job if it already exists
-        print(f"A job with name '{filename}' already exists.")
-        return
+        logging.error(f"A job with name '{filename}' already exists.")
+        return None
 
     steps = cwl_data.get("steps")
-
     step_source = {}
     task_arr = []
+    task_details = []
+
     for step_name, step_detail in steps.items():
-        # Get each step's input source
         task_input = step_detail.get("in")
         source_arr = []
         for input_name, input_detail in task_input.items():
-            # Put file dependency into source_arr
-            if(type(input_detail) is dict):
+            if isinstance(input_detail, dict):
                 input_source = input_detail.get("source", None)
-                source_arr.append(input_source.split('/')[0])
+                if input_source:
+                    source_arr.append(input_source.split('/')[0])
 
         task_run = step_detail.get("run")
+        if not task_run.endswith(".cwl"):
+            task_run += ".cwl"
 
-        # For step type == CommandLineTool
-        if(type(task_run) is dict):
-            task_class = task_run.get("class")
-
-            if(task_class == "CommandLineTool"):
-                # Create new task
-                try:
-                    task_id = parse_cwl_clt(task_run, step_name)
-                    t = Task.objects.get(id=task_id)
-                except IntegrityError:
-                    # TODO: Update implementation to: Update existing task if it already exists
-                    print(f"A task with name '{step_name}' already exists.")
-                    return
-                
-                step_source[step_name] = set(source_arr)
-
-        # For step type == .cwl
-        else:
-            # Find existing task
-            task_name = task_run.split('.')[0]
+        task_file_path = os.path.join("cwl_files", task_run)
+        if os.path.exists(task_file_path):
             try:
-                t = Task.objects.get(name=task_name)
-            except Task.DoesNotExist:
-                print(f"Task {task_name} not found")
-                return
-            
-            step_source[task_name] = set(source_arr)
-        
-        task_arr.append(t)
-    
-    # Initialize order mapping dictionary
+                with open(task_file_path, 'r') as task_file:
+                    task_data = yaml.safe_load(task_file)
+                    task_detail = parse_cwl_clt(task_data, step_name)
+                    task = save_task_to_db(task_detail)
+                    if task:
+                        task_details.append(task_detail)
+                        step_source[step_name] = set(source_arr)
+            except Exception as e:
+                logging.error(f"Error parsing task {task_run}: {str(e)}")
+
+        task_arr.append(step_name)
+
     order_mapping = {}
     order = 0
-
-    # Process step to assign order values
     for step_name in step_source:
         if step_name not in order_mapping:
             order_mapping[step_name] = order
@@ -260,11 +282,27 @@ def parse_cwl_workflow(cwl_data, filename):
             if dependency not in order_mapping:
                 order_mapping[dependency] = order
                 order += 1
-    
-    print(order_mapping)
 
-    # Map job and task into step
-    # TODO: Test logic for more complex ordering
-    for task in task_arr:
-        s = Step.objects.create(job=j, task=task, ordering=order_mapping[task.name])
-        s.save()
+    logging.info(f"Order Mapping: {order_mapping}")
+    logging.info(f"Task Sequence: {task_arr}")
+    logging.info("Task Details:")
+    logging.info(task_details)
+
+    for task_name in task_arr:
+        try:
+            task = Task.objects.get(name=task_name)
+            Step.objects.create(job=job, task=task, ordering=order_mapping[task_name])
+        except ObjectDoesNotExist:
+            logging.error(f"Task {task_name} does not exist in the database")
+
+    return order_mapping
+
+def main(directory_path):
+    workflow_files, clt_files = scan_cwl_directory(directory_path)
+    for workflow_file, cwl_data in workflow_files.items():
+        logging.info(f"Processing Workflow: {workflow_file}")
+        parse_cwl_workflow(cwl_data, os.path.splitext(os.path.basename(workflow_file))[0])
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    main("cwl_files")
