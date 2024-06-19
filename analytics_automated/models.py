@@ -41,6 +41,9 @@ class QueueType(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        app_label = 'analytics_automated'
+
 
 # Create your models here.
 class Backend(models.Model):
@@ -58,6 +61,9 @@ class Backend(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        app_label = 'analytics_automated'
 # TODO:Not clear if the path to the processed file root should be in the
 # backend or in the task table. I guess it is more of a property of the
 # backend though This will likely expand lots as we understand the complexity
@@ -87,6 +93,9 @@ class BackendUser(models.Model):
                                    choices=PRIORITY_CHOICES,
                                    default=MEDIUM)
 
+    class Meta:
+        app_label = 'analytics_automated'
+
 
 class Job(models.Model):
     name = models.CharField(max_length=64, unique=True, null=False,
@@ -98,6 +107,7 @@ class Job(models.Model):
 
     class Meta:
         ordering = ('pk', )
+        app_label = 'analytics_automated'
 # TODO: set runnable true if all it's tasks exists, set false if a task
 # needed has been deleted
 
@@ -107,6 +117,9 @@ class ValidatorTypes(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        app_label = 'analytics_automated'
 
 
 class Validator(models.Model):
@@ -129,6 +142,9 @@ class Validator(models.Model):
 
     def __str__(self):
         return self.validation_type.name
+
+    class Meta:
+        app_label = 'analytics_automated'
 
 
 class Task(models.Model):
@@ -160,6 +176,9 @@ class Task(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        app_label = 'analytics_automated'
 # TODO: deleting a task should set any jobs to runnable false where it is
 # missing
 
@@ -187,6 +206,9 @@ class Configuration(models.Model):
         d = dict(Configuration.CONFIGURATION_CHOICES)
         return(d[self.type])
 
+    class Meta:
+        app_label = 'analytics_automated'
+
 
 class Step(models.Model):
     job = models.ForeignKey(Job, related_name='steps',
@@ -201,6 +223,9 @@ class Step(models.Model):
     class Meta:
         ordering = ['ordering']
 
+    class Meta:
+        app_label = 'analytics_automated'
+
 
 class Environment(models.Model):
     task = models.ForeignKey(Task, related_name='environment',
@@ -211,6 +236,8 @@ class Environment(models.Model):
     def __str__(self):
         return self.env
 
+    class Meta:
+        app_label = 'analytics_automated'
 
 class Parameter(models.Model):
     task = models.ForeignKey(Task, related_name='parameters',
@@ -229,6 +256,9 @@ class Parameter(models.Model):
     def save(self, *args, **kwargs):
         self.rest_alias = str(self.task)+"_"+self.rest_alias
         super(Parameter, self).save(*args, **kwargs)
+
+    class Meta:
+        app_label = 'analytics_automated'
 
 
 class Batch(models.Model):
@@ -262,6 +292,9 @@ class Batch(models.Model):
     def returnStatus(self):
         d = dict(Batch.STATUS_CHOICES)
         return(d[self.status])
+
+    class Meta:
+        app_label = 'analytics_automated'
 
 
 class Submission(TimeStampedModel):
@@ -335,6 +368,9 @@ class Submission(TimeStampedModel):
                                    message=message)
         m.save()
 
+    class Meta:
+        app_label = 'analytics_automated'
+
 
 # Store results data
 class Result(TimeStampedModel):
@@ -351,6 +387,9 @@ class Result(TimeStampedModel):
     def __str__(self):
         return self.name
 
+    class Meta:
+        app_label = 'analytics_automated'
+
 
 # keep a timestamped history of all the messages sent for this jobs
 class Message(TimeStampedModel):
@@ -362,3 +401,6 @@ class Message(TimeStampedModel):
 
     def __str__(self):
         return str(self.pk)
+
+    class Meta:
+        app_label = 'analytics_automated'
