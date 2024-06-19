@@ -24,7 +24,7 @@ def parse_cwl_clt(cwl_data):
         parsed_inputs = []
         for input_name, input_data in inputs.items():
             input_type = input_data.get("type")
-            input_binding = input_data.get("inpuutBinding", {})
+            input_binding = input_data.get("inputBinding", {})
             parsed_input = {
                 "name": input_name,
                 "type": input_type,
@@ -38,7 +38,6 @@ def parse_cwl_clt(cwl_data):
         for output_name, output_data in outputs.items():
             output_type = output_data.get("type")
             output_binding = output_data.get("outputBinding", {})
-            glob = output_binding.get("glob")
 
             # Example: Mapping CWL output to AA output format
             parsed_output = {
@@ -46,10 +45,6 @@ def parse_cwl_clt(cwl_data):
                 "type": output_type,
                 "output_binding": output_binding
             }
-
-            # Check if there is a glob pattern defined
-            if glob:
-                parsed_output["out_glob"] = glob
 
             parsed_outputs.append(parsed_output)
 
@@ -66,7 +61,8 @@ def parse_cwl_clt(cwl_data):
         "inputs": parse_cwl_inputs(inputs),
         "outputs": parse_cwl_outputs(outpus)
     }
-    print(task)
+    pp = pprint.PrettyPrinter(width=60)
+    pp.pprint(task)
     return None
 
 
