@@ -2,6 +2,7 @@ import yaml
 import os
 import pprint
 from .models import Backend, Task, Parameter, Job, Step
+from django.db import IntegrityError
 
 
 def read_cwl_file(cwl_path):
@@ -163,22 +164,41 @@ def save_ctl_task(task_data: dict):
     return t
 
 def parse_cwl_workflow(cwl_data, filename):
+    # Create new job
+    try:
+        j = Job.objects.create(name=filename, runnable=True)
+        j.save()
+    except IntegrityError:
+        # TODO: Update implementation to: Update existing job if it already exists
+        print(f"A job with name '{filename}' already exists.")
+        return
+
     steps = cwl_data.get("steps")
 
     for step_name, step_detail in steps.items():
         task_run = step_detail.get("run")
-        task_class = task_run.get("class")
+        if(task_run is dict):
+            task_class = task_run.get("class")
 
-        if(task_class == "CommandLineTool"):
-            task_id = parse_cwl_clt(task_run, step_name)
-    
-    j = Job.objects.create(name=filename, runnable=True)
-    j.save()
+            if(task_class == "CommandLineTool"):
+                # Create new task
+                try:
+                    task_id = parse_cwl_clt(task_run, step_name)
+                    t = Task.objects.get(id=task_id)
+                except IntegrityError:
+                    # TODO: Update implementation to: Update existing task if it already exists
+                    print(f"A task with name '{step_name}' already exists.")
+                    return
+        else:
+            # Find existing task
+            task_name = task_run.split('.')[0]
+            t = Task.objects.get(name=task_name)
 
-    t = Task.objects.get(id=task_id)
-
-    s = Step.objects.create(job=j, task=t, ordering=0)
-    s.save()
-
-
-
+            if t is None:
+                print(f"Task {task_name} not found")
+                return
+        
+        # Map job and task into step
+        # TODO: Add method to handle ordering
+        s = Step.objects.create(job=j, task=t, ordering=0)
+        s.save()
