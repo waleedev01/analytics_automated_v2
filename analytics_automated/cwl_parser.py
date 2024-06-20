@@ -1,7 +1,7 @@
 import yaml
 import os
 import pprint
-from .models import Backend, Task, Parameter
+from .models import Backend, Task, Parameter, Job, Step
 
 
 def read_cwl_file(cwl_path):
@@ -13,7 +13,7 @@ def read_cwl_file(cwl_path):
     # TODO: Transfer filename as Job/Task name
     if cwl_class == "Workflow":
         # print(f'[Detected] Workflow {cwl_file}')
-        return parse_cwl_workflow(cwl_data)
+        return parse_cwl_workflow(cwl_data, base_name)
     elif cwl_class == "CommandLineTool":
         # print(f'[Detected] CommandLineTool {cwl_file} ')
         return parse_cwl_clt(cwl_data, base_name)
@@ -150,7 +150,7 @@ def save_ctl_task(task_data: dict):
 
     backend = Backend.objects.get(id=1)
     t = Task.objects.create(backend=backend)
-    t.name = task_data['name'] + '_TEST'
+    t.name = task_data['name']
     t.in_glob = task_data['in_glob']
     t.out_glob = task_data['out_glob']
     t.executable = task_data['executable']
@@ -162,14 +162,23 @@ def save_ctl_task(task_data: dict):
             save_task_parameter(input_data, t)
     return t
 
-
-def parse_cwl_workflow(cwl_data):
-    inputs = cwl_data.get("inputs")
-    outputs = cwl_data.get("outputs")
+def parse_cwl_workflow(cwl_data, filename):
     steps = cwl_data.get("steps")
 
     for step_name, step_detail in steps.items():
-        task_name = step_name
         task_run = step_detail.get("run")
-        task_in = step_detail.get("in")
-        task_out = step_detail.get("out")
+        task_class = task_run.get("class")
+
+        if(task_class == "CommandLineTool"):
+            task_id = parse_cwl_clt(task_run, step_name)
+    
+    j = Job.objects.create(name=filename, runnable=True)
+    j.save()
+
+    t = Task.objects.get(id=task_id)
+
+    s = Step.objects.create(job=j, task=t, ordering=0)
+    s.save()
+
+
+
