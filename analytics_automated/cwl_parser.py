@@ -182,16 +182,18 @@ def parse_cwl_workflow(cwl_data, filename):
     step_source = {}
     task_arr = []
     for step_name, step_detail in steps.items():
+        # Get each step's input source
         task_input = step_detail.get("in")
         source_arr = []
         for input_name, input_detail in task_input.items():
+            # Put file dependency into source_arr
             if(type(input_detail) is dict):
                 input_source = input_detail.get("source", None)
                 source_arr.append(input_source.split('/')[0])
-            else:
-                continue
 
         task_run = step_detail.get("run")
+
+        # For step type == CommandLineTool
         if(type(task_run) is dict):
             task_class = task_run.get("class")
 
@@ -204,7 +206,10 @@ def parse_cwl_workflow(cwl_data, filename):
                     # TODO: Update implementation to: Update existing task if it already exists
                     print(f"A task with name '{step_name}' already exists.")
                     return
+                
                 step_source[step_name] = set(source_arr)
+
+        # For step type == .cwl
         else:
             # Find existing task
             task_name = task_run.split('.')[0]
@@ -213,6 +218,7 @@ def parse_cwl_workflow(cwl_data, filename):
             except Task.DoesNotExist:
                 print(f"Task {task_name} not found")
                 return
+            
             step_source[task_name] = set(source_arr)
         
         task_arr.append(t)
@@ -234,7 +240,8 @@ def parse_cwl_workflow(cwl_data, filename):
     
     print(order_mapping)
 
+    # Map job and task into step
+    # TODO: Test logic for more complex ordering
     for task in task_arr:
-        # Map job and task into step
         s = Step.objects.create(job=j, task=task, ordering=order_mapping[task.name])
         s.save()
