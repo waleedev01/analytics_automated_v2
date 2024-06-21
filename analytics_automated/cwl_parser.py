@@ -175,9 +175,20 @@ def parse_cwl_workflow(cwl_data, filename):
 
     steps = cwl_data.get("steps")
 
+    step_source = {}
+    task_arr = []
     for step_name, step_detail in steps.items():
+        task_input = step_detail.get("in")
+        source_arr = []
+        for input_name, input_detail in task_input.items():
+            if(type(input_detail) is dict):
+                input_source = input_detail.get("source", None)
+                source_arr.append(input_source.split('/')[0])
+            else:
+                continue
+
         task_run = step_detail.get("run")
-        if(task_run is dict):
+        if(type(task_run) is dict):
             task_class = task_run.get("class")
 
             if(task_class == "CommandLineTool"):
@@ -189,16 +200,37 @@ def parse_cwl_workflow(cwl_data, filename):
                     # TODO: Update implementation to: Update existing task if it already exists
                     print(f"A task with name '{step_name}' already exists.")
                     return
+                step_source[step_name] = set(source_arr)
         else:
             # Find existing task
             task_name = task_run.split('.')[0]
-            t = Task.objects.get(name=task_name)
-
-            if t is None:
+            try:
+                t = Task.objects.get(name=task_name)
+            except Task.DoesNotExist:
                 print(f"Task {task_name} not found")
                 return
+            step_source[task_name] = set(source_arr)
         
+        task_arr.append(t)
+    
+    # Initialize order mapping dictionary
+    order_mapping = {}
+    order = 0
+
+    # Process step to assign order values
+    for step_name in step_source:
+        if step_name not in order_mapping:
+            order_mapping[step_name] = order
+            order += 1
+        dependencies = step_source[step_name]
+        for dependency in dependencies:
+            if dependency not in order_mapping:
+                order_mapping[dependency] = order
+                order += 1
+    
+    print(order_mapping)
+
+    for task in task_arr:
         # Map job and task into step
-        # TODO: Add method to handle ordering
-        s = Step.objects.create(job=j, task=t, ordering=0)
+        s = Step.objects.create(job=j, task=task, ordering=order_mapping[task.name])
         s.save()
