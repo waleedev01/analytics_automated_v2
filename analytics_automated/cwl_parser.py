@@ -45,11 +45,13 @@ def parse_cwl_clt(cwl_data, name):
         parsed_inputs = []
         for input_name, input_data in inputs.items():
             input_type = input_data.get("type")
+            input_format = input_data.get("format")
             input_binding = input_data.get("inputBinding", {})
             default_value = input_data.get("default")
             parsed_input = {
                 "name": input_name,
                 "type": input_type,
+                "format": input_format,
                 "default": default_value,
                 "input_binding": input_binding
             }
