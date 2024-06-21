@@ -91,7 +91,11 @@ def parse_cwl_clt(cwl_data, name):
     else:
         task['stdout_glob'] = ""
 
-    executable_parts = [task['base_command']]
+    if isinstance(task['base_command'], list):
+        executable_parts = task['base_command']
+    else:
+        executable_parts = [task['base_command']]
+
     in_globs = []
     for idx, input_data in enumerate(task['inputs']):
         input_position = 1

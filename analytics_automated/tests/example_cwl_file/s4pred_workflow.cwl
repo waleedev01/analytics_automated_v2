@@ -25,15 +25,15 @@ steps:
 
       inputs:
         input_file:
-            type: File
-            inputBinding:
-                position: 3
+          type: File
+          inputBinding:
+            position: 3
 
       outputs:
         output_fasta:
-            type: File
-            outputBinding:
-                glob: "*.fasta"
+          type: File
+          outputBinding:
+            glob: "*.fasta"
         
     in:
       input_file: input_file
@@ -50,19 +50,20 @@ steps:
 
       inputs:
         input_file:
-            type: File
-            inputBinding:
-                position: 14
+          type: File
+          format: "http://edamontology.org/format_1929"
+          inputBinding:
+            position: 14
 
       outputs:
         output_ss2:
-            type: File
-            outputBinding:
-                glob: "*.ss2"
+          type: File
+          outputBinding:
+            glob: "*.ss2"
         output_horiz:
-            type: File
-            outputBinding:
-                glob: "*.horiz"
+          type: File
+          outputBinding:
+            glob: "*.horiz"
         
     in:
       input_file:
