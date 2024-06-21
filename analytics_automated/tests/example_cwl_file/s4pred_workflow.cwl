@@ -9,13 +9,13 @@ inputs:
 outputs:
   output_ss2:
     type: File
-    outputSource: s4pred_run_model/output_ss2
+    outputSource: s4pred_run_model2/output_ss2
   output_horiz:
     type: File
-    outputSource: s4pred_run_model/output_horiz
+    outputSource: s4pred_run_model2/output_horiz
 
 steps:
-  create_fasta:
+  create_fasta2:
     run:
       class: CommandLineTool
 
@@ -40,7 +40,7 @@ steps:
     out: 
       - output_fasta
 
-  s4pred_run_model:
+  s4pred_run_model2:
     run:
       class: CommandLineTool
 
@@ -67,7 +67,7 @@ steps:
         
     in:
       input_file:
-        source: create_fasta/output_fasta
+        source: create_fasta2/output_fasta
 
     out: 
       - output_ss2
