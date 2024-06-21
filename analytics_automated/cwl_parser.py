@@ -3,9 +3,18 @@ import os
 import pprint
 from .models import Backend, Task, Parameter, Job, Step
 from django.db import IntegrityError
+from .cwl_schema_validator import CWLSchemaValidator  # Import the validator
 
 
 def read_cwl_file(cwl_path):
+    # Initialize the validator
+    validator = CWLSchemaValidator()
+    is_valid, message = validator.validate_cwl(cwl_path)
+    
+    if not is_valid:
+        print(f"Validation Failed: {message}")
+        return None  # Stop further processing if validation fails
+
     with open(cwl_path, 'r') as cwl_file:
         cwl_data = yaml.safe_load(cwl_file)
     base_name = os.path.splitext(os.path.basename(cwl_path))[0]
