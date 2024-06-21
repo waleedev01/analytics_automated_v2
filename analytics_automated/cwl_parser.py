@@ -24,7 +24,15 @@ def read_cwl_file(cwl_path):
 
 
 def parse_cwl_clt(cwl_data, name):
+    """
+    Create a new task and return the generated task id.
+    :param cwl_data: dict, content of the cwl dict
+    :param name: str, name of the task
+    """
     def map_format(format_uri):
+        """
+        Return extract file suffix based on the format uri
+        """
         EDAM_FORMAT_MAPPING = {
             "http://edamontology.org/format_1929": ".fasta",
             "http://edamontology.org/format_2330": ".fasta",
@@ -64,7 +72,6 @@ def parse_cwl_clt(cwl_data, name):
             output_type = output_data.get("type")
             output_binding = output_data.get("outputBinding", {})
 
-            # Example: Mapping CWL output to AA output format
             parsed_output = {
                 "name": output_name,
                 "type": output_type,
@@ -88,18 +95,21 @@ def parse_cwl_clt(cwl_data, name):
         "inputs": parse_cwl_inputs(inputs),
         "outputs": parse_cwl_outputs(outpus)
     }
+
+    # Extract stdout
     if 'stdout' in cwl_data:
         task['stdout_glob'] = f".{cwl_data.get('stdout').split('.')[-1]}"
     else:
         task['stdout_glob'] = ""
 
+    # Extract executable command
     if isinstance(task['base_command'], list):
         executable_parts = task['base_command']
     else:
         executable_parts = [task['base_command']]
 
     in_globs = []
-    for idx, input_data in enumerate(task['inputs']):
+    for idx, input_data in enumerate(task['inputs']):  # Extract parameters to executable command
         input_position = 1
         position = input_data['input_binding']['position']
         type = input_data['type']
@@ -155,6 +165,7 @@ def save_ctl_task(task_data: dict):
         p.switchless = input_data["switchless"]
         p.save()
 
+    # TODO: Expect receive backend id from outer function
     backend = Backend.objects.get(id=1)
     t = Task.objects.create(backend=backend)
     t.name = task_data['name']
@@ -168,6 +179,7 @@ def save_ctl_task(task_data: dict):
             # print(input_data, input_data['input_binding'].get('prefix'))
             save_task_parameter(input_data, t)
     return t
+
 
 def parse_cwl_workflow(cwl_data, filename):
     # Create new job
