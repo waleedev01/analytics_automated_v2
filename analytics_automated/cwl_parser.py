@@ -6,6 +6,11 @@ from .models import Backend, Task, Parameter, Job, Step
 from django.db.utils import IntegrityError
 
 logger = logging.getLogger(__name__)
+UNSUPPORTED_REQUIREMENTS = [
+    'InlineJavascriptRequirement',
+    'ResourceRequirement',
+    'DockerRequirement',
+]
 
 
 class CWLSchemaValidator:
@@ -20,6 +25,10 @@ class CWLSchemaValidator:
 
             if not cwl_data.get('class'):
                 raise ValueError("Missing 'class' in CWL file")
+
+            for item in cwl_data.get('requirements'):
+                if item['class'] in UNSUPPORTED_REQUIREMENTS:
+                    raise ValueError(f"Unsupported requirement: {item['class']}")
 
             return True, "CWL file is valid."
         except Exception as e:
@@ -52,7 +61,7 @@ def read_cwl_file(cwl_path):
     
     if not is_valid:
         logging.error(f"Validation Failed: {message}")
-        return None
+        return "Invalid CWL content"
 
     logging.info(f"Reading CWL file: {cwl_path}")
     with open(cwl_path, 'r') as cwl_file:
