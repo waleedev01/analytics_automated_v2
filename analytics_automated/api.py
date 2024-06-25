@@ -2,6 +2,7 @@ import ast
 import uuid
 from ipware.ip import get_client_ip
 from collections import defaultdict
+from django.core.files.storage import default_storage
 import pprint
 import logging
 import string
@@ -25,6 +26,8 @@ from rest_framework.response import Response
 from rest_framework import request
 from rest_framework.parsers import MultiPartParser
 from rest_framework.parsers import FormParser
+from rest_framework.views import APIView  # new import
+
 
 from .serializers import SubmissionInputSerializer, SubmissionOutputSerializer
 from .serializers import JobSerializer, BatchSerializer, JobDetailSerializer
@@ -34,6 +37,8 @@ from .tasks import *
 from .validators import *
 from .r_keywords import *
 from .cmdline import *
+from .cwl_parser import read_cwl_file 
+
 
 logger = logging.getLogger(__name__)
 
@@ -609,3 +614,20 @@ class JobDetail(mixins.RetrieveModelMixin,
             Returns the details of a job
         """
         return self.retrieve(request, *args, **kwargs)
+
+class CWLUploadView(APIView):
+    def post(self, request, format=None):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Save the file to a temporary location and get the full path
+        saved_path = default_storage.save('analytics_automated/cwl_files/' + file.name, ContentFile(file.read()))
+        full_path = default_storage.path(saved_path)
+        
+        # Parse the CWL file
+        try:
+            task_id = read_cwl_file(full_path)
+            return Response({"message": "CWL file processed successfully", "task_id": task_id}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

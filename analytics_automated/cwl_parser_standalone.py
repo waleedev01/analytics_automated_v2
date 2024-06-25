@@ -1,17 +1,13 @@
 import os
 import yaml
 import logging
-from django.core.exceptions import ObjectDoesNotExist
-from .models import Backend, Task, Parameter, Job, Step
-from django.db.utils import IntegrityError
 
-logger = logging.getLogger(__name__)
-
+logging.basicConfig(filename='cwl_parser.log', level=logging.INFO, 
+                    format='%(asctime)s %(levelname)s %(message)s')
 
 class CWLSchemaValidator:
     def validate_cwl(self, cwl_path):
         try:
-            logging.info(f"Validating CWL file: {cwl_path}")
             with open(cwl_path, 'r') as file:
                 cwl_data = yaml.safe_load(file)
 
@@ -54,7 +50,6 @@ def read_cwl_file(cwl_path):
         logging.error(f"Validation Failed: {message}")
         return None
 
-    logging.info(f"Reading CWL file: {cwl_path}")
     with open(cwl_path, 'r') as cwl_file:
         cwl_data = yaml.safe_load(cwl_file)
     base_name = os.path.splitext(os.path.basename(cwl_path))[0]
@@ -63,8 +58,7 @@ def read_cwl_file(cwl_path):
     if cwl_class == "Workflow":
         return parse_cwl_workflow(cwl_data, base_name)
     elif cwl_class == "CommandLineTool":
-        task_data = parse_cwl_clt(cwl_data, base_name)
-        return save_task_to_db(task_data)
+        return parse_cwl_clt(cwl_data, base_name)
     else:
         logging.error(f"Unknown CWL class for file {cwl_path}")
         return "Unknown CWL class"
@@ -194,48 +188,11 @@ def parse_cwl_clt(cwl_data, name):
 
     return task
 
-def save_task_to_db(task_data):
-    try:
-        backend = Backend.objects.get(id=1)  # Assuming a default backend ID
-        logging.info(f"Saving task to database: {task_data['name']}")
-        task = Task.objects.create(
-            backend=backend,
-            name=task_data['name'],
-            description=task_data.get('doc'),
-            in_glob=task_data['in_glob'],
-            out_glob=task_data['out_glob'],
-            stdout_glob=task_data['stdout_glob'],
-            executable=task_data['executable']
-        )
-        for input_data in task_data['inputs']:
-            Parameter.objects.create(
-                task=task,
-                flag=input_data['name'],
-                default=input_data.get('default'),
-                bool_valued=(input_data['type'] == 'boolean'),
-                rest_alias=input_data['name'],
-                spacing=input_data['input_binding'].get('separate', True),
-                switchless=input_data['input_binding'].get('prefix', None) is None
-            )
-        logging.info(f"Task saved successfully: {task_data['name']}")
-        return task
-    except Exception as e:
-        logging.error(f"Failed to save task to database: {str(e)}")
-        return None
-
 def parse_cwl_workflow(cwl_data, filename):
-    try:
-        logging.info(f"Creating job for workflow: {filename}")
-        job = Job.objects.create(name=filename, runnable=True)
-    except IntegrityError:
-        logging.error(f"A job with name '{filename}' already exists.")
-        return None
-
     steps = cwl_data.get("steps")
     step_source = {}
     task_arr = []
     task_details = []
-
     for step_name, step_detail in steps.items():
         task_input = step_detail.get("in")
         source_arr = []
@@ -246,27 +203,27 @@ def parse_cwl_workflow(cwl_data, filename):
                     source_arr.append(input_source.split('/')[0])
 
         task_run = step_detail.get("run")
+
         if not task_run.endswith(".cwl"):
             task_run += ".cwl"
 
-        task_file_path = os.path.join("analytics_automated/cwl_files", task_run)
+        task_file_path = os.path.join("cwl_files", task_run)
+
         if os.path.exists(task_file_path):
             try:
-                logging.info(f"Parsing task file: {task_file_path}")
                 with open(task_file_path, 'r') as task_file:
                     task_data = yaml.safe_load(task_file)
                     task_detail = parse_cwl_clt(task_data, step_name)
-                    task = save_task_to_db(task_detail)
-                    if task:
-                        task_details.append(task_detail)
-                        step_source[step_name] = set(source_arr)
+                    task_details.append(task_detail)
+                    step_source[step_name] = set(source_arr)
             except Exception as e:
                 logging.error(f"Error parsing task {task_run}: {str(e)}")
-
+        
         task_arr.append(step_name)
 
     order_mapping = {}
     order = 0
+
     for step_name in step_source:
         if step_name not in order_mapping:
             order_mapping[step_name] = order
@@ -281,14 +238,6 @@ def parse_cwl_workflow(cwl_data, filename):
     logging.info(f"Task Sequence: {task_arr}")
     logging.info("Task Details:")
     logging.info(task_details)
-
-    for task_name in task_arr:
-        try:
-            task = Task.objects.get(name=task_name)
-            Step.objects.create(job=job, task=task, ordering=order_mapping[task_name])
-        except ObjectDoesNotExist:
-            logging.error(f"Task {task_name} does not exist in the database")
-
     return order_mapping
 
 def main(directory_path):
@@ -299,4 +248,4 @@ def main(directory_path):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    main("analytics_automated/cwl_files")
+    main("cwl_files")
