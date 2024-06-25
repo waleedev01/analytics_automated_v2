@@ -26,9 +26,10 @@ class CWLSchemaValidator:
             if not cwl_data.get('class'):
                 raise ValueError("Missing 'class' in CWL file")
 
-            for item in cwl_data.get('requirements'):
-                if item['class'] in UNSUPPORTED_REQUIREMENTS:
-                    raise ValueError(f"Unsupported requirement: {item['class']}")
+            if cwl_data.get('requirements'):
+                for item in cwl_data.get('requirements'):
+                    if item['class'] in UNSUPPORTED_REQUIREMENTS:
+                        raise ValueError(f"Unsupported requirement: {item['class']}")
 
             return True, "CWL file is valid."
         except Exception as e:

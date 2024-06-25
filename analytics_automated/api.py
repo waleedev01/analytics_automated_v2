@@ -615,6 +615,7 @@ class JobDetail(mixins.RetrieveModelMixin,
         """
         return self.retrieve(request, *args, **kwargs)
 
+
 class CWLUploadView(APIView):
     def post(self, request, format=None):
         file = request.FILES.get('file')
@@ -626,6 +627,9 @@ class CWLUploadView(APIView):
         full_path = default_storage.path(saved_path)
         
         # Parse the CWL file
+        # TODO: Alert read_cwl_file to
+        #  return a list of task, add a form that require user to
+        #  input Job termination behaviour
         try:
             task_id = read_cwl_file(full_path)
             return Response({"message": "CWL file processed successfully", "task_id": task_id}, status=status.HTTP_201_CREATED)
