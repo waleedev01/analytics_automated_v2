@@ -12,7 +12,6 @@ UNSUPPORTED_REQUIREMENTS = [
     'DockerRequirement',
 ]
 
-
 class CWLSchemaValidator:
     def validate_cwl(self, cwl_data):
         try:
@@ -32,7 +31,7 @@ class CWLSchemaValidator:
             logging.error(f"Validation failed: {str(e)}")
             return False, f"Validation failed: {str(e)}"
 
-def read_cwl_file(cwl_path, all_files):
+def read_cwl_file(cwl_path, all_files, messages):
     with open(cwl_path, 'r') as cwl_file:
         cwl_data = yaml.safe_load(cwl_file)
 
@@ -41,18 +40,21 @@ def read_cwl_file(cwl_path, all_files):
 
     if not is_valid:
         logging.error(f"Validation Failed: {message}")
+        messages.append(f"Validation Failed: {message}")
         return None
 
     base_name = os.path.splitext(os.path.basename(cwl_path))[0]
     cwl_class = cwl_data.get("class")
 
     if cwl_class == "Workflow":
-        return parse_cwl_workflow(cwl_data, base_name, all_files)
+        return parse_cwl_workflow(cwl_data, base_name, all_files, messages)
     elif cwl_class == "CommandLineTool":
         task_data = parse_cwl_clt(cwl_data, base_name)
-        return save_task_to_db(task_data)
+        return save_task_to_db(task_data, messages)
     else:
-        logging.error(f"Unknown CWL class for file {cwl_path}")
+        error_message = f"Unknown CWL class for file {cwl_path}"
+        logging.error(error_message)
+        messages.append(error_message)
         return None
 
 
@@ -183,7 +185,7 @@ def parse_cwl_clt(cwl_data, name):
     return task
 
 
-def save_task_to_db(task_data):
+def save_task_to_db(task_data, messages):
     try:
         backend = Backend.objects.get(id=1)  # Assuming a default backend ID
         logging.info(f"Saving task to database: {task_data['name']}")
@@ -199,7 +201,9 @@ def save_task_to_db(task_data):
         ).first()
 
         if existing_task:
-            logging.info(f"Task already exists: {task_data['name']}")
+            message = f"Task already exists: {task_data['name']}"
+            logging.info(message)
+            messages.append(message)
             return existing_task
 
         # Create a new task if it doesn't exist
@@ -222,20 +226,24 @@ def save_task_to_db(task_data):
                 spacing=input_data['input_binding'].get('separate', True),
                 switchless=input_data['input_binding'].get('prefix', None) is None
             )
-        logging.info(f"Task saved successfully: {task_data['name']}")
+        message = f"Task saved successfully: {task_data['name']}"
+        logging.info(message)
+        messages.append(message)
         return task
     except Exception as e:
-        logging.error(f"Failed to save task to database: {str(e)}")
+        error_message = f"Failed to save task to database: {str(e)}"
+        logging.error(error_message)
+        messages.append(error_message)
         return None
 
-
-
-def parse_cwl_workflow(cwl_data, filename, all_files):
+def parse_cwl_workflow(cwl_data, filename, all_files, messages):
     try:
         logging.info(f"Creating job for workflow: {filename}")
         job = Job.objects.create(name=filename, runnable=True)
     except IntegrityError:
-        logging.error(f"A job with name '{filename}' already exists.")
+        error_message = f"A job with name '{filename}' already exists."
+        logging.error(error_message)
+        messages.append(error_message)
         return None
 
     steps = cwl_data.get("steps")
@@ -257,7 +265,7 @@ def parse_cwl_workflow(cwl_data, filename, all_files):
         if isinstance(task_run, dict) and task_run.get("class") == "CommandLineTool":
             logging.info(f"Parsing inline CommandLineTool for step: {step_name}")
             task_data = parse_cwl_clt(task_run, step_name)
-            task = save_task_to_db(task_data)
+            task = save_task_to_db(task_data, messages)
             if task:
                 task_details.append(task_data)
                 step_source[step_name] = set(source_arr)
@@ -272,12 +280,18 @@ def parse_cwl_workflow(cwl_data, filename, all_files):
                     with open(task_file_path, 'r') as task_file:
                         task_data = yaml.safe_load(task_file)
                         task_detail = parse_cwl_clt(task_data, step_name)
-                        task = save_task_to_db(task_detail)
+                        task = save_task_to_db(task_detail, messages)
                         if task:
                             task_details.append(task_detail)
                             step_source[step_name] = set(source_arr)
                 except Exception as e:
-                    logging.error(f"Error parsing task {task_run}: {str(e)}")
+                    error_message = f"Error parsing task {task_run}: {str(e)}"
+                    logging.error(error_message)
+                    messages.append(error_message)
+            else:
+                error_message = f"Task file not found: {task_run}"
+                logging.error(error_message)
+                messages.append(error_message)
 
         task_arr.append(step_name)
 
@@ -303,8 +317,11 @@ def parse_cwl_workflow(cwl_data, filename, all_files):
             task = Task.objects.get(name=task_name)
             Step.objects.create(job=job, task=task, ordering=order_mapping[task_name])
         except ObjectDoesNotExist:
-            logging.error(f"Task {task_name} does not exist in the database")
+            error_message = f"Task {task_name} does not exist in the database"
+            logging.error(error_message)
+            messages.append(error_message)
 
+    messages.append(f"Job '{filename}' created with tasks: {', '.join(task_arr)}")
     return order_mapping
 
 

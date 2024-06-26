@@ -5,6 +5,7 @@ from django.core.files.base import ContentFile
 from .cwl_parser import read_cwl_file, CWLSchemaValidator
 import logging
 import yaml
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +20,12 @@ class CWLUploadPageView(View):
             return render(request, 'cwl/upload_cwl.html', {"message": "No files provided"})
         
         file_paths = {}
+        messages = []
         for file in files:
             if not file.name.endswith('.cwl'):
                 logging.error(f"Uploaded file is not a CWL file: {file.name}")
-                return render(request, 'cwl/upload_cwl.html', {"message": f"Uploaded file is not a CWL file: {file.name}"})
+                messages.append(f"Uploaded file is not a CWL file: {file.name}")
+                continue
             
             path = default_storage.save('cwl_workflows/' + file.name, ContentFile(file.read()))
             full_path = default_storage.path(path)
@@ -39,11 +42,18 @@ class CWLUploadPageView(View):
                 if cwl_class == "Workflow":
                     workflow_files[file_name] = cwl_data
 
-            for workflow_name, workflow_data in workflow_files.items():
-                read_cwl_file(file_paths[workflow_name], file_paths)
+            if not workflow_files:
+                messages.append("No workflow files found in the uploaded files.")
+            else:
+                for workflow_name, workflow_data in workflow_files.items():
+                    read_cwl_file(file_paths[workflow_name], file_paths, messages)
             
+            # Clean up uploaded files
+            for file_name, full_path in file_paths.items():
+                os.remove(full_path)
+
             logging.info(f"Successfully processed CWL files: {', '.join(file_paths.keys())}")
-            return render(request, 'cwl/upload_cwl.html', {"message": "CWL files processed successfully", "file_names": list(file_paths.keys())})
+            return render(request, 'cwl/upload_cwl.html', {"message": "Results Below:", "file_names": list(file_paths.keys()), "messages": messages})
         except Exception as e:
             logging.error(f"Failed to process CWL files: {str(e)}")
-            return render(request, 'cwl/upload_cwl.html', {"message": str(e)})
+            return render(request, 'cwl/upload_cwl.html', {"message": str(e), "messages": messages})
