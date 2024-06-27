@@ -15,20 +15,20 @@ steps:
     in:
       input1: input-wf
     out: [output1]
-  task2:
-    run: task2.cwl
-    in:
-      input1: task1/output1
-    out: [output1]
   task3:
     run: task3.cwl
     in:
-      files: [task2/output1]
+      input1: task2/output1
+    out: [output1]
+  task2:
+    run: task3.cwl
+    in:
+      files: [task1/output1]
       mode: "analyze"
     out: [result]
   task4:
     run: task4.cwl
     in:
       config: task2/output1
-      data: task3/result
+      data: task2/output1
     out: [report]
