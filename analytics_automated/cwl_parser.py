@@ -127,6 +127,7 @@ def parse_cwl_clt(cwl_data, name):
         return parsed_outputs
 
     def parse_cwl_requirements(requirements: dict):
+        print(requirements)
         return requirements
 
     base_command = cwl_data.get("baseCommand")
@@ -165,6 +166,8 @@ def parse_cwl_clt(cwl_data, name):
         "initial_work_dir": initial_work_dir,
         "shell_quote": shell_quote,
     }
+
+    return
 
     if stdout:
         task['stdout_glob'] = f".{stdout.split('.')[-1]}"
