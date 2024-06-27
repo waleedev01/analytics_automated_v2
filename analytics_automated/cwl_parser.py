@@ -254,11 +254,17 @@ def parse_cwl_workflow(cwl_data, filename, all_files, messages):
     for step_name, step_detail in steps.items():
         task_input = step_detail.get("in")
         source_arr = []
-        for input_name, input_detail in task_input.items():
+        for input_detail in task_input.values():
             if isinstance(input_detail, dict):
                 input_source = input_detail.get("source", None)
                 if input_source:
                     source_arr.append(input_source.split('/')[0])
+            elif isinstance(input_detail, list):
+                for item in input_detail:
+                    if "/" in item:
+                        source_arr.append(item.split('/')[0])
+            elif "/" in input_detail:
+                source_arr.append(input_detail.split('/')[0])
 
         task_run = step_detail.get("run")
 
@@ -297,8 +303,11 @@ def parse_cwl_workflow(cwl_data, filename, all_files, messages):
 
     order_mapping = {}
     order = 0
-    for step_name in step_source:
-        if step_name not in order_mapping:
+    for step_name, source_list in step_source.items():
+        if len(source_list) == 0:
+            order_mapping[step_name] = 0
+            order += 1
+        elif step_name not in order_mapping:
             order_mapping[step_name] = order
             order += 1
         dependencies = step_source[step_name]

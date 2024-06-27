@@ -1,5 +1,6 @@
 cwlVersion: v1.0
 class: Workflow
+
 inputs:
   input-wf:
     type: File
@@ -7,6 +8,7 @@ outputs:
   output-wf:
     type: File
     outputSource: task4/report
+
 steps:
   task1:
     run: task1.cwl
