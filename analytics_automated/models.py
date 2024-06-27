@@ -146,7 +146,7 @@ class Task(models.Model):
                                           blank=True)
     custom_exit_behaviour = models.IntegerField(null=True, blank=True,
                                                 choices=COMPLETION_CHOICES,)
-    requirements = models.JSONField(null=True, blank=True)  # New field for requirements
+    # requirements = models.JSONField(null=True, blank=True)  # New field for requirements
     hints = models.JSONField(null=True, blank=True)  # New field for hints
     arguments = models.JSONField(null=True, blank=True)  # New field for arguments
     stdin = models.CharField(max_length=256, null=True, blank=True)
@@ -239,6 +239,19 @@ class Parameter(models.Model):
     def save(self, *args, **kwargs):
         self.rest_alias = str(self.task) + "_" + self.rest_alias
         super(Parameter, self).save(*args, **kwargs)
+
+    class Meta:
+        app_label = 'analytics_automated'
+
+
+class Requirement(models.Model):
+    task = models.ForeignKey(Task, related_name='requirements',
+                             on_delete=models.CASCADE)
+    requirement_class = models.CharField(max_length=64, null=False, blank=False)
+    payload = models.JSONField(null=False)
+
+    def __str__(self):
+        return f"{self.requirement_class}: {self.payload}"
 
     class Meta:
         app_label = 'analytics_automated'

@@ -2,7 +2,7 @@ import os
 import yaml
 import logging
 from django.core.exceptions import ObjectDoesNotExist
-from .models import Backend, Task, Parameter, Job, Step
+from .models import Backend, Task, Parameter, Job, Step, Requirement
 from django.db.utils import IntegrityError
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ class CWLSchemaValidator:
             logging.error(f"Validation failed: {str(e)}")
             return False, f"Validation failed: {str(e)}"
 
+
 def scan_cwl_directory(directory_path):
     cwl_files = [os.path.join(directory_path, f) for f in os.listdir(directory_path) if f.endswith('.cwl')]
     workflow_files = {}
@@ -55,6 +56,7 @@ def scan_cwl_directory(directory_path):
             logging.error(f"Failed to read {cwl_file}: {str(e)}")
 
     return workflow_files, clt_files
+
 
 def read_cwl_file(cwl_path):
     validator = CWLSchemaValidator()
@@ -78,6 +80,7 @@ def read_cwl_file(cwl_path):
     else:
         logging.error(f"Unknown CWL class for file {cwl_path}")
         return "Unknown CWL class"
+
 
 def parse_cwl_clt(cwl_data, name):
     def map_format(format_uri):
@@ -126,9 +129,6 @@ def parse_cwl_clt(cwl_data, name):
             parsed_outputs.append(parsed_output)
         return parsed_outputs
 
-    def parse_cwl_requirements(requirements: dict):
-        print(requirements)
-        return requirements
 
     base_command = cwl_data.get("baseCommand")
     inputs = cwl_data.get("inputs", [])
@@ -152,7 +152,7 @@ def parse_cwl_clt(cwl_data, name):
         "base_command": base_command,
         "inputs": parse_cwl_inputs(inputs),
         "outputs": parse_cwl_outputs(outputs),
-        "requirements": parse_cwl_requirements(requirements),
+        "requirements": requirements,
         "hints": hints,
         "arguments": arguments,
         "stdin": stdin,
@@ -166,8 +166,6 @@ def parse_cwl_clt(cwl_data, name):
         "initial_work_dir": initial_work_dir,
         "shell_quote": shell_quote,
     }
-
-    return
 
     if stdout:
         task['stdout_glob'] = f".{stdout.split('.')[-1]}"
@@ -210,6 +208,7 @@ def parse_cwl_clt(cwl_data, name):
 
     return task
 
+
 def save_task_to_db(task_data):
     try:
         backend = Backend.objects.get(id=1)  # Assuming a default backend ID
@@ -233,6 +232,11 @@ def save_task_to_db(task_data):
                 spacing=input_data['input_binding'].get('separate', True),
                 switchless=input_data['input_binding'].get('prefix', None) is None
             )
+        for requirement in task_data['requirements']:
+            Requirement.objects.create(
+                task=task,
+                requirement_class=requirement['class'],
+                payload=requirement)
         logging.info(f"Task saved successfully: {task_data['name']}")
         return task
     except Exception as e:
