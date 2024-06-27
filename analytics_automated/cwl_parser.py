@@ -126,6 +126,9 @@ def parse_cwl_clt(cwl_data, name):
             parsed_outputs.append(parsed_output)
         return parsed_outputs
 
+    def parse_cwl_requirements(requirements: dict):
+        return requirements
+
     base_command = cwl_data.get("baseCommand")
     inputs = cwl_data.get("inputs", [])
     outputs = cwl_data.get("outputs", [])
@@ -148,7 +151,7 @@ def parse_cwl_clt(cwl_data, name):
         "base_command": base_command,
         "inputs": parse_cwl_inputs(inputs),
         "outputs": parse_cwl_outputs(outputs),
-        "requirements": requirements,
+        "requirements": parse_cwl_requirements(requirements),
         "hints": hints,
         "arguments": arguments,
         "stdin": stdin,
