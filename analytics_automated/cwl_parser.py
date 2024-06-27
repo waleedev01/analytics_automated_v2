@@ -301,22 +301,11 @@ def parse_cwl_workflow(cwl_data, filename, all_files, messages):
 
         task_arr.append(step_name)
 
-    order_mapping = {}
-    order = 0
-    for step_name, source_list in step_source.items():
-        if len(source_list) == 0:
-            order_mapping[step_name] = 0
-            order += 1
-        elif step_name not in order_mapping:
-            order_mapping[step_name] = order
-            order += 1
-        dependencies = step_source[step_name]
-        for dependency in dependencies:
-            if dependency not in order_mapping:
-                order_mapping[dependency] = order
-                order += 1
+    order_mapping_initial = set_step_order({}, step_source)
+    # Handle dependent that are defined before the dependencies step
+    order_mapping_final = set_step_order(order_mapping_initial, step_source)
 
-    logging.info(f"Order Mapping: {order_mapping}")
+    logging.info(f"Order Mapping: {order_mapping_final}")
     logging.info(f"Task Sequence: {task_arr}")
     logging.info("Task Details:")
     logging.info(task_details)
@@ -324,16 +313,31 @@ def parse_cwl_workflow(cwl_data, filename, all_files, messages):
     for task_name in task_arr:
         try:
             task = Task.objects.get(name=task_name)
-            Step.objects.create(job=job, task=task, ordering=order_mapping[task_name])
+            Step.objects.create(job=job, task=task, ordering=order_mapping_final[task_name])
         except ObjectDoesNotExist:
             error_message = f"Task {task_name} does not exist in the database"
             logging.error(error_message)
             messages.append(error_message)
 
     messages.append(f"Job '{filename}' created with tasks: {', '.join(task_arr)}")
+    return order_mapping_final
+
+def set_step_order(order_mapping, step_source):
+    logging.info(f"Step Source: {step_source}")
+    for step_name, source_list in step_source.items():
+        if len(source_list) == 0:
+            order_mapping[step_name] = 0
+        else:
+            order = 0
+            for source in source_list:
+                if source in order_mapping:
+                    source_order = order_mapping[source]
+                    if order <= source_order:
+                        order = source_order + 1
+            
+            order_mapping[step_name] = order
+
     return order_mapping
-
-
 
 def main(directory_path):
     workflow_files, clt_files = scan_cwl_directory(directory_path)
