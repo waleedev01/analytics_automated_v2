@@ -10,7 +10,7 @@ import keyword
 import numpy as np
 import math
 import scipy.stats as stats
-
+import yaml
 from celery import chain
 
 from django import forms
@@ -618,20 +618,45 @@ class JobDetail(mixins.RetrieveModelMixin,
 
 class CWLUploadView(APIView):
     def post(self, request, format=None):
-        file = request.FILES.get('file')
-        if not file:
-            return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+        files = request.FILES.getlist('files')
+        if not files:
+            return Response({"error": "No files provided"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Save the file to a temporary location and get the full path
-        saved_path = default_storage.save('analytics_automated/cwl_files/' + file.name, ContentFile(file.read()))
-        full_path = default_storage.path(saved_path)
+        file_paths = {}
+        messages = []
+        for file in files:
+            if not file.name.endswith('.cwl'):
+                logging.error(f"Uploaded file is not a CWL file: {file.name}")
+                messages.append(f"Uploaded file is not a CWL file: {file.name}")
+                continue
+            
+            path = default_storage.save('cwl_workflows/' + file.name, ContentFile(file.read()))
+            full_path = default_storage.path(path)
+            file_paths[file.name] = full_path
         
-        # Parse the CWL file
-        # TODO: Alert read_cwl_file to
-        #  return a list of task, add a form that require user to
-        #  input Job termination behaviour
+        # Parse each CWL file
         try:
-            task_id = read_cwl_file(full_path)
-            return Response({"message": "CWL file processed successfully", "task_id": task_id}, status=status.HTTP_201_CREATED)
+            workflow_files = {}
+            for file_name, full_path in file_paths.items():
+                with open(full_path, 'r') as cwl_file:
+                    cwl_data = yaml.safe_load(cwl_file)
+                cwl_class = cwl_data.get("class")
+
+                if cwl_class == "Workflow":
+                    workflow_files[file_name] = cwl_data
+
+            if not workflow_files:
+                messages.append("No workflow files found in the uploaded files.")
+            else:
+                for workflow_name, workflow_data in workflow_files.items():
+                    read_cwl_file(file_paths[workflow_name], file_paths, messages)
+            
+            # Clean up uploaded files
+            for file_name, full_path in file_paths.items():
+                os.remove(full_path)
+
+            logging.info(f"Successfully processed CWL files: {', '.join(file_paths.keys())}")
+            return Response({"message": "CWL files processed successfully", "file_names": list(file_paths.keys()), "messages": messages}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logging.error(f"Failed to process CWL files: {str(e)}")
+            return Response({"error": str(e), "messages": messages}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

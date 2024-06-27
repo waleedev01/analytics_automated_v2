@@ -1,19 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Upload CWL File</title>
+    <title>Upload CWL Files</title>
 </head>
 <body>
-    <h1>Upload CWL File</h1>
+    <h1>Upload CWL Files</h1>
     <form action="{% url 'uploadcwlpage' %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <label for="file">Select CWL file:</label>
-        <input type="file" name="file" id="file" required>
+        <label for="files">Select CWL files:</label>
+        <input type="file" name="files" id="files" multiple required>
         <br><br>
         <input type="submit" value="Upload">
     </form>
     {% if message %}
         <p>{{ message }}</p>
+    {% endif %}
+    {% if file_names %}
+        <p>Processed files:</p>
+        <ul>
+            {% for file_name in file_names %}
+                <li>{{ file_name }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% if messages %}
+        <p>Details:</p>
+        <ul>
+            {% for msg in messages %}
+                <li>{{ msg }}</li>
+            {% endfor %}
+        </ul>
     {% endif %}
 </body>
 </html>
