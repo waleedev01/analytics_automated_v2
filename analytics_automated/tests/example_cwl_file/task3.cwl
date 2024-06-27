@@ -20,7 +20,6 @@ requirements:
     listing:
       - entryname: "tempfile.txt"
         entry: $(inputs.files[0].path)
-  - class: InlineJavascriptRequirement
 successCodes: [0]
 temporaryFailCodes: [1]
 permanentFailCodes: [2]
