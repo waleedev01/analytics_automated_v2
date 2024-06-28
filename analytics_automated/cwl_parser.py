@@ -68,6 +68,8 @@ def parse_cwl_clt(cwl_data, name):
             "http://edamontology.org/format_3016": ".vcf",
             "http://edamontology.org/format_3752": ".csv",
             "http://edamontology.org/format_3464": ".json",
+            "http://edamontology.org/format_3916": ".mtx",
+            "http://edamontology.org/format_3310": ".ss",
         }
         return EDAM_FORMAT_MAPPING.get(format_uri, ".input")
 
