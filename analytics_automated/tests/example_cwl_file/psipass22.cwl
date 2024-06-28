@@ -1,13 +1,13 @@
 cwlVersion: v1.0
 class: CommandLineTool
-baseCommand: [/home/dbuchan/Code/psipred/bin/psipass2, /home/dbuchan/Code/psipred/data/weights_p2.dat, 1, 1.0, 1.0]
+baseCommand: [/home/dbuchan/Code/psipred/bin/psipass2, /home/dbuchan/Code/psipred/data/weights_p2.dat, 1, 1.0, 1.0, $O1]
 
 inputs:
   input_ss_file:
     type: File
     format: "http://edamontology.org/format_3310"
     inputBinding:
-      position: 7
+      position: 6
 
 outputs:
   output_ss2:
@@ -18,6 +18,5 @@ outputs:
     type: File
     outputBinding:
       glob: "*.horiz"
-      position: 6
 
 stdout: "$(inputs.input_file.basename).horiz"

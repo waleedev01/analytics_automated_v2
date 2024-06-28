@@ -7,7 +7,7 @@ inputs:
     type: File
     format: "http://edamontology.org/format_1929"
     inputBinding:
-      position: 3
+      position: 2
 
 outputs:
   output_mtx:

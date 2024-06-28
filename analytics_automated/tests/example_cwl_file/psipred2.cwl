@@ -7,7 +7,7 @@ inputs:
     type: File
     format: "http://edamontology.org/format_3916"
     inputBinding:
-      position: 2
+      position: 1
 
 outputs:
   output_ss:
