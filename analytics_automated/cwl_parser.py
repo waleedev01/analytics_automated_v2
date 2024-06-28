@@ -249,9 +249,15 @@ def save_task_to_db(task_data, messages):
             requirements=task_data['requirements'],
         )
         for input_data in task_data['inputs']:
+
+            # Skip inputs with File type
+            type = input_data['type']
+            if type == 'File':
+                continue
+
             Parameter.objects.create(
                 task=task,
-                flag=input_data['name'],
+                flag=input_data.get('input_binding').get('prefix'),
                 default=input_data.get('default'),
                 bool_valued=(input_data['type'] == 'boolean'),
                 rest_alias=input_data['name'],
@@ -316,6 +322,11 @@ def parse_cwl_workflow(cwl_data, filename, messages):
             if task:
                 task_details.append(task_data)
                 step_source[step_name] = set(source_arr)
+            else:
+                error_message = f"Cancel job creation with name '{filename}' due to failure when creating task file: {step_name}"
+                logging.error(error_message)
+                messages.append(error_message)
+                return
         elif isinstance(task_run, str):
             if not task_run.endswith(".cwl"):
                 task_run += ".cwl"
