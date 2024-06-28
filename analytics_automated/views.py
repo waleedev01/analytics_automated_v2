@@ -33,6 +33,7 @@ class CWLUploadPageView(View):
         
         # Parse each CWL file
         try:
+            workflow_files_temp = {}
             workflow_files = {}
             for file_name, full_path in file_paths.items():
                 with open(full_path, 'r') as cwl_file:
@@ -40,13 +41,20 @@ class CWLUploadPageView(View):
                 cwl_class = cwl_data.get("class")
 
                 if cwl_class == "Workflow":
+                    workflow_files_temp[file_name] = cwl_data
+                elif cwl_class == "CommandLineTool":
                     workflow_files[file_name] = cwl_data
+            
+            # Put workflow file at the end of the list
+            for file_name, cwl_data in workflow_files_temp.items():
+                workflow_files[file_name] = cwl_data
 
             if not workflow_files:
                 messages.append("No workflow files found in the uploaded files.")
             else:
-                for workflow_name, workflow_data in workflow_files.items():
-                    read_cwl_file(file_paths[workflow_name], file_paths, messages)
+                for workflow_name in workflow_files:
+                    filename = workflow_name.split('.')[0]
+                    read_cwl_file(file_paths[workflow_name], filename, messages)
             
             # Clean up uploaded files
             for file_name, full_path in file_paths.items():

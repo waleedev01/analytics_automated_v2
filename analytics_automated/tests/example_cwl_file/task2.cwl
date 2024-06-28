@@ -10,8 +10,6 @@ outputs:
   output1:
     type: stdout
 stdout: output.txt
-requirements:
-  - class: InlineJavascriptRequirement
 arguments: ["--verbose"]
 stdin: $(inputs.input1.path)
 successCodes: [0]

@@ -31,7 +31,7 @@ class CWLSchemaValidator:
             logging.error(f"Validation failed: {str(e)}")
             return False, f"Validation failed: {str(e)}"
 
-def read_cwl_file(cwl_path, all_files, messages):
+def read_cwl_file(cwl_path, filename, messages):
     with open(cwl_path, 'r') as cwl_file:
         cwl_data = yaml.safe_load(cwl_file)
 
@@ -43,13 +43,12 @@ def read_cwl_file(cwl_path, all_files, messages):
         messages.append(f"Validation Failed: {message}")
         return None
 
-    base_name = os.path.splitext(os.path.basename(cwl_path))[0]
     cwl_class = cwl_data.get("class")
 
     if cwl_class == "Workflow":
-        return parse_cwl_workflow(cwl_data, base_name, all_files, messages)
+        return parse_cwl_workflow(cwl_data, filename, messages)
     elif cwl_class == "CommandLineTool":
-        task_data = parse_cwl_clt(cwl_data, base_name)
+        task_data = parse_cwl_clt(cwl_data, filename)
         return save_task_to_db(task_data, messages)
     else:
         error_message = f"Unknown CWL class for file {cwl_path}"
@@ -236,16 +235,23 @@ def save_task_to_db(task_data, messages):
         messages.append(error_message)
         return None
 
-def parse_cwl_workflow(cwl_data, filename, all_files, messages):
-    try:
-        logging.info(f"Creating job for workflow: {filename}")
-        job = Job.objects.create(name=filename, runnable=True)
-    except IntegrityError:
-        error_message = f"A job with name '{filename}' already exists."
-        logging.error(error_message)
+def check_existing_task_in_db(task_name, messages):
+    backend = Backend.objects.get(id=1)  # Assuming a default backend ID
+
+    # Check if the task already exists
+    existing_task = Task.objects.filter(
+        name=task_name,
+        backend=backend,
+    ).first()
+
+    if not existing_task:
+        error_message = f"Task file not found: {task_name}"
         messages.append(error_message)
         return None
+    
+    return existing_task
 
+def parse_cwl_workflow(cwl_data, filename, messages):
     steps = cwl_data.get("steps")
     step_source = {}
     task_arr = []
@@ -278,26 +284,16 @@ def parse_cwl_workflow(cwl_data, filename, all_files, messages):
         elif isinstance(task_run, str):
             if not task_run.endswith(".cwl"):
                 task_run += ".cwl"
-
-            task_file_path = all_files.get(task_run)
-            if task_file_path:
-                try:
-                    logging.info(f"Parsing task file: {task_file_path}")
-                    with open(task_file_path, 'r') as task_file:
-                        task_data = yaml.safe_load(task_file)
-                        task_detail = parse_cwl_clt(task_data, step_name)
-                        task = save_task_to_db(task_detail, messages)
-                        if task:
-                            task_details.append(task_detail)
-                            step_source[step_name] = set(source_arr)
-                except Exception as e:
-                    error_message = f"Error parsing task {task_run}: {str(e)}"
-                    logging.error(error_message)
-                    messages.append(error_message)
+            
+            task = check_existing_task_in_db(step_name, messages)
+            if task:
+                # task_details.append(task_detail) -> only for debugging
+                step_source[step_name] = set(source_arr)
             else:
-                error_message = f"Task file not found: {task_run}"
+                error_message = f"Cancel job creation with name '{filename}' due to missing task file: {step_name}"
                 logging.error(error_message)
                 messages.append(error_message)
+                return
 
         task_arr.append(step_name)
 
@@ -309,6 +305,15 @@ def parse_cwl_workflow(cwl_data, filename, all_files, messages):
     logging.info(f"Task Sequence: {task_arr}")
     logging.info("Task Details:")
     logging.info(task_details)
+
+    try:
+        logging.info(f"Creating job for workflow: {filename}")
+        job = Job.objects.create(name=filename, runnable=True)
+    except IntegrityError:
+        error_message = f"A job with name '{filename}' already exists."
+        logging.error(error_message)
+        messages.append(error_message)
+        return None
 
     for task_name in task_arr:
         try:
