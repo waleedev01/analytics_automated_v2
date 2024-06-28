@@ -77,6 +77,7 @@ class Job(models.Model):
     name = models.CharField(max_length=64, unique=True, null=False,
                             blank=False, db_index=True)
     runnable = models.BooleanField(default=False, blank=False)
+    requirements = models.JSONField(null=True, blank=True)  # New field for requirements
     cwl_version = models.CharField(max_length=32, null=True, blank=True)  # New field for CWL version
 
     def __str__(self):
@@ -157,7 +158,6 @@ class Task(models.Model):
     permanent_fail_codes = models.JSONField(null=True, blank=True)  # New field for permanent fail codes
     label = models.CharField(max_length=256, null=True, blank=True)
     doc = models.TextField(null=True, blank=True)
-    initial_work_dir = models.JSONField(null=True, blank=True)  # New field for InitialWorkDirRequirement
     shell_quote = models.BooleanField(default=False)
 
     def __str__(self):

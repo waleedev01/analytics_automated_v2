@@ -31,6 +31,28 @@ class CWLSchemaValidator:
             logging.error(f"Validation failed: {str(e)}")
             return False, f"Validation failed: {str(e)}"
 
+
+def scan_cwl_directory(directory_path):
+    cwl_files = [os.path.join(directory_path, f) for f in os.listdir(directory_path) if f.endswith('.cwl')]
+    workflow_files = {}
+    clt_files = []
+
+    for cwl_file in cwl_files:
+        try:
+            with open(cwl_file, 'r') as file:
+                cwl_data = yaml.safe_load(file)
+                cwl_class = cwl_data.get("class")
+
+                if cwl_class == "Workflow":
+                    workflow_files[cwl_file] = cwl_data
+                elif cwl_class == "CommandLineTool":
+                    clt_files.append(cwl_file)
+        except Exception as e:
+            logging.error(f"Failed to read {cwl_file}: {str(e)}")
+
+    return workflow_files, clt_files
+
+
 def read_cwl_file(cwl_path, filename, messages):
     with open(cwl_path, 'r') as cwl_file:
         cwl_data = yaml.safe_load(cwl_file)
@@ -55,7 +77,6 @@ def read_cwl_file(cwl_path, filename, messages):
         logging.error(error_message)
         messages.append(error_message)
         return None
-
 
 
 def parse_cwl_clt(cwl_data, name):
@@ -106,6 +127,7 @@ def parse_cwl_clt(cwl_data, name):
             }
             parsed_outputs.append(parsed_output)
         return parsed_outputs
+
 
     base_command = cwl_data.get("baseCommand")
     inputs = cwl_data.get("inputs", [])
@@ -223,7 +245,8 @@ def save_task_to_db(task_data, messages):
             in_glob=task_data['in_glob'],
             out_glob=task_data['out_glob'],
             stdout_glob=task_data['stdout_glob'],
-            executable=task_data['executable']
+            executable=task_data['executable'],
+            requirements=task_data['requirements'],
         )
         for input_data in task_data['inputs']:
             Parameter.objects.create(
@@ -245,6 +268,7 @@ def save_task_to_db(task_data, messages):
         messages.append(error_message)
         return None
 
+
 def check_existing_task_in_db(task_name, messages):
     backend = Backend.objects.get(id=1)  # Assuming a default backend ID
 
@@ -258,8 +282,9 @@ def check_existing_task_in_db(task_name, messages):
         error_message = f"Task file not found: {task_name}"
         messages.append(error_message)
         return None
-    
+
     return existing_task
+
 
 def parse_cwl_workflow(cwl_data, filename, messages):
     steps = cwl_data.get("steps")
@@ -294,7 +319,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
         elif isinstance(task_run, str):
             if not task_run.endswith(".cwl"):
                 task_run += ".cwl"
-            
+
             task = check_existing_task_in_db(step_name, messages)
             if task:
                 # task_details.append(task_detail) -> only for debugging
@@ -337,6 +362,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
     messages.append(f"Job '{filename}' created with tasks: {', '.join(task_arr)}")
     return order_mapping_final
 
+
 def set_step_order(order_mapping, step_source):
     logging.info(f"Step Source: {step_source}")
     for step_name, source_list in step_source.items():
@@ -349,7 +375,7 @@ def set_step_order(order_mapping, step_source):
                     source_order = order_mapping[source]
                     if order <= source_order:
                         order = source_order + 1
-            
+
             order_mapping[step_name] = order
 
     return order_mapping
