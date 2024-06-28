@@ -2,7 +2,7 @@ import os
 import yaml
 import logging
 from django.core.exceptions import ObjectDoesNotExist
-from .models import Backend, Task, Parameter, Job, Step, Requirement
+from .models import Backend, Task, Parameter, Job, Step
 from django.db.utils import IntegrityError
 
 logger = logging.getLogger(__name__)
@@ -235,7 +235,8 @@ def save_task_to_db(task_data, messages):
             in_glob=task_data['in_glob'],
             out_glob=task_data['out_glob'],
             stdout_glob=task_data['stdout_glob'],
-            executable=task_data['executable']
+            executable=task_data['executable'],
+            requirements=task_data['requirements'],
         )
         for input_data in task_data['inputs']:
             Parameter.objects.create(
@@ -247,11 +248,6 @@ def save_task_to_db(task_data, messages):
                 spacing=input_data['input_binding'].get('separate', True),
                 switchless=input_data['input_binding'].get('prefix', None) is None
             )
-        for requirement in task_data['requirements']:
-            Requirement.objects.create(
-                task=task,
-                requirement_class=requirement['class'],
-                payload=requirement)
         message = f"Task saved successfully: {task_data['name']}"
         logging.info(message)
         messages.append(message)
@@ -355,6 +351,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
 
     messages.append(f"Job '{filename}' created with tasks: {', '.join(task_arr)}")
     return order_mapping_final
+
 
 def set_step_order(order_mapping, step_source):
     logging.info(f"Step Source: {step_source}")
