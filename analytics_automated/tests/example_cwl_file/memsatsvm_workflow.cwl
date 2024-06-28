@@ -28,7 +28,7 @@ steps:
         input_file:
           type: File
           inputBinding:
-            position: 3
+            position: 2
 
       outputs:
         output_fasta:
