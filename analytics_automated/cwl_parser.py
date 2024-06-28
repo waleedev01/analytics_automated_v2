@@ -89,6 +89,8 @@ def parse_cwl_clt(cwl_data, name):
             "http://edamontology.org/format_3016": ".vcf",
             "http://edamontology.org/format_3752": ".csv",
             "http://edamontology.org/format_3464": ".json",
+            "http://edamontology.org/format_3916": ".mtx",
+            "http://edamontology.org/format_3310": ".ss",
         }
         return EDAM_FORMAT_MAPPING.get(format_uri, ".input")
 
@@ -175,21 +177,29 @@ def parse_cwl_clt(cwl_data, name):
         executable_parts = [base_command]
 
     in_globs = []
+    position_parameter = 1
+    position_input = 1
     for idx, input_data in enumerate(task['inputs']):
-        input_position = 1
         position = input_data['input_binding'].get('position')
+
+        if position is None:
+            # Handle no "position" key in input_binding
+            position = len(executable_parts)
+        
         type = input_data['type']
         if type != 'File':
-            executable_parts.append(f"$P{position}")
+            executable_parts.insert(position, f"$P{position_parameter}")
+            position_parameter += 1
         else:
-            executable_parts.append(f"$I{input_position}")
-            input_position += 1
+            executable_parts.insert(position, f"$I{position_input}")
+            position_input += 1
             if 'format' in input_data:
                 in_globs.append(map_format(input_data['format']))
             else:
                 in_globs.append('.input')
 
-    executable = " ".join(executable_parts)
+    executable_parts_str = [str(item) for item in executable_parts]
+    executable = " ".join(executable_parts_str)
     in_glob = ",".join(in_globs)
 
     out_globs = []

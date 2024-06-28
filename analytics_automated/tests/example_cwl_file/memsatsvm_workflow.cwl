@@ -28,7 +28,7 @@ steps:
         input_file:
           type: File
           inputBinding:
-            position: 3
+            position: 2
 
       outputs:
         output_fasta:
@@ -45,7 +45,7 @@ steps:
     run:
       class: CommandLineTool
 
-      baseCommand: [python, /home/dbuchan/Code/s4pred/run_model.py, --device, cpu, -t, ss2, -t2, horiz, -z, --outdir, ./, --prefix]
+      baseCommand: [python, /home/dbuchan/Code/blast_cache/scripts/run_legacy_blast.py, $TMP/$ID, http://127.1.2.1, /home/dbuchan/Applications/blast-2.2.26/bin, /home/dbuchan/Data/uniref_test_db/uniref_test.fasta, chk, -b, 0, -j, 3, -h, 0.001, -v, 5000]
 
       stdout: "$(inputs.input_file.basename).bls"
 
@@ -54,7 +54,7 @@ steps:
           type: File
           format: "http://edamontology.org/format_1929"
           inputBinding:
-            position: 14
+            position: 3
 
       outputs:
         output_mtx:
