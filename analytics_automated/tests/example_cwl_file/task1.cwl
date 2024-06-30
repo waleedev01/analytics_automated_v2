@@ -26,3 +26,4 @@ requirements:
 successCodes: [0]
 temporaryFailCodes: [1]
 permanentFailCodes: [2]
+AAIncompleteOutputsBehaviour: 2
