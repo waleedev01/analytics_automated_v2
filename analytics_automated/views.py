@@ -2,7 +2,8 @@ from django.shortcuts import render
 from django.views import View
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-from .cwl_parser import read_cwl_file, CWLSchemaValidator
+from .cwl_utils.cwl_parser import read_cwl_file
+from .cwl_utils.cwl_schema_validator import CWLSchemaValidator
 import logging
 import yaml
 import os

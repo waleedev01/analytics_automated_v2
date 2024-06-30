@@ -37,7 +37,7 @@ from .tasks import *
 from .validators import *
 from .r_keywords import *
 from .cmdline import *
-from .cwl_parser import read_cwl_file 
+from .cwl_utils import cwl_parser
 
 
 logger = logging.getLogger(__name__)

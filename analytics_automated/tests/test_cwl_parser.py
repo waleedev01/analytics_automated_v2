@@ -1,8 +1,8 @@
 import os
 from django.test import TestCase
-from analytics_automated.cwl_parser import read_cwl_file
+from analytics_automated.cwl_utils.cwl_parser import read_cwl_file
 from analytics_automated.models import Backend
-from analytics_automated.cwl_schema_validator import CWLSchemaValidator
+from analytics_automated.cwl_utils.cwl_schema_validator import CWLSchemaValidator
 
 def add_fake_backend(name, root_path):
     b = Backend.objects.create(name=name)
