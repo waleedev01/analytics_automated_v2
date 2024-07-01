@@ -188,9 +188,9 @@ def save_task_to_db(task_data, messages):
             existing_task.stdout_glob = task_data['stdout_glob']
             existing_task.executable = task_data['executable']
             existing_task.requirements = task_data['requirements']
-            existing_task.incomplete_outputs_behaviour=task_data['incomplete_outputs_behaviour'],
-            existing_task.custom_exit_status=task_data['custom_exit_status'],
-            existing_task.custom_exit_behaviour=task_data['custom_exit_behaviour'],
+            existing_task.incomplete_outputs_behaviour=task_data['incomplete_outputs_behaviour']
+            existing_task.custom_exit_status=task_data['custom_exit_status']
+            existing_task.custom_exit_behaviour=task_data['custom_exit_behaviour']
             existing_task.save()
 
             existing_parameter = Parameter.objects.filter(task=existing_task)
