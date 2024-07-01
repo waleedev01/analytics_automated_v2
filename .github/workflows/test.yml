@@ -90,3 +90,5 @@ jobs:
                  analytics_automated/tests/test_cwl_parser.py \
                  analytics_automated/tests/test_cwl_schema_validator.py \
                  analytics_automated/tests/test_cwl_workflow_handler.py
+        env:
+          DJANGO_SETTINGS_MODULE: analytics_automated_project.settings.dev
