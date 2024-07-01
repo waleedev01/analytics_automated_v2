@@ -3,6 +3,11 @@ from ..models import Backend, Task, Parameter
 
 logger = logging.getLogger(__name__)
 
+# Define default values
+DEFAULT_INCOMPLETE_OUTPUTS_BEHAVIOUR = 3
+DEFAULT_CUSTOM_EXIT_STATUS = ""
+DEFAULT_CUSTOM_EXIT_BEHAVIOUR = None
+
 def parse_cwl_clt(cwl_data, name):
     def map_format(format_uri):
         EDAM_FORMAT_MAPPING = {
@@ -67,8 +72,25 @@ def parse_cwl_clt(cwl_data, name):
     permanent_fail_codes = cwl_data.get("permanentFailCodes", [])
     label = cwl_data.get("label")
     doc = cwl_data.get("doc")
-    initial_work_dir = cwl_data.get("initialWorkDir")
     shell_quote = cwl_data.get("shellQuote", False)
+    try:
+        # custom field, Get values from cwl_data or use default values if not present
+        incomplete_outputs_behaviour = cwl_data.get("AAIncompleteOutputsBehaviour",
+                                                    DEFAULT_INCOMPLETE_OUTPUTS_BEHAVIOUR)
+        custom_exit_status = cwl_data.get("AACustomExitStatus")
+        custom_exit_behaviour = cwl_data.get("AACustomExitBehaviour")
+        # Ensure custom_exit_behaviour is provided if custom_exit_status is present
+        if custom_exit_status is not None and custom_exit_behaviour is None:
+            raise ValueError(
+                f"Missing CustomExitBehaviour for task {name}:"
+                f" If you provide a custom exit status, you must provide a behaviour.")
+
+        # If custom_exit_status is None, set it to the default value
+        if custom_exit_status is None:
+            custom_exit_status = DEFAULT_CUSTOM_EXIT_STATUS
+
+    except Exception as e:
+        logging.error(f"Failed to  task {name}: {str(e)}")
 
     task = {
         "name": name,
@@ -86,8 +108,10 @@ def parse_cwl_clt(cwl_data, name):
         "permanent_fail_codes": permanent_fail_codes,
         "label": label,
         "doc": doc,
-        "initial_work_dir": initial_work_dir,
         "shell_quote": shell_quote,
+        "incomplete_outputs_behaviour": incomplete_outputs_behaviour,
+        "custom_exit_status": custom_exit_status,
+        "custom_exit_behaviour": custom_exit_behaviour,
     }
 
     if stdout:
@@ -164,6 +188,9 @@ def save_task_to_db(task_data, messages):
             existing_task.stdout_glob = task_data['stdout_glob']
             existing_task.executable = task_data['executable']
             existing_task.requirements = task_data['requirements']
+            existing_task.incomplete_outputs_behaviour=task_data['incomplete_outputs_behaviour'],
+            existing_task.custom_exit_status=task_data['custom_exit_status'],
+            existing_task.custom_exit_behaviour=task_data['custom_exit_behaviour'],
             existing_task.save()
 
             existing_parameter = Parameter.objects.filter(task=existing_task)
@@ -183,6 +210,9 @@ def save_task_to_db(task_data, messages):
                 stdout_glob=task_data['stdout_glob'],
                 executable=task_data['executable'],
                 requirements=task_data['requirements'],
+                incomplete_outputs_behaviour=task_data['incomplete_outputs_behaviour'],
+                custom_exit_status=task_data['custom_exit_status'],
+                custom_exit_behaviour=task_data['custom_exit_behaviour'],
             )
             message = f"Task saved successfully: {task_data['name']}"
 
