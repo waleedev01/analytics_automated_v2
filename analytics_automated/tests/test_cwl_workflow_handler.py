@@ -1,8 +1,7 @@
 import pytest
-from analytics_automated.cwl_utils.cwl_workflow_handler import parse_cwl_workflow
-from analytics_automated.models import Job, Task, Step
 from django.test import TestCase
-from analytics_automated.models import Backend, QueueType
+from analytics_automated.models import Backend, QueueType, Job, Task, Step
+from analytics_automated.cwl_utils.cwl_workflow_handler import parse_cwl_workflow
 
 class SetupBackendQueueTestCase(TestCase):
     def setUp(self):

@@ -79,9 +79,6 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest analytics_automated/tests/test_cwl_clt_handler.py \
-                 analytics_automated/tests/test_cwl_parser.py \
-                 analytics_automated/tests/test_cwl_schema_validator.py \
-                 analytics_automated/tests/test_cwl_workflow_handler.py --disable-warnings
+          pytest analytics_automated/tests/test_cwl.py --disable-warnings
         env:
           DJANGO_SETTINGS_MODULE: analytics_automated_project.settings.dev
