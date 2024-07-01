@@ -58,9 +58,10 @@ jobs:
           mkdir -p logs
           touch logs/debug.log
 
-      - name: Create test database
+      - name: Create test database and role
         run: |
-          psql -h localhost -U test_user -c "CREATE DATABASE analytics_automated_db;"
+          psql -h localhost -U postgres -c "CREATE ROLE test_user WITH LOGIN PASSWORD 'test_pass';"
+          psql -h localhost -U postgres -c "CREATE DATABASE analytics_automated_db OWNER test_user;"
         env:
           PGPASSWORD: test_pass
 
