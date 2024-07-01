@@ -14,12 +14,12 @@ jobs:
         image: postgres:12
         env:
           POSTGRES_DB: test_db
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_pass
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -58,12 +58,19 @@ jobs:
           mkdir -p logs
           touch logs/debug.log
 
+      - name: Wait for Postgres to be ready
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for postgres container...";
+            sleep 5;
+          done
+
       - name: Create test database and role
         run: |
           psql -h localhost -U postgres -c "CREATE ROLE test_user WITH LOGIN PASSWORD 'test_pass';"
           psql -h localhost -U postgres -c "CREATE DATABASE analytics_automated_db OWNER test_user;"
         env:
-          PGPASSWORD: test_pass
+          PGPASSWORD: postgres
 
       - name: Run migrations
         run: |
