@@ -77,29 +77,6 @@ jobs:
         run: |
           python manage.py migrate --settings=analytics_automated_project.settings.dev
 
-      - name: Create default queue type
-        run: |
-          python manage.py shell --settings=analytics_automated_project.settings.dev -c "
-          from analytics_automated.models import QueueType;
-          queue_type, created = QueueType.objects.get_or_create(pk=1, defaults={'name': 'localhost', 'execution_behaviour': 1});
-          if created:
-              print('QueueType created')
-          else:
-              print('QueueType already exists');
-          "
-
-      - name: Create default backend
-        run: |
-          python manage.py shell --settings=analytics_automated_project.settings.dev -c "
-          from analytics_automated.models import Backend, QueueType;
-          queue_type = QueueType.objects.get(pk=1);
-          backend, created = Backend.objects.get_or_create(pk=1, defaults={'name': 'localhost', 'queue_type': queue_type, 'root_path': '/tmp/'});
-          if created:
-              print('Backend created')
-          else:
-              print('Backend already exists');
-          "
-
       - name: Run tests
         run: |
           pytest analytics_automated/tests/test_cwl_clt_handler.py \

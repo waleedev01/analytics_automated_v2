@@ -18,9 +18,7 @@ def parse_cwl_clt(cwl_data, name):
         }
         return EDAM_FORMAT_MAPPING.get(format_uri, ".input")
 
-    def parse_cwl_inputs(inputs):
-        if isinstance(inputs, list):
-            inputs = {str(i): input_data for i, input_data in enumerate(inputs)}
+    def parse_cwl_inputs(inputs: dict):
         parsed_inputs = []
         for input_name, input_data in inputs.items():
             input_type = input_data.get("type")
@@ -181,13 +179,9 @@ def save_task_to_db(task_data, messages):
             if type == 'File':
                 continue
 
-            flag = input_data.get('input_binding').get('prefix')
-            if flag is None:
-                flag = input_data['name']
-
             Parameter.objects.create(
                 task=task,
-                flag=flag,
+                flag=input_data['name'],
                 default=input_data.get('default'),
                 bool_valued=(input_data['type'] == 'boolean'),
                 rest_alias=input_data['name'],
