@@ -56,6 +56,14 @@ def parse_cwl_workflow(cwl_data, filename, messages):
                 return
 
         task_arr.append(step_name)
+    
+    for step_name, source_list in step_source.items():
+        for item in source_list:
+            if step_name in step_source.get(item):
+                error_message = f"Cancel job creation with name '{filename}' due to circular dependency in step: {step_name}"
+                logging.error(error_message)
+                messages.append(error_message)
+                return
 
     order_mapping_initial = set_step_order({}, step_source)
     # Handle dependent that are defined before the dependencies step
