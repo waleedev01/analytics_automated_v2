@@ -115,7 +115,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
             logging.error(error_message)
             messages.append(error_message)
 
-    messages.append(f"Job '{filename}' '{keyword}' with tasks: {', '.join(task_arr)}")
+    messages.append(f"Job '{filename}' {keyword} with tasks: {', '.join(task_arr)}")
     return job
 
 
