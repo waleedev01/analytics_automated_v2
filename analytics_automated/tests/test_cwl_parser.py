@@ -18,7 +18,7 @@ class CWLParserTest(TestCase):
         this_backend = add_fake_backend(name="local1", root_path="/tmp/")
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         filename = 'task1'
-        file_path = os.path.join(base_dir, 'tests', 'example_cwl_file', 'task1.cwl')
+        file_path = os.path.join(base_dir, 'tests', 'example_cwl_file', f'{filename}.cwl')
         message = []
         result = read_cwl_file(file_path, filename, message)
         # self.assertIsNotNone(result)

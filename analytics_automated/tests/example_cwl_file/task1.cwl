@@ -15,6 +15,8 @@ requirements:
   - class: EnvVarRequirement
     envDef:
       MY_VAR: "Hello World"
+      THREAD_DIR: "/home/dbuchan/Code/pGenTHREADER/data"
+      HELLO: $(inputs.message)
   - class: InitialWorkDirRequirement
     listing:
       - entry: $(inputs.input1)
