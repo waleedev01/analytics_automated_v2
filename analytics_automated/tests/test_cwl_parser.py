@@ -1,8 +1,9 @@
-import pytest
 import yaml
 import logging
+import pytest
 from analytics_automated.cwl_utils.cwl_schema_validator import CWLSchemaValidator
-from analytics_automated.cwl_utils.cwl_parser import read_cwl_file
+from analytics_automated.cwl_utils.cwl_workflow_handler import parse_cwl_workflow
+from analytics_automated.cwl_utils.cwl_clt_handler import parse_cwl_clt, save_task_to_db, read_cwl_file
 from analytics_automated.models import Backend, QueueType
 from django.test import TestCase
 
@@ -68,3 +69,7 @@ class TestCWLParser(SetupBackendQueueTestCase):
         messages = []
         order_mapping = parse_cwl_workflow(cwl_data, "test_workflow", messages)
         assert order_mapping is not None
+        assert order_mapping is not None
+        assert Job.objects.filter(name="test_workflow").exists()
+        assert Task.objects.filter(name="step1").exists()
+        assert Step.objects.filter(job__name="test_workflow", task__name="step1").exists()
