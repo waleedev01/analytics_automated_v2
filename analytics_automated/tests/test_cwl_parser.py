@@ -1,9 +1,8 @@
+import pytest
 import yaml
 import logging
-import pytest
 from analytics_automated.cwl_utils.cwl_schema_validator import CWLSchemaValidator
-from analytics_automated.cwl_utils.cwl_workflow_handler import parse_cwl_workflow
-from analytics_automated.cwl_utils.cwl_clt_handler import parse_cwl_clt, save_task_to_db
+from analytics_automated.cwl_utils.cwl_parser import read_cwl_file
 from analytics_automated.models import Backend, QueueType
 from django.test import TestCase
 
