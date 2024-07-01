@@ -41,6 +41,18 @@ jobs:
         run: |
           pip install -r requirements/dev.txt
 
+      - name: Create base_secrets.json
+        run: |
+          echo '{}' > analytics_automated_project/settings/base_secrets.json
+
+      - name: Create dev_secrets.json
+        run: |
+          echo '{
+                  "USER": "test_user",
+                  "PASSWORD": "test_pass",
+                  "SECRET_KEY": "ANDKSNKJDNSJKFNJKDFJKBFDJKFDBJKDBFJKFBJKFDBJKFBDJKBFJKDBFJKDFBJKFD"
+                }' > analytics_automated_project/settings/dev_secrets.json
+
       - name: Run migrations
         run: |
           python manage.py migrate --settings=analytics_automated_project.settings.dev
