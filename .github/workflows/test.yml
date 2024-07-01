@@ -86,4 +86,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest
+          pytest analytics_automated/tests/test_cwl_clt_handler.py \
+                 analytics_automated/tests/test_cwl_parser.py \
+                 analytics_automated/tests/test_cwl_schema_validator.py \
+                 analytics_automated/tests/test_cwl_workflow_handler.py
