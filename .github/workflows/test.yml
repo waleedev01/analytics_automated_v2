@@ -77,12 +77,16 @@ jobs:
         run: |
           python manage.py migrate --settings=analytics_automated_project.settings.dev
 
-      - name: Create default backend
+      - name: Create default backend and queue type
         run: |
           python manage.py shell --settings=analytics_automated_project.settings.dev -c "
-          from analytics_automated.models import Backend;
-          if not Backend.objects.filter(pk=1).exists():
-              Backend.objects.create(pk=1, name='localhost', queue_type=1, root_path='/tmp/');
+          from analytics_automated.models import Backend, QueueType;
+          queue_type, created = QueueType.objects.get_or_create(pk=1, defaults={'name': 'localhost', 'execution_behaviour': 1});
+          if created:
+              print('QueueType created')
+          else:
+              print('QueueType already exists')
+          Backend.objects.get_or_create(pk=1, defaults={'name': 'localhost', 'queue_type': queue_type, 'root_path': '/tmp/'});
           "
 
       - name: Run tests
