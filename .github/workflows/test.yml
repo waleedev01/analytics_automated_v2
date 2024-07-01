@@ -19,7 +19,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres"
+          --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -91,4 +91,4 @@ jobs:
                  analytics_automated/tests/test_cwl_schema_validator.py \
                  analytics_automated/tests/test_cwl_workflow_handler.py
         env:
-          DJANGO_SETTINGS_MODULE: analytics_automated_project.settings
+          DJANGO_SETTINGS_MODULE: analytics_automated_project.settings.dev
