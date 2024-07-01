@@ -1,5 +1,5 @@
 import logging
-from ..models import Backend, Task, Parameter
+from ..models import Backend, Task, Parameter, Environment
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +57,11 @@ def parse_cwl_clt(cwl_data, name):
             parsed_outputs.append(parsed_output)
         return parsed_outputs
 
+    def handle_env_variable_req(requirements: list):
+        for requirement in requirements:
+            if requirement['class'] == 'EnvVarRequirement':
+                return requirement['envDef']
+        return None
 
     base_command = cwl_data.get("baseCommand")
     inputs = cwl_data.get("inputs", [])
@@ -98,6 +103,7 @@ def parse_cwl_clt(cwl_data, name):
         "inputs": parse_cwl_inputs(inputs),
         "outputs": parse_cwl_outputs(outputs),
         "requirements": requirements,
+        "environments": handle_env_variable_req(requirements),
         "hints": hints,
         "arguments": arguments,
         "stdin": stdin,
@@ -134,8 +140,8 @@ def parse_cwl_clt(cwl_data, name):
             # Handle no "position" key in input_binding
             position = len(executable_parts)
         
-        type = input_data['type']
-        if type != 'File':
+        file_type = input_data['type']
+        if file_type != 'File':
             executable_parts.insert(position, f"$P{position_parameter}")
             position_parameter += 1
         else:
@@ -203,8 +209,8 @@ def save_task_to_db(task_data, messages):
         for input_data in task_data['inputs']:
 
             # Skip inputs with File type
-            type = input_data['type']
-            if type == 'File':
+            file_type = input_data['type']
+            if file_type == 'File':
                 continue
 
             flag = input_data.get('input_binding').get('prefix')
@@ -220,6 +226,17 @@ def save_task_to_db(task_data, messages):
                 spacing=input_data['input_binding'].get('separate', True),
                 switchless=input_data['input_binding'].get('prefix', None) is None
             )
+
+        for env_var_name, env_var_value in task_data['environments'].items():
+            # TODO: There are values that dynamic generated during CWL execution,
+            #  should be handled during Celery execution. (For example: $(inputs.message))
+            if '$' not in env_var_value:
+                Environment.objects.create(
+                    task=task,
+                    env=env_var_name,
+                    value=env_var_value
+                )
+
         message = f"Task saved successfully: {task_data['name']}"
         logging.info(message)
         messages.append(message)
