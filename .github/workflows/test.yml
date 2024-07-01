@@ -58,6 +58,12 @@ jobs:
           mkdir -p logs
           touch logs/debug.log
 
+      - name: Create test database
+        run: |
+          psql -h localhost -U test_user -c "CREATE DATABASE analytics_automated_db;"
+        env:
+          PGPASSWORD: test_pass
+
       - name: Run migrations
         run: |
           python manage.py migrate --settings=analytics_automated_project.settings.dev
