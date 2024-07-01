@@ -18,7 +18,9 @@ def parse_cwl_clt(cwl_data, name):
         }
         return EDAM_FORMAT_MAPPING.get(format_uri, ".input")
 
-    def parse_cwl_inputs(inputs: dict):
+    def parse_cwl_inputs(inputs):
+        if isinstance(inputs, list):
+            inputs = {str(i): input_data for i, input_data in enumerate(inputs)}
         parsed_inputs = []
         for input_name, input_data in inputs.items():
             input_type = input_data.get("type")
