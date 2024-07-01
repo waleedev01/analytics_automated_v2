@@ -1,71 +1,32 @@
 import yaml
 import logging
-import pytest
-from analytics_automated.cwl_utils.cwl_schema_validator import CWLSchemaValidator
-from analytics_automated.cwl_utils.cwl_workflow_handler import parse_cwl_workflow
-from analytics_automated.cwl_utils.cwl_clt_handler import parse_cwl_clt, save_task_to_db
-from analytics_automated.models import Backend, QueueType
-from django.test import TestCase
+from .cwl_schema_validator import CWLSchemaValidator
+from .cwl_workflow_handler import parse_cwl_workflow
+from .cwl_clt_handler import parse_cwl_clt, save_task_to_db
 
 logger = logging.getLogger(__name__)
 
-class SetupBackendQueueTestCase(TestCase):
-    def setUp(self):
-        queue_type, created = QueueType.objects.get_or_create(pk=1, defaults={'name': 'localhost', 'execution_behaviour': 1})
-        Backend.objects.get_or_create(pk=1, defaults={'name': 'localhost', 'queue_type': queue_type, 'root_path': '/tmp/'})
+def read_cwl_file(cwl_path, filename, messages):
+    with open(cwl_path, 'r') as cwl_file:
+        cwl_data = yaml.safe_load(cwl_file)
 
-@pytest.mark.django_db
-class TestCWLParser(SetupBackendQueueTestCase):
-    def test_read_cwl_file(self, tmpdir):
-        cwl_content = """
-        cwlVersion: v1.2
-        class: CommandLineTool
-        baseCommand: echo
-        inputs:
-          input1:
-            type: string
-        outputs:
-          output1:
-            type: stdout
-        """
-        cwl_file = tmpdir.join("echo.cwl")
-        cwl_file.write(cwl_content)
+    validator = CWLSchemaValidator()
+    is_valid, message = validator.validate_cwl(cwl_data)
 
-        messages = []
-        task = read_cwl_file(str(cwl_file), "echo.cwl", messages)
-        assert task is not None
+    if not is_valid:
+        logger.error(f"Validation Failed: {message}")
+        messages.append(f"Validation Failed: {message}")
+        return None
 
-    def test_validate_cwl(self):
-        cwl_content = {
-            "cwlVersion": "v1.2",
-            "class": "CommandLineTool",
-            "baseCommand": "echo",
-            "inputs": {
-                "input1": {
-                    "type": "string"
-                }
-            },
-            "outputs": {
-                "output1": {
-                    "type": "stdout"
-                }
-            }
-        }
-        validator = CWLSchemaValidator()
-        is_valid, message = validator.validate_cwl(cwl_content)
-        assert is_valid
+    cwl_class = cwl_data.get("class")
 
-    def test_parse_cwl_workflow(self):
-        cwl_data = {
-            "class": "Workflow",
-            "steps": {
-                "step1": {
-                    "run": {"class": "CommandLineTool", "baseCommand": "echo"},
-                    "in": {},
-                    "out": ["output1"]
-                }
-            }
-        }
-        messages = []
-        order_mapping = parse_cwl_workflow(cwl_data, "test_workflow", messages)
-        assert order_mapping is not None
+    if cwl_class == "Workflow":
+        return parse_cwl_workflow(cwl_data, filename, messages)
+    elif cwl_class == "CommandLineTool":
+        task_data = parse_cwl_clt(cwl_data, filename)
+        return save_task_to_db(task_data, messages)
+    else:
+        error_message = f"Unknown CWL class for file {cwl_path}"
+        logger.error(error_message)
+        messages.append(error_message)
+        return None
