@@ -179,32 +179,47 @@ def save_task_to_db(task_data, messages):
         existing_task = Task.objects.filter(
             name=task_data['name'],
             backend=backend,
-            executable=task_data['executable'],
-            in_glob=task_data['in_glob'],
-            out_glob=task_data['out_glob'],
-            stdout_glob=task_data['stdout_glob'],
         ).first()
 
         if existing_task:
-            message = f"Task already exists: {task_data['name']}"
+            message = f"Found existing task with name: {existing_task}"
             logging.info(message)
             messages.append(message)
-            return existing_task
 
-        # Create a new task if it doesn't exist
-        task = Task.objects.create(
-            backend=backend,
-            name=task_data['name'],
-            description=task_data.get('doc'),
-            in_glob=task_data['in_glob'],
-            out_glob=task_data['out_glob'],
-            stdout_glob=task_data['stdout_glob'],
-            executable=task_data['executable'],
-            requirements=task_data['requirements'],
-            incomplete_outputs_behaviour=task_data['incomplete_outputs_behaviour'],
-            custom_exit_status=task_data['custom_exit_status'],
-            custom_exit_behaviour=task_data['custom_exit_behaviour'],
-        )
+            existing_task.name = task_data['name']
+            existing_task.description = task_data.get('doc')
+            existing_task.in_glob = task_data['in_glob']
+            existing_task.out_glob = task_data['out_glob']
+            existing_task.stdout_glob = task_data['stdout_glob']
+            existing_task.executable = task_data['executable']
+            existing_task.requirements = task_data['requirements']
+            existing_task.incomplete_outputs_behaviour=task_data['incomplete_outputs_behaviour']
+            existing_task.custom_exit_status=task_data['custom_exit_status']
+            existing_task.custom_exit_behaviour=task_data['custom_exit_behaviour']
+            existing_task.save()
+
+            existing_parameter = Parameter.objects.filter(task=existing_task)
+            for param in existing_parameter:
+                param.delete()
+            
+            message = f"Task updated successfully: {task_data['name']}"
+            task = existing_task
+        else:
+            # Create a new task if it doesn't exist
+            task = Task.objects.create(
+                backend=backend,
+                name=task_data['name'],
+                description=task_data.get('doc'),
+                in_glob=task_data['in_glob'],
+                out_glob=task_data['out_glob'],
+                stdout_glob=task_data['stdout_glob'],
+                executable=task_data['executable'],
+                requirements=task_data['requirements'],
+                incomplete_outputs_behaviour=task_data['incomplete_outputs_behaviour'],
+                custom_exit_status=task_data['custom_exit_status'],
+                custom_exit_behaviour=task_data['custom_exit_behaviour'],
+            )
+            message = f"Task saved successfully: {task_data['name']}"
 
         for input_data in task_data['inputs']:
 
