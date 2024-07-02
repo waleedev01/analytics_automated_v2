@@ -11,6 +11,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
     step_source = {}
     task_arr = []
     task_details = []
+    workflow_req = cwl_data.get("requirements", [])
 
     for step_name, step_detail in steps.items():
         task_input = step_detail.get("in")
@@ -31,7 +32,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
 
         if isinstance(task_run, dict) and task_run.get("class") == "CommandLineTool":
             logging.info(f"Parsing inline CommandLineTool for step: {step_name}")
-            task_data = parse_cwl_clt(task_run, step_name)
+            task_data = parse_cwl_clt(task_run, step_name, workflow_req)
             task = save_task_to_db(task_data, messages)
             if task:
                 task_details.append(task_data)

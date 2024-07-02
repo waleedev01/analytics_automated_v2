@@ -7,8 +7,32 @@ logger = logging.getLogger(__name__)
 DEFAULT_INCOMPLETE_OUTPUTS_BEHAVIOUR = 3
 DEFAULT_CUSTOM_EXIT_STATUS = ""
 DEFAULT_CUSTOM_EXIT_BEHAVIOUR = None
+NOT_TASK_REQUIREMENTS = [
+    {'class': 'ScatterFeatureRequirement'},
+    {'class': 'SubworkflowFeatureRequirement'},
+]
 
-def parse_cwl_clt(cwl_data, name):
+
+def handle_env_variable_req(requirements: list) -> dict[str, str]:
+    """
+    Extract envVarRequirement as environment variable list
+    """
+    for requirement in requirements:
+        if requirement['class'] == 'EnvVarRequirement':
+            return requirement['envDef']
+    return {}
+
+
+def filter_workflow_req(requirements):
+    """
+    Remove requirement should not be inherited by task
+    """
+    return list(filter(lambda req: req['class'] not in ['ScatterFeatureRequirement',
+                                                        'SubworkflowFeatureRequirement'],
+                       requirements))
+
+
+def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
     def map_format(format_uri):
         EDAM_FORMAT_MAPPING = {
             "http://edamontology.org/format_1929": ".fasta",
@@ -57,11 +81,14 @@ def parse_cwl_clt(cwl_data, name):
             parsed_outputs.append(parsed_output)
         return parsed_outputs
 
-    def handle_env_variable_req(requirements: list):
-        for requirement in requirements:
-            if requirement['class'] == 'EnvVarRequirement':
-                return requirement['envDef']
-        return None
+    def update_dict_with_no_conflict(original: dict, updates: dict) -> dict:
+        """
+        Update the task env variable with values from the workflow, without overwriting existing env variables.
+        """
+        for key, value in updates.items():
+            if key not in original:
+                original[key] = value
+        return original
 
     base_command = cwl_data.get("baseCommand")
     inputs = cwl_data.get("inputs", [])
@@ -119,6 +146,12 @@ def parse_cwl_clt(cwl_data, name):
         "custom_exit_status": custom_exit_status,
         "custom_exit_behaviour": custom_exit_behaviour,
     }
+
+    # Inherit Requirement from workflow
+    if workflow_req:
+        inherited_req = filter_workflow_req(workflow_req)
+        inherited_env_var_li = handle_env_variable_req(inherited_req)
+        update_dict_with_no_conflict(original=task['environments'], updates=inherited_env_var_li)
 
     if stdout:
         task['stdout_glob'] = f".{stdout.split('.')[-1]}"
@@ -201,6 +234,9 @@ def save_task_to_db(task_data, messages):
             existing_parameter = Parameter.objects.filter(task=existing_task)
             for param in existing_parameter:
                 param.delete()
+            existing_environment_var = Environment.objects.filter(task=existing_task)
+            for env_var in existing_environment_var:
+                env_var.delete()
             
             message = f"Task updated successfully: {task_data['name']}"
             task = existing_task
