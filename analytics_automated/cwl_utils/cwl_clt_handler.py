@@ -179,9 +179,13 @@ def save_task_to_db(task_data, messages):
             if type == 'File':
                 continue
 
+            flag = input_data.get('input_binding').get('prefix')
+            if flag is None:
+                flag = input_data['name']
+
             Parameter.objects.create(
                 task=task,
-                flag=input_data['name'],
+                flag=flag,
                 default=input_data.get('default'),
                 bool_valued=(input_data['type'] == 'boolean'),
                 rest_alias=input_data['name'],
