@@ -17,10 +17,13 @@ class CWLParserTest(TestCase):
         """
         this_backend = add_fake_backend(name="local1", root_path="/tmp/")
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        filename = 'task1'
-        file_path = os.path.join(base_dir, 'tests', 'example_cwl_file', 'task1.cwl')
+        filenames = ['task1', 'task2', 'task3', 'task4', 'workflow']
+        filenames = ['fake_workflow']
         message = []
-        result = read_cwl_file(file_path, filename, message)
+        for filename in filenames:
+            file_path = os.path.join(base_dir, 'tests', 'example_cwl_file', f'{filename}.cwl')
+            read_cwl_file(file_path, filename, message)
+        # result = read_cwl_file(file_path, filename, message)
         # self.assertIsNotNone(result)
 
     def tearDown(self):
