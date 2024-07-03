@@ -15,6 +15,7 @@ class SetupBackendQueueTestCase(TestCase):
 @pytest.mark.django_db
 class TestCWLParser(SetupBackendQueueTestCase):
 
+    @pytest.mark.usefixtures("tmpdir")
     def test_read_cwl_file(self, tmpdir):
         cwl_content = """
         cwlVersion: v1.2
@@ -33,4 +34,3 @@ class TestCWLParser(SetupBackendQueueTestCase):
         messages = []
         task = read_cwl_file(str(cwl_file), "echo.cwl", messages)
         assert task is not None
-
