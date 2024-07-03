@@ -1,0 +1,84 @@
+name: Django Tests
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_DB: analytics_automated_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements/*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Downgrade pip
+        run: |
+          python -m pip install --upgrade "pip<24.1"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements/dev.txt
+
+      - name: Create base_secrets.json
+        run: |
+          echo '{}' > analytics_automated_project/settings/base_secrets.json
+
+      - name: Create dev_secrets.json
+        run: |
+          echo '{
+                   "USER": "test_user",
+                   "PASSWORD": "test_pass",
+                   "SECRET_KEY": "ANDKSNKJDNSJKFNJKDFJKBFDJKFDBJKDBFJKFBJKFDBJKFBDJKBFJKDBFJKDFBJKFD"
+                 }' > analytics_automated_project/settings/dev_secrets.json
+
+      - name: Create logs directory
+        run: |
+          mkdir -p logs
+          touch logs/debug.log
+
+      - name: Wait for Postgres to be ready
+        run: |
+          until pg_isready -h localhost -p 5432 -U test_user; do
+            echo "Waiting for postgres container...";
+            sleep 5;
+          done
+
+      - name: Run migrations
+        run: |
+          python manage.py migrate --settings=analytics_automated_project.settings.dev
+
+      - name: Run tests
+        run: |
+          pytest analytics_automated/tests/test_cwl.py --disable-warnings
+        env:
+          DJANGO_SETTINGS_MODULE: analytics_automated_project.settings.dev
