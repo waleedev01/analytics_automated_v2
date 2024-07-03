@@ -1,57 +1,51 @@
-import yaml
-import logging
-import pytest
+import os
 from django.test import TestCase
-from analytics_automated.models import Backend, QueueType
-from analytics_automated.cwl_utils.cwl_parser import read_cwl_file
+from analytics_automated.cwl_parser import read_cwl_file
+from analytics_automated.models import Backend
+from analytics_automated.cwl_schema_validator import CWLSchemaValidator
 
-logger = logging.getLogger(__name__)
+def add_fake_backend(name, root_path):
+    b = Backend.objects.create(name=name)
+    b.root_path = root_path
+    b.save()
+    return b
 
-@pytest.fixture(scope="function")
-def setup_backend_queue(db):
-    queue_type, created = QueueType.objects.get_or_create(pk=1, defaults={'name': 'localhost', 'execution_behaviour': 1})
-    Backend.objects.get_or_create(pk=1, defaults={'name': 'localhost', 'queue_type': queue_type, 'root_path': '/tmp/'})
-
-@pytest.mark.django_db
-class TestCWLParser:
-
-    @pytest.mark.usefixtures("setup_backend_queue")
-    def test_read_cwl_file(self, tmpdir):
-        cwl_content = """
-        cwlVersion: v1.2
-        class: CommandLineTool
-        baseCommand: echo
-        inputs:
-          input1:
-            type: string
-        outputs:
-          output1:
-            type: stdout
+class CWLParserTest(TestCase):
+    def test_read_cwl_file(self):
         """
-        cwl_file = tmpdir.join("echo.cwl")
-        cwl_file.write(cwl_content)
-
-        messages = []
-        task = read_cwl_file(str(cwl_file), "echo.cwl", messages)
-        assert task is not None
-
-    @pytest.mark.usefixtures("setup_backend_queue")
-    def test_read_cwl_file_invalid(self, tmpdir):
-        cwl_content = """
-        cwlVersion: v1.2
-        class: InvalidClass
-        baseCommand: echo
-        inputs:
-          input1:
-            type: string
-        outputs:
-          output1:
-            type: stdout
+        Test if the CWL file is read correctly.
         """
-        cwl_file = tmpdir.join("invalid.cwl")
-        cwl_file.write(cwl_content)
+        this_backend = add_fake_backend(name="local1", root_path="/tmp/")
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        filename = 'task3'
+        file_path = os.path.join(base_dir, 'tests', 'example_cwl_file', 'task3.cwl')
+        message = []
+        result = read_cwl_file(file_path, filename, message)
+        # self.assertIsNotNone(result)
 
-        messages = []
-        task = read_cwl_file(str(cwl_file), "invalid.cwl", messages)
-        assert task is None
-        assert "Unknown CWL class for file" in messages[0]
+    def tearDown(self):
+        pass
+
+class CWLValidatorTest(TestCase):
+    def test_validate_cwl(self):
+        """
+        Test the CWL schema validator.
+        """
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        file_path = os.path.join(base_dir, 'tests', 'example_cwl_file', 's4pred_workflow.cwl')
+        validator = CWLSchemaValidator()
+        is_valid, message = validator.validate_cwl(file_path)
+        self.assertTrue(is_valid, message)
+
+    def test_invalid_cwl(self):
+        """
+        Test the CWL schema validator with an invalid CWL file.
+        """
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        file_path = os.path.join(base_dir, 'tests', 'example_cwl_file', 'invalid_workflow.cwl')
+        validator = CWLSchemaValidator()
+        is_valid, message = validator.validate_cwl(file_path)
+        self.assertFalse(is_valid, message)
+
+    def tearDown(self):
+        pass

@@ -3,7 +3,7 @@ name: Django Tests
 on:
   push:
     branches:
-      - cwl-testing-framework
+      - '**'
 
 jobs:
   test:
@@ -79,6 +79,6 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest analytics_automated/tests/test_cwl_parser.py --disable-warnings
+          pytest analytics_automated/tests/test_cwl.py --disable-warnings
         env:
           DJANGO_SETTINGS_MODULE: analytics_automated_project.settings.dev
