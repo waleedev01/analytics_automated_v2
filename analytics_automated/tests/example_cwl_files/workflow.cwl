@@ -1,5 +1,9 @@
 cwlVersion: v1.0
 class: Workflow
+requirements:
+  - class: EnvVarRequirement
+    envDef:
+      WORKFLOW_VAR: example_value
 
 inputs:
   input-wf:

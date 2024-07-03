@@ -11,6 +11,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
     step_source = {}
     task_arr = []
     task_details = []
+    workflow_req = cwl_data.get("requirements", [])
 
     for step_name, step_detail in steps.items():
         task_input = step_detail.get("in")
@@ -31,7 +32,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
 
         if isinstance(task_run, dict) and task_run.get("class") == "CommandLineTool":
             logging.info(f"Parsing inline CommandLineTool for step: {step_name}")
-            task_data = parse_cwl_clt(task_run, step_name)
+            task_data = parse_cwl_clt(task_run, step_name, workflow_req)
             task = save_task_to_db(task_data, messages)
             if task:
                 task_details.append(task_data)
@@ -74,14 +75,37 @@ def parse_cwl_workflow(cwl_data, filename, messages):
     logging.info("Task Details:")
     logging.info(task_details)
 
-    try:
-        logging.info(f"Creating job for workflow: {filename}")
-        job = Job.objects.create(name=filename, runnable=True)
-    except IntegrityError:
-        error_message = f"A job with name '{filename}' already exists."
-        logging.error(error_message)
-        messages.append(error_message)
-        return None
+    logging.info(f"Creating job for workflow: {filename}")
+
+    cwl_version = cwl_data.get("cwlVersion")
+    requirements = cwl_data.get("requirements")
+
+    # Check if the job already exists
+    existing_job = Job.objects.filter(name=filename).first()
+
+    if existing_job:
+        message = f"Found existing job with name: {filename}"
+        logging.info(message)
+        messages.append(message)
+
+        existing_job.name = filename
+        existing_job.cwl_version = cwl_version
+        existing_job.requirements = requirements
+        existing_job.save()
+
+        existing_step = Step.objects.filter(job=existing_job)
+        for step in existing_step:
+            step.delete()
+
+        job = existing_job
+        keyword = "updated"
+    else:
+        job = Job.objects.create(
+            name=filename, 
+            runnable=True,
+            cwl_version=cwl_version,
+            requirements=requirements)
+        keyword = "created"
 
     for task_name in task_arr:
         try:
@@ -92,8 +116,8 @@ def parse_cwl_workflow(cwl_data, filename, messages):
             logging.error(error_message)
             messages.append(error_message)
 
-    messages.append(f"Job '{filename}' created with tasks: {', '.join(task_arr)}")
-    return order_mapping_final
+    messages.append(f"Job '{filename}' {keyword} with tasks: {', '.join(task_arr)}")
+    return job
 
 
 def set_step_order(order_mapping, step_source):
