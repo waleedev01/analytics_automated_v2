@@ -12,25 +12,32 @@ NOT_TASK_REQUIREMENTS = [
     {'class': 'SubworkflowFeatureRequirement'},
 ]
 
-
 def handle_env_variable_req(requirements: list) -> dict[str, str]:
     """
     Extract envVarRequirement as environment variable list
     """
-    for requirement in requirements:
-        if requirement['class'] == 'EnvVarRequirement':
-            return requirement['envDef']
+    logging.info(f"Handling environment variable requirements: {requirements}")
+    try:
+        for requirement in requirements:
+            if requirement['class'] == 'EnvVarRequirement':
+                logging.info(f"Found environment variable requirement: {requirement['envDef']}")
+                return requirement['envDef']
+    except Exception as e:
+        logging.error(f"Error handling environment variable requirements: {e}")
     return {}
-
 
 def filter_workflow_req(requirements):
     """
     Remove requirement should not be inherited by task
     """
-    return list(filter(lambda req: req['class'] not in ['ScatterFeatureRequirement',
-                                                        'SubworkflowFeatureRequirement'],
-                       requirements))
-
+    logging.info(f"Filtering workflow requirements: {requirements}")
+    try:
+        return list(filter(lambda req: req['class'] not in ['ScatterFeatureRequirement',
+                                                            'SubworkflowFeatureRequirement'],
+                           requirements))
+    except Exception as e:
+        logging.error(f"Error filtering workflow requirements: {e}")
+        return []
 
 def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
     def map_format(format_uri):
@@ -45,51 +52,65 @@ def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
             "http://edamontology.org/format_3916": ".mtx",
             "http://edamontology.org/format_3310": ".ss",
         }
+        logging.info(f"Mapping format URI: {format_uri}")
         return EDAM_FORMAT_MAPPING.get(format_uri, ".input")
 
     def parse_cwl_inputs(inputs: dict):
+        logging.info(f"Parsing CWL inputs: {inputs}")
         parsed_inputs = []
-        for input_name, input_data in inputs.items():
-            input_type = input_data.get("type")
-            input_format = input_data.get("format")
-            input_binding = input_data.get("inputBinding", {})
-            default_value = input_data.get("default")
-            secondary_files = input_data.get("secondaryFiles", [])
-            parsed_input = {
-                "name": input_name,
-                "type": input_type,
-                "format": input_format,
-                "default": default_value,
-                "input_binding": input_binding,
-                "secondary_files": secondary_files
-            }
-            parsed_inputs.append(parsed_input)
+        try:
+            for input_name, input_data in inputs.items():
+                input_type = input_data.get("type")
+                input_format = input_data.get("format")
+                input_binding = input_data.get("inputBinding", {})
+                default_value = input_data.get("default")
+                secondary_files = input_data.get("secondaryFiles", [])
+                parsed_input = {
+                    "name": input_name,
+                    "type": input_type,
+                    "format": input_format,
+                    "default": default_value,
+                    "input_binding": input_binding,
+                    "secondary_files": secondary_files
+                }
+                parsed_inputs.append(parsed_input)
+        except Exception as e:
+            logging.error(f"Error parsing CWL inputs: {e}")
         return parsed_inputs
 
     def parse_cwl_outputs(outputs: dict):
+        logging.info(f"Parsing CWL outputs: {outputs}")
         parsed_outputs = []
-        for output_name, output_data in outputs.items():
-            output_type = output_data.get("type")
-            output_binding = output_data.get("outputBinding", {})
-            secondary_files = output_data.get("secondaryFiles", [])
-            parsed_output = {
-                "name": output_name,
-                "type": output_type,
-                "output_binding": output_binding,
-                "secondary_files": secondary_files
-            }
-            parsed_outputs.append(parsed_output)
+        try:
+            for output_name, output_data in outputs.items():
+                output_type = output_data.get("type")
+                output_binding = output_data.get("outputBinding", {})
+                secondary_files = output_data.get("secondaryFiles", [])
+                parsed_output = {
+                    "name": output_name,
+                    "type": output_type,
+                    "output_binding": output_binding,
+                    "secondary_files": secondary_files
+                }
+                parsed_outputs.append(parsed_output)
+        except Exception as e:
+            logging.error(f"Error parsing CWL outputs: {e}")
         return parsed_outputs
 
     def update_dict_with_no_conflict(original: dict, updates: dict) -> dict:
         """
         Update the task env variable with values from the workflow, without overwriting existing env variables.
         """
-        for key, value in updates.items():
-            if key not in original:
-                original[key] = value
+        logging.info(f"Updating dictionary with no conflict. Original: {original}, Updates: {updates}")
+        try:
+            for key, value in updates.items():
+                if key not in original:
+                    original[key] = value
+        except Exception as e:
+            logging.error(f"Error updating dictionary with no conflict: {e}")
         return original
 
+    logging.info(f"Parsing CWL command line tool: {name}")
     base_command = cwl_data.get("baseCommand")
     inputs = cwl_data.get("inputs", [])
     outputs = cwl_data.get("outputs", [])
@@ -122,7 +143,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
             custom_exit_status = DEFAULT_CUSTOM_EXIT_STATUS
 
     except Exception as e:
-        logging.error(f"Failed to  task {name}: {str(e)}")
+        logging.error(f"Failed to parse custom fields for task {name}: {e}")
 
     task = {
         "name": name,
@@ -149,6 +170,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
 
     # Inherit Requirement from workflow
     if workflow_req:
+        logging.info(f"Inheriting requirements from workflow: {workflow_req}")
         inherited_req = filter_workflow_req(workflow_req)
         inherited_env_var_li = handle_env_variable_req(inherited_req)
         update_dict_with_no_conflict(original=task['environments'], updates=inherited_env_var_li)
@@ -166,40 +188,47 @@ def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
     in_globs = []
     position_parameter = 1
     position_input = 1
-    for idx, input_data in enumerate(task['inputs']):
-        position = input_data['input_binding'].get('position')
+    try:
+        for idx, input_data in enumerate(task['inputs']):
+            position = input_data['input_binding'].get('position')
 
-        if position is None:
-            # Handle no "position" key in input_binding
-            position = len(executable_parts)
-        
-        file_type = input_data['type']
-        if file_type != 'File':
-            executable_parts.insert(position, f"$P{position_parameter}")
-            position_parameter += 1
-        else:
-            executable_parts.insert(position, f"$I{position_input}")
-            position_input += 1
-            if 'format' in input_data:
-                in_globs.append(map_format(input_data['format']))
+            if position is None:
+                # Handle no "position" key in input_binding
+                position = len(executable_parts)
+            
+            file_type = input_data['type']
+            if file_type != 'File':
+                executable_parts.insert(position, f"$P{position_parameter}")
+                position_parameter += 1
             else:
-                in_globs.append('.input')
+                executable_parts.insert(position, f"$I{position_input}")
+                position_input += 1
+                if 'format' in input_data:
+                    in_globs.append(map_format(input_data['format']))
+                else:
+                    in_globs.append('.input')
+    except Exception as e:
+        logging.error(f"Error processing inputs for task {name}: {e}")
 
-    executable_parts_str = [str(item) for item in executable_parts]
-    executable = " ".join(executable_parts_str)
-    in_glob = ",".join(in_globs)
+    try:
+        executable_parts_str = [str(item) for item in executable_parts]
+        executable = " ".join(executable_parts_str)
+        in_glob = ",".join(in_globs)
 
-    out_globs = []
-    for idx, output_data in enumerate(task['outputs']):
-        if output_data['type'] == 'File' and 'glob' in output_data['output_binding']:
-            suffix = f".{output_data['output_binding'].get('glob').split('.')[-1]}"
-            out_globs.append(suffix)
-    out_glob = ",".join(out_globs)
+        out_globs = []
+        for idx, output_data in enumerate(task['outputs']):
+            if output_data['type'] == 'File' and 'glob' in output_data['output_binding']:
+                suffix = f".{output_data['output_binding'].get('glob').split('.')[-1]}"
+                out_globs.append(suffix)
+        out_glob = ",".join(out_globs)
 
-    task['executable'] = executable
-    task['in_glob'] = in_glob
-    task['out_glob'] = out_glob
+        task['executable'] = executable
+        task['in_glob'] = in_glob
+        task['out_glob'] = out_glob
+    except Exception as e:
+        logging.error(f"Error finalizing task details for {name}: {e}")
 
+    logging.info(f"Task parsed successfully: {task}")
     return task
 
 
@@ -239,6 +268,7 @@ def save_task_to_db(task_data, messages):
                 env_var.delete()
             
             message = f"Task updated successfully: {task_data['name']}"
+            logging.info(message)
             task = existing_task
         else:
             # Create a new task if it doesn't exist
@@ -256,61 +286,75 @@ def save_task_to_db(task_data, messages):
                 custom_exit_behaviour=task_data['custom_exit_behaviour'],
             )
             message = f"Task saved successfully: {task_data['name']}"
+            logging.info(message)
 
         for input_data in task_data['inputs']:
+            try:
+                # Skip inputs with File type
+                file_type = input_data['type']
+                if file_type == 'File':
+                    continue
 
-            # Skip inputs with File type
-            file_type = input_data['type']
-            if file_type == 'File':
-                continue
+                flag = input_data.get('input_binding').get('prefix')
+                if flag is None:
+                    flag = input_data['name']
 
-            flag = input_data.get('input_binding').get('prefix')
-            if flag is None:
-                flag = input_data['name']
-
-            Parameter.objects.create(
-                task=task,
-                flag=flag,
-                default=input_data.get('default'),
-                bool_valued=(input_data['type'] == 'boolean'),
-                rest_alias=input_data['name'],
-                spacing=input_data['input_binding'].get('separate', True),
-                switchless=input_data['input_binding'].get('prefix', None) is None
-            )
+                Parameter.objects.create(
+                    task=task,
+                    flag=flag,
+                    default=input_data.get('default'),
+                    bool_valued=(input_data['type'] == 'boolean'),
+                    rest_alias=input_data['name'],
+                    spacing=input_data['input_binding'].get('separate', True),
+                    switchless=input_data['input_binding'].get('prefix', None) is None
+                )
+            except Exception as e:
+                logging.error(f"Error saving parameter for task {task_data['name']}: {e}")
 
         for env_var_name, env_var_value in task_data['environments'].items():
-            # TODO: There are values that dynamic generated during CWL execution,
-            #  should be handled during Celery execution. (For example: $(inputs.message))
-            if '$' not in env_var_value:
-                Environment.objects.create(
-                    task=task,
-                    env=env_var_name,
-                    value=env_var_value
-                )
+            try:
+                # TODO: There are values that dynamic generated during CWL execution,
+                #  should be handled during Celery execution. (For example: $(inputs.message))
+                if '$' not in env_var_value:
+                    Environment.objects.create(
+                        task=task,
+                        env=env_var_name,
+                        value=env_var_value
+                    )
+            except Exception as e:
+                logging.error(f"Error saving environment variable for task {task_data['name']}: {e}")
 
         message = f"Task saved successfully: {task_data['name']}"
         logging.info(message)
         messages.append(message)
         return task
     except Exception as e:
-        error_message = f"Failed to save task to database: {str(e)}"
+        error_message = f"Failed to save task to database: {e}"
         logging.error(error_message)
         messages.append(error_message)
         return None
 
 
 def check_existing_task_in_db(task_name, messages):
-    backend = Backend.objects.get(id=1)  # Assuming a default backend ID
+    logging.info(f"Checking existing task in DB: {task_name}")
+    try:
+        backend = Backend.objects.get(id=1)  # Assuming a default backend ID
 
-    # Check if the task already exists
-    existing_task = Task.objects.filter(
-        name=task_name,
-        backend=backend,
-    ).first()
+        # Check if the task already exists
+        existing_task = Task.objects.filter(
+            name=task_name,
+            backend=backend,
+        ).first()
 
-    if not existing_task:
-        error_message = f"Task file not found: {task_name}"
+        if not existing_task:
+            error_message = f"Task file not found: {task_name}"
+            logging.error(error_message)
+            messages.append(error_message)
+            return None
+
+        return existing_task
+    except Exception as e:
+        error_message = f"Error checking existing task in DB: {e}"
+        logging.error(error_message)
         messages.append(error_message)
         return None
-
-    return existing_task

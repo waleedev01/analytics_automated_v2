@@ -11,10 +11,22 @@ import os
 logger = logging.getLogger(__name__)
 
 class CWLUploadPageView(View):
+    """
+    View to handle the CWL file upload page.
+    """
+
     def get(self, request):
+        """
+        Handle GET requests to render the upload page.
+        """
+        logging.info("Rendering upload page.")
         return render(request, 'cwl/upload_cwl.html')
     
     def post(self, request):
+        """
+        Handle POST requests to upload and process CWL files.
+        """
+        logging.info("Handling file upload.")
         files = request.FILES.getlist('files')
         if not files:
             logging.error("No files provided in upload.")
@@ -28,6 +40,7 @@ class CWLUploadPageView(View):
                 messages.append(f"Uploaded file is not a CWL file: {file.name}")
                 continue
             
+            # Save the uploaded file to the storage
             path = default_storage.save('cwl_workflows/' + file.name, ContentFile(file.read()))
             full_path = default_storage.path(path)
             file_paths[file.name] = full_path
@@ -57,12 +70,12 @@ class CWLUploadPageView(View):
                     filename = workflow_name.split('.')[0]
                     read_cwl_file(file_paths[workflow_name], filename, messages)
             
-            # Clean up uploaded files
+            # Clean up uploaded files after processing
             for file_name, full_path in file_paths.items():
                 os.remove(full_path)
 
             logging.info(f"Successfully processed CWL files: {', '.join(file_paths.keys())}")
             return render(request, 'cwl/upload_cwl.html', {"message": "Results Below:", "file_names": list(file_paths.keys()), "messages": messages})
         except Exception as e:
-            logging.error(f"Failed to process CWL files: {str(e)}")
+            logging.error(f"Failed to process CWL files: {e}")
             return render(request, 'cwl/upload_cwl.html', {"message": str(e), "messages": messages})
