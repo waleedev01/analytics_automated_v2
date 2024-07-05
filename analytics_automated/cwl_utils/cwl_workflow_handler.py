@@ -7,6 +7,7 @@ from .cwl_clt_handler import parse_cwl_clt, save_task_to_db, check_existing_task
 logger = logging.getLogger(__name__)
 
 def parse_cwl_workflow(cwl_data, filename, messages):
+    logging.info(f"Parsing CWL workflow: {filename}")
     steps = cwl_data.get("steps")
     step_source = {}
     task_arr = []
@@ -14,6 +15,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
     workflow_req = cwl_data.get("requirements", [])
 
     for step_name, step_detail in steps.items():
+        logging.info(f"Processing step: {step_name}")
         task_input = step_detail.get("in")
         source_arr = []
         for input_detail in task_input.values():
@@ -30,45 +32,57 @@ def parse_cwl_workflow(cwl_data, filename, messages):
 
         task_run = step_detail.get("run")
 
-        if isinstance(task_run, dict) and task_run.get("class") == "CommandLineTool":
-            logging.info(f"Parsing inline CommandLineTool for step: {step_name}")
-            task_data = parse_cwl_clt(task_run, step_name, workflow_req)
-            task = save_task_to_db(task_data, messages)
-            if task:
-                task_details.append(task_data)
-                step_source[step_name] = set(source_arr)
-            else:
-                error_message = f"Cancel job creation with name '{filename}' due to failure when creating task file: {step_name}"
-                logging.error(error_message)
-                messages.append(error_message)
-                return
-        elif isinstance(task_run, str):
-            if not task_run.endswith(".cwl"):
-                task_run += ".cwl"
+        try:
+            if isinstance(task_run, dict) and task_run.get("class") == "CommandLineTool":
+                logging.info(f"Parsing inline CommandLineTool for step: {step_name}")
+                task_data = parse_cwl_clt(task_run, step_name, workflow_req)
+                task = save_task_to_db(task_data, messages)
+                if task:
+                    task_details.append(task_data)
+                    step_source[step_name] = set(source_arr)
+                else:
+                    error_message = f"Cancel job creation with name '{filename}' due to failure when creating task file: {step_name}"
+                    logging.error(error_message)
+                    messages.append(error_message)
+                    return
+            elif isinstance(task_run, str):
+                if not task_run.endswith(".cwl"):
+                    task_run += ".cwl"
 
-            task = check_existing_task_in_db(step_name, messages)
-            if task:
-                # task_details.append(task_detail) -> only for debugging
-                step_source[step_name] = set(source_arr)
-            else:
-                error_message = f"Cancel job creation with name '{filename}' due to missing task file: {step_name}"
-                logging.error(error_message)
-                messages.append(error_message)
-                return
+                task = check_existing_task_in_db(step_name, messages)
+                if task:
+                    step_source[step_name] = set(source_arr)
+                else:
+                    error_message = f"Cancel job creation with name '{filename}' due to missing task file: {step_name}"
+                    logging.error(error_message)
+                    messages.append(error_message)
+                    return
+        except Exception as e:
+            error_message = f"Error processing task run for step {step_name}: {e}"
+            logging.error(error_message)
+            messages.append(error_message)
+            return
 
         task_arr.append(step_name)
-    
+
+    # Check for circular dependencies
     for step_name, source_list in step_source.items():
         for item in source_list:
-            if step_name in step_source.get(item):
+            if step_name in step_source.get(item, set()):
                 error_message = f"Cancel job creation with name '{filename}' due to circular dependency in step: {step_name}"
                 logging.error(error_message)
                 messages.append(error_message)
                 return
 
-    order_mapping_initial = set_step_order({}, step_source)
-    # Handle dependent that are defined before the dependencies step
-    order_mapping_final = set_step_order(order_mapping_initial, step_source)
+    try:
+        order_mapping_initial = set_step_order({}, step_source)
+        # Handle dependents that are defined before the dependencies step
+        order_mapping_final = set_step_order(order_mapping_initial, step_source)
+    except Exception as e:
+        error_message = f"Error setting step order for workflow {filename}: {e}"
+        logging.error(error_message)
+        messages.append(error_message)
+        return
 
     logging.info(f"Order Mapping: {order_mapping_final}")
     logging.info(f"Task Sequence: {task_arr}")
@@ -80,59 +94,72 @@ def parse_cwl_workflow(cwl_data, filename, messages):
     cwl_version = cwl_data.get("cwlVersion")
     requirements = cwl_data.get("requirements")
 
-    # Check if the job already exists
-    existing_job = Job.objects.filter(name=filename).first()
+    try:
+        # Check if the job already exists
+        existing_job = Job.objects.filter(name=filename).first()
 
-    if existing_job:
-        message = f"Found existing job with name: {filename}"
-        logging.info(message)
-        messages.append(message)
+        if existing_job:
+            message = f"Found existing job with name: {filename}"
+            logging.info(message)
+            messages.append(message)
 
-        existing_job.name = filename
-        existing_job.cwl_version = cwl_version
-        existing_job.requirements = requirements
-        existing_job.save()
+            existing_job.name = filename
+            existing_job.cwl_version = cwl_version
+            existing_job.requirements = requirements
+            existing_job.save()
 
-        existing_step = Step.objects.filter(job=existing_job)
-        for step in existing_step:
-            step.delete()
+            existing_step = Step.objects.filter(job=existing_job)
+            for step in existing_step:
+                step.delete()
 
-        job = existing_job
-        keyword = "updated"
-    else:
-        job = Job.objects.create(
-            name=filename, 
-            runnable=True,
-            cwl_version=cwl_version,
-            requirements=requirements)
-        keyword = "created"
+            job = existing_job
+            keyword = "updated"
+        else:
+            job = Job.objects.create(
+                name=filename, 
+                runnable=True,
+                cwl_version=cwl_version,
+                requirements=requirements)
+            keyword = "created"
 
-    for task_name in task_arr:
-        try:
-            task = Task.objects.get(name=task_name)
-            Step.objects.create(job=job, task=task, ordering=order_mapping_final[task_name])
-        except ObjectDoesNotExist:
-            error_message = f"Task {task_name} does not exist in the database"
-            logging.error(error_message)
-            messages.append(error_message)
+        for task_name in task_arr:
+            try:
+                task = Task.objects.get(name=task_name)
+                Step.objects.create(job=job, task=task, ordering=order_mapping_final[task_name])
+            except ObjectDoesNotExist:
+                error_message = f"Task {task_name} does not exist in the database"
+                logging.error(error_message)
+                messages.append(error_message)
+            except IntegrityError as e:
+                error_message = f"Integrity error when creating step for task {task_name}: {e}"
+                logging.error(error_message)
+                messages.append(error_message)
+    except Exception as e:
+        error_message = f"Error creating or updating job {filename}: {e}"
+        logging.error(error_message)
+        messages.append(error_message)
+        return None
 
     messages.append(f"Job '{filename}' {keyword} with tasks: {', '.join(task_arr)}")
+    logging.info(f"Job '{filename}' {keyword} with tasks: {', '.join(task_arr)}")
     return job
 
-
 def set_step_order(order_mapping, step_source):
-    logging.info(f"Step Source: {step_source}")
-    for step_name, source_list in step_source.items():
-        if len(source_list) == 0:
-            order_mapping[step_name] = 0
-        else:
-            order = 0
-            for source in source_list:
-                if source in order_mapping:
-                    source_order = order_mapping[source]
-                    if order <= source_order:
-                        order = source_order + 1
+    logging.info(f"Setting step order. Step Source: {step_source}")
+    try:
+        for step_name, source_list in step_source.items():
+            if len(source_list) == 0:
+                order_mapping[step_name] = 0
+            else:
+                order = 0
+                for source in source_list:
+                    if source in order_mapping:
+                        source_order = order_mapping[source]
+                        if order <= source_order:
+                            order = source_order + 1
 
-            order_mapping[step_name] = order
+                order_mapping[step_name] = order
+    except Exception as e:
+        logging.error(f"Error setting step order: {e}")
 
     return order_mapping
