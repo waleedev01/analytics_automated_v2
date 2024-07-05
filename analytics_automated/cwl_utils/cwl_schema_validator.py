@@ -9,7 +9,7 @@ UNSUPPORTED_REQUIREMENTS = [
     'DockerRequirement',
 ]
 
-VALID_CWL_VERSIONS = ['v1.0', 'v1.1']
+VALID_CWL_VERSIONS = ['v1.0', 'v1.1','v1.2']
 VALID_CWL_CLASSES = ['CommandLineTool', 'Workflow']
 
 class CWLSchemaValidator:
