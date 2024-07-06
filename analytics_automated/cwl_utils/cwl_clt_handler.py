@@ -1,4 +1,5 @@
 import logging
+import re
 from ..models import Backend, Task, Parameter, Environment
 
 logger = logging.getLogger(__name__)
@@ -11,6 +12,8 @@ NOT_TASK_REQUIREMENTS = [
     {'class': 'ScatterFeatureRequirement'},
     {'class': 'SubworkflowFeatureRequirement'},
 ]
+dynamic_input_file_pattern = r"input.[^_]+.basename"
+
 
 def handle_env_variable_req(requirements: list) -> dict[str, str]:
     """
@@ -26,6 +29,7 @@ def handle_env_variable_req(requirements: list) -> dict[str, str]:
         logging.error(f"Error handling environment variable requirements: {e}")
     return {}
 
+
 def filter_workflow_req(requirements):
     """
     Remove requirement should not be inherited by task
@@ -39,7 +43,8 @@ def filter_workflow_req(requirements):
         logging.error(f"Error filtering workflow requirements: {e}")
         return []
 
-def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
+
+def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     def map_format(format_uri):
         EDAM_FORMAT_MAPPING = {
             "http://edamontology.org/format_1929": ".fasta",
@@ -109,6 +114,30 @@ def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
         except Exception as e:
             logging.error(f"Error updating dictionary with no conflict: {e}")
         return original
+
+    def dynamic_value_judge(input_li: list, max_out: int, value: str) -> str:
+        try:
+            if value == '$(runtime.tmpdir)':
+                return "$TMP"
+            # Check if the value matches the dynamic input file pattern
+            if re.search(dynamic_input_file_pattern, value):
+                parts = value.split('.')
+                if len(parts) <= 2:
+                    raise ValueError(f"Value '{value}' is not in the expected format 'inputs.input_field_name.basename'")
+                input_name = parts[1]
+                if not input_name in input_li:
+                    raise ValueError(f"Unexpected input field {input_name}, should be in {input_li}")
+                input_idx = input_li.index(input_name)
+                return f"$I{input_idx}"
+            # Handle Output
+            if "$O" in value:
+                if len(value) < 3 or not value[2].isdigit():
+                    raise ValueError(f"Missing Output index in {value}")
+                if value[2] > max_out:
+                    raise IndexError(f"Only {max_out} in the task, index {value[2]} does not exist")
+            return value
+        except Exception as e:
+            logging.error(f"Error generating dynamic output directory: {e}")
 
     logging.info(f"Parsing CWL command line tool: {name}")
     base_command = cwl_data.get("baseCommand")
@@ -185,6 +214,24 @@ def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
     else:
         executable_parts = [base_command]
 
+    max_out = len(task['outputs'])
+    task_name_li = [t['name'] for t in task['inputs'] if t['type'] == 'File']
+    for argument_item in arguments:
+        if isinstance(argument_item, dict):
+            argument = argument_item['valueFrom']
+        else:
+            argument = argument_item
+        if '/' in argument:
+            arg_li = argument.split('/')
+            for i in range(len(arg_li)):
+                arg_li[i] = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
+                                                value=arg_li[i])
+            executable_parts.append('/'.join(arg_li))
+        else:
+            executable_parts.append(dynamic_value_judge(input_li=task_name_li, max_out=max_out,
+                                                        value=argument))
+    del max_out, task_name_li
+
     in_globs = []
     position_parameter = 1
     position_input = 1
@@ -195,13 +242,20 @@ def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
             if position is None:
                 # Handle no "position" key in input_binding
                 position = len(executable_parts)
-            
+
             file_type = input_data['type']
             if file_type != 'File':
                 executable_parts.insert(position, f"$P{position_parameter}")
                 position_parameter += 1
             else:
-                executable_parts.insert(position, f"$I{position_input}")
+                insert_value = f"$I{position_input}"
+                input_prefix = input_data['input_binding'].get('prefix')
+                if input_prefix:
+                    if not input_data['input_binding'].get('separate', True):
+                        insert_value = f"{input_prefix}$I{position_input}"
+                    else:
+                        insert_value = f"{input_prefix} $I{position_input}"
+                executable_parts.insert(position, insert_value)
                 position_input += 1
                 if 'format' in input_data:
                     in_globs.append(map_format(input_data['format']))
@@ -225,6 +279,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
         task['executable'] = executable
         task['in_glob'] = in_glob
         task['out_glob'] = out_glob
+        print(f"Generated executable command for {task['name']}", executable)
     except Exception as e:
         logging.error(f"Error finalizing task details for {name}: {e}")
 
@@ -255,9 +310,9 @@ def save_task_to_db(task_data, messages):
             existing_task.stdout_glob = task_data['stdout_glob']
             existing_task.executable = task_data['executable']
             existing_task.requirements = task_data['requirements']
-            existing_task.incomplete_outputs_behaviour=task_data['incomplete_outputs_behaviour']
-            existing_task.custom_exit_status=task_data['custom_exit_status']
-            existing_task.custom_exit_behaviour=task_data['custom_exit_behaviour']
+            existing_task.incomplete_outputs_behaviour = task_data['incomplete_outputs_behaviour']
+            existing_task.custom_exit_status = task_data['custom_exit_status']
+            existing_task.custom_exit_behaviour = task_data['custom_exit_behaviour']
             existing_task.save()
 
             existing_parameter = Parameter.objects.filter(task=existing_task)
@@ -266,7 +321,7 @@ def save_task_to_db(task_data, messages):
             existing_environment_var = Environment.objects.filter(task=existing_task)
             for env_var in existing_environment_var:
                 env_var.delete()
-            
+
             message = f"Task updated successfully: {task_data['name']}"
             logging.info(message)
             task = existing_task
@@ -299,7 +354,7 @@ def save_task_to_db(task_data, messages):
                 if flag is None:
                     flag = input_data['name']
 
-                Parameter.objects.create(
+                p = Parameter.objects.create(
                     task=task,
                     flag=flag,
                     default=input_data.get('default'),
