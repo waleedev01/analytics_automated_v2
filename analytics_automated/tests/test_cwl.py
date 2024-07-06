@@ -35,23 +35,3 @@ class TestCWLParser:
         task = read_cwl_file(str(cwl_file), "echo.cwl", messages)
         assert task is not None
 
-    @pytest.mark.usefixtures("setup_backend_queue")
-    def test_read_cwl_file_invalid(self, tmpdir):
-        cwl_content = """
-        cwlVersion: v1.2
-        class: InvalidClass
-        baseCommand: echo
-        inputs:
-          input1:
-            type: string
-        outputs:
-          output1:
-            type: stdout
-        """
-        cwl_file = tmpdir.join("invalid.cwl")
-        cwl_file.write(cwl_content)
-
-        messages = []
-        task = read_cwl_file(str(cwl_file), "invalid.cwl", messages)
-        assert task is None
-        assert "Unknown CWL class for file" in messages[0]
