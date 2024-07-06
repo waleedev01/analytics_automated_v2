@@ -1,4 +1,5 @@
 import os
+import yaml
 from django.test import TestCase
 from analytics_automated.cwl_utils.cwl_parser import read_cwl_file
 from analytics_automated.models import Backend
@@ -17,12 +18,13 @@ class CWLParserTest(TestCase):
         """
         this_backend = add_fake_backend(name="local1", root_path="/tmp/")
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        filenames = ['task1', 'task2', 'task3', 'task4', 'workflow']
-        filenames = ['fake_workflow']
+        # filenames = ['task1', 'task2', 'task3', 'task4', 'workflow']
+        filenames = ['psipass22']
         message = []
         for filename in filenames:
-            file_path = os.path.join(base_dir, 'tests', 'example_cwl_file', f'{filename}.cwl')
+            file_path = os.path.join(base_dir, 'tests', 'example_cwl_files', f'{filename}.cwl')
             read_cwl_file(file_path, filename, message)
+            print(message)
         # result = read_cwl_file(file_path, filename, message)
         # self.assertIsNotNone(result)
 
@@ -35,9 +37,11 @@ class CWLValidatorTest(TestCase):
         Test the CWL schema validator.
         """
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        file_path = os.path.join(base_dir, 'tests', 'example_cwl_file', 's4pred_workflow.cwl')
+        file_path = os.path.join(base_dir, 'tests', 'example_cwl_files', 's4pred_workflow.cwl')
+        with open(file_path, 'r') as cwl_file:
+            cwl_data = yaml.safe_load(cwl_file)
         validator = CWLSchemaValidator()
-        is_valid, message = validator.validate_cwl(file_path)
+        is_valid, message = validator.validate_cwl(cwl_data)
         self.assertTrue(is_valid, message)
 
     def test_invalid_cwl(self):
@@ -45,7 +49,9 @@ class CWLValidatorTest(TestCase):
         Test the CWL schema validator with an invalid CWL file.
         """
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        file_path = os.path.join(base_dir, 'tests', 'example_cwl_file', 'invalid_workflow.cwl')
+        file_path = os.path.join(base_dir, 'tests', 'example_cwl_files', 'invalid_workflow.cwl')
+        with open(file_path, 'r') as cwl_file:
+            cwl_data = yaml.safe_load(cwl_file)
         validator = CWLSchemaValidator()
         is_valid, message = validator.validate_cwl(file_path)
         self.assertFalse(is_valid, message)

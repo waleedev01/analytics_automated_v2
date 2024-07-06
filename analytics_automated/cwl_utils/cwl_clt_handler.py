@@ -1,4 +1,5 @@
 import logging
+import json
 from ..models import Backend, Task, Parameter, Environment
 
 logger = logging.getLogger(__name__)
@@ -11,6 +12,14 @@ NOT_TASK_REQUIREMENTS = [
     {'class': 'ScatterFeatureRequirement'},
     {'class': 'SubworkflowFeatureRequirement'},
 ]
+FORMAT_MAP = r"analytics_automated/cwl_utils/format_uri_mapping.json"
+
+
+def load_format_mapping(file_path):
+    with open(file_path, 'r') as file:
+        format_mapping = json.load(file)
+    return format_mapping
+
 
 def handle_env_variable_req(requirements: list) -> dict[str, str]:
     """
@@ -26,6 +35,7 @@ def handle_env_variable_req(requirements: list) -> dict[str, str]:
         logging.error(f"Error handling environment variable requirements: {e}")
     return {}
 
+
 def filter_workflow_req(requirements):
     """
     Remove requirement should not be inherited by task
@@ -39,21 +49,11 @@ def filter_workflow_req(requirements):
         logging.error(f"Error filtering workflow requirements: {e}")
         return []
 
-def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
-    def map_format(format_uri):
-        EDAM_FORMAT_MAPPING = {
-            "http://edamontology.org/format_1929": ".fasta",
-            "http://edamontology.org/format_2330": ".fasta",
-            "http://edamontology.org/format_1930": ".fastq",
-            "http://edamontology.org/format_2572": ".bam",
-            "http://edamontology.org/format_3016": ".vcf",
-            "http://edamontology.org/format_3752": ".csv",
-            "http://edamontology.org/format_3464": ".json",
-            "http://edamontology.org/format_3916": ".mtx",
-            "http://edamontology.org/format_3310": ".ss",
-        }
+
+def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
+    def map_format(format_uri, mapping):
         logging.info(f"Mapping format URI: {format_uri}")
-        return EDAM_FORMAT_MAPPING.get(format_uri, ".input")
+        return mapping.get(format_uri, ".input")
 
     def parse_cwl_inputs(inputs: dict):
         logging.info(f"Parsing CWL inputs: {inputs}")
@@ -189,13 +189,14 @@ def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
     position_parameter = 1
     position_input = 1
     try:
+        format_mapping = load_format_mapping(FORMAT_MAP)
         for idx, input_data in enumerate(task['inputs']):
             position = input_data['input_binding'].get('position')
 
             if position is None:
                 # Handle no "position" key in input_binding
                 position = len(executable_parts)
-            
+
             file_type = input_data['type']
             if file_type != 'File':
                 executable_parts.insert(position, f"$P{position_parameter}")
@@ -204,7 +205,8 @@ def parse_cwl_clt(cwl_data, name, workflow_req:list =None):
                 executable_parts.insert(position, f"$I{position_input}")
                 position_input += 1
                 if 'format' in input_data:
-                    in_globs.append(map_format(input_data['format']))
+                    file_format = map_format(input_data['format'], mapping = format_mapping)
+                    in_globs.append(file_format)
                 else:
                     in_globs.append('.input')
     except Exception as e:
@@ -255,9 +257,9 @@ def save_task_to_db(task_data, messages):
             existing_task.stdout_glob = task_data['stdout_glob']
             existing_task.executable = task_data['executable']
             existing_task.requirements = task_data['requirements']
-            existing_task.incomplete_outputs_behaviour=task_data['incomplete_outputs_behaviour']
-            existing_task.custom_exit_status=task_data['custom_exit_status']
-            existing_task.custom_exit_behaviour=task_data['custom_exit_behaviour']
+            existing_task.incomplete_outputs_behaviour = task_data['incomplete_outputs_behaviour']
+            existing_task.custom_exit_status = task_data['custom_exit_status']
+            existing_task.custom_exit_behaviour = task_data['custom_exit_behaviour']
             existing_task.save()
 
             existing_parameter = Parameter.objects.filter(task=existing_task)
@@ -266,7 +268,7 @@ def save_task_to_db(task_data, messages):
             existing_environment_var = Environment.objects.filter(task=existing_task)
             for env_var in existing_environment_var:
                 env_var.delete()
-            
+
             message = f"Task updated successfully: {task_data['name']}"
             logging.info(message)
             task = existing_task

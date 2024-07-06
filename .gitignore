@@ -1,5 +1,6 @@
 *.py[cod]
 *.json
+!analytics_automated/cwl_utils/format_uri_mapping.json
 *~
 DEADJOE
 media/temp

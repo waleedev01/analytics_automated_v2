@@ -5,7 +5,7 @@ baseCommand: [/home/dbuchan/Code/psipred/bin/psipass2, /home/dbuchan/Code/psipre
 inputs:
   input_ss_file:
     type: File
-    format: "http://edamontology.org/format_3310"
+    format: "https://github.com/psipred/psipred/ss"
     inputBinding:
       position: 6
 
