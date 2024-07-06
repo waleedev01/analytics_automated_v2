@@ -1,4 +1,5 @@
 import os
+import yaml
 from django.test import TestCase
 from analytics_automated.cwl_utils.cwl_parser import read_cwl_file
 from analytics_automated.models import Backend
@@ -36,8 +37,10 @@ class CWLValidatorTest(TestCase):
         """
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         file_path = os.path.join(base_dir, 'tests', 'example_cwl_file', 's4pred_workflow.cwl')
+        with open(file_path, 'r') as cwl_file:
+            cwl_data = yaml.safe_load(cwl_file)
         validator = CWLSchemaValidator()
-        is_valid, message = validator.validate_cwl(file_path)
+        is_valid, message = validator.validate_cwl(cwl_data)
         self.assertTrue(is_valid, message)
 
     def test_invalid_cwl(self):
@@ -46,6 +49,8 @@ class CWLValidatorTest(TestCase):
         """
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         file_path = os.path.join(base_dir, 'tests', 'example_cwl_file', 'invalid_workflow.cwl')
+        with open(file_path, 'r') as cwl_file:
+            cwl_data = yaml.safe_load(cwl_file)
         validator = CWLSchemaValidator()
         is_valid, message = validator.validate_cwl(file_path)
         self.assertFalse(is_valid, message)
