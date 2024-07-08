@@ -5,6 +5,7 @@ cwlVersion: v1.2
 baseCommand: /home/dbuchan/Code/hspred/bin/split_pdb.pl
 arguments:
   - valueFrom: "$ID"
+    position: 1
   - valueFrom: "$(runtime.tmpdir)/$ID"
 
 inputs:

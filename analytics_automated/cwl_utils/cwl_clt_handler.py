@@ -124,7 +124,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
                 input_name = parts[1]
                 if not input_name in input_li:
                     raise ValueError(f"Unexpected input field {input_name}, should be in {input_li}")
-                input_idx = input_li.index(input_name)
+                input_idx = input_li.index(input_name) + 1
                 return f"$I{input_idx}"
             # Handle Output
             if "$O" in value:
@@ -211,24 +211,6 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     else:
         executable_parts = [base_command]
 
-    max_out = len(task['outputs'])
-    task_name_li = [t['name'] for t in task['inputs'] if t['type'] == 'File']
-    for argument_item in arguments:
-        if isinstance(argument_item, dict):
-            argument = argument_item['valueFrom']
-        else:
-            argument = argument_item
-        if '/' in argument:
-            arg_li = argument.split('/')
-            for i in range(len(arg_li)):
-                arg_li[i] = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
-                                                value=arg_li[i])
-            executable_parts.append('/'.join(arg_li))
-        else:
-            executable_parts.append(dynamic_value_judge(input_li=task_name_li, max_out=max_out,
-                                                        value=argument))
-    del max_out, task_name_li
-
     in_globs = []
     position_parameter = 1
     position_input = 1
@@ -262,6 +244,48 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
                     in_globs.append('.input')
     except Exception as e:
         logging.error(f"Error processing inputs for task {name}: {e}")
+    del position_parameter, position_input
+
+    try:
+        max_out = len(task['outputs'])
+        task_name_li = [t['name'] for t in task['inputs'] if t['type'] == 'File']
+        for argument_item in arguments:
+            if isinstance(argument_item, dict):
+                argument = argument_item['valueFrom']
+                argument_position = argument_item.get('position')
+                argument_prefix = argument_item.get('prefix')
+                argument_separate = argument_item.get('separate', True)
+                if '/' in argument:
+                    arg_li = argument.split('/')
+                    for i in range(len(arg_li)):
+                        arg_li[i] = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
+                                                        value=arg_li[i])
+                    argument_str = '/'.join(arg_li)
+                else:
+                    argument_str = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
+                                                                value=argument)
+                if not argument_separate and argument_prefix:
+                    argument_str = argument_prefix + argument_str
+                elif argument_separate and argument_prefix:
+                    argument_str = argument_prefix + " " + argument_str
+                if argument_position:
+                    executable_parts.insert(argument_position, argument_str)
+                else:
+                    executable_parts.append(argument_str)
+            else:
+                argument = argument_item
+                if '/' in argument:
+                    arg_li = argument.split('/')
+                    for i in range(len(arg_li)):
+                        arg_li[i] = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
+                                                        value=arg_li[i])
+                    executable_parts.append('/'.join(arg_li))
+                else:
+                    executable_parts.append(dynamic_value_judge(input_li=task_name_li, max_out=max_out,
+                                                                value=argument))
+    except Exception as e:
+        logging.error(f"Error processing arguments for task {name}: {e}")
+    del max_out, task_name_li
 
     try:
         executable_parts_str = [str(item) for item in executable_parts]
@@ -278,7 +302,6 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         task['executable'] = executable
         task['in_glob'] = in_glob
         task['out_glob'] = out_glob
-        print(f"Generated executable command for {task['name']}", executable)
     except Exception as e:
         logging.error(f"Error finalizing task details for {name}: {e}")
 
