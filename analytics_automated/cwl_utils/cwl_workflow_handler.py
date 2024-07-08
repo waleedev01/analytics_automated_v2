@@ -1,8 +1,8 @@
 import logging
 from django.db import IntegrityError
 from django.core.exceptions import ObjectDoesNotExist
-from ..models import Job, Step, Task
-from .cwl_clt_handler import parse_cwl_clt, save_task_to_db, check_existing_task_in_db
+from ..models import Job, Step, Task, Environment
+from .cwl_clt_handler import parse_cwl_clt, save_task_to_db, check_existing_task_in_db, handle_env_variable_req
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
         try:
             if isinstance(task_run, dict) and task_run.get("class") == "CommandLineTool":
                 logging.info(f"Parsing inline CommandLineTool for step: {step_name}")
-                task_data = parse_cwl_clt(task_run, step_name, workflow_req)
+                task_data = parse_cwl_clt(task_run, step_name)
                 task = save_task_to_db(task_data, messages)
                 if task:
                     task_details.append(task_data)
@@ -126,8 +126,23 @@ def parse_cwl_workflow(cwl_data, filename, messages):
 
         for task_name in task_arr:
             try:
+                # Create steps for the job
                 task = Task.objects.get(name=task_name)
                 Step.objects.create(job=job, task=task, ordering=order_mapping_final[task_name])
+
+                # Create inherited workflow environment variables for the task
+                if workflow_req:
+                    curr_env = Environment.objects.filter(task=task)
+                    env_dict = {}
+                    for env in curr_env:
+                        env_dict[env.env] = env.value
+
+                    inherited_req = filter_workflow_req(workflow_req)
+                    inherited_env_var_li = handle_env_variable_req(inherited_req)
+
+                    for key, value in inherited_env_var_li.items():
+                        if key not in env_dict:
+                            Environment.objects.create(task=task, env=key, value=value)
             except ObjectDoesNotExist:
                 error_message = f"Task {task_name} does not exist in the database"
                 logging.error(error_message)
@@ -165,3 +180,16 @@ def set_step_order(order_mapping, step_source):
         logging.error(f"Error setting step order: {e}")
 
     return order_mapping
+
+def filter_workflow_req(requirements):
+    """
+    Remove requirement should not be inherited by task
+    """
+    logging.info(f"Filtering workflow requirements: {requirements}")
+    try:
+        return list(filter(lambda req: req['class'] not in ['ScatterFeatureRequirement',
+                                                            'SubworkflowFeatureRequirement'],
+                           requirements))
+    except Exception as e:
+        logging.error(f"Error filtering workflow requirements: {e}")
+        return []
