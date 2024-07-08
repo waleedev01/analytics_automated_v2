@@ -297,6 +297,22 @@ def save_task_to_db(task_data, messages):
             backend=backend,
         ).first()
 
+        # Check if the environments is a dictionary or a list
+        environments = task_data['environments']
+        if isinstance(environments, dict):
+            environment_items = environments.items()
+        elif isinstance(environments, list):
+            env_dict = {}
+            for env in environments:
+                if not isinstance(env, dict):
+                    messages.append("Environment variables should be a dictionary")
+                    return None
+                env_dict[env.get('envName')] = env.get('envValue')
+            environment_items = env_dict.items()
+        else:
+            messages.append("Environment variables should be a dictionary or a list")
+            return None
+
         if existing_task:
             message = f"Found existing task with name: {existing_task}"
             logging.info(message)
@@ -365,7 +381,7 @@ def save_task_to_db(task_data, messages):
             except Exception as e:
                 logging.error(f"Error saving parameter for task {task_data['name']}: {e}")
 
-        for env_var_name, env_var_value in task_data['environments'].items():
+        for env_var_name, env_var_value in environment_items:
             try:
                 # TODO: There are values that dynamic generated during CWL execution,
                 #  should be handled during Celery execution. (For example: $(inputs.message))
