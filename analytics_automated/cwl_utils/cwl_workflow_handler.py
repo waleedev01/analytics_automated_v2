@@ -48,8 +48,10 @@ def parse_cwl_workflow(cwl_data, filename, messages):
             elif isinstance(task_run, str):
                 if not task_run.endswith(".cwl"):
                     task_run += ".cwl"
+                    
+                task_name = task_run.split(".cwl")[0]
 
-                task = check_existing_task_in_db(step_name, messages)
+                task = check_existing_task_in_db(task_name, messages)
                 if task:
                     step_source[step_name] = set(source_arr)
                 else:
