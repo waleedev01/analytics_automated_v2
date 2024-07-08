@@ -1,4 +1,7 @@
 import logging
+import os
+from cwltool.load_tool import fetch_document, resolve_and_validate_document
+from cwltool.context import LoadingContext
 
 logger = logging.getLogger(__name__)
 
@@ -9,16 +12,43 @@ UNSUPPORTED_REQUIREMENTS = [
     'DockerRequirement',
 ]
 
-VALID_CWL_VERSIONS = ['v1.0', 'v1.1','v1.2']
+VALID_CWL_VERSIONS = ['v1.0', 'v1.1', 'v1.2', 'v1.3']
 VALID_CWL_CLASSES = ['CommandLineTool', 'Workflow']
 
 class CWLSchemaValidator:
     """
     Validates the schema of CWL (Common Workflow Language) files.
     """
+    def __init__(self):
+        self.loading_context = LoadingContext()
+
     def validate_cwl(self, cwl_data):
         """
-        Validate the CWL data against the expected schema.
+        Validate the CWL file or data against the expected schema.
+
+        Args:
+            cwl_data (str or dict): The path to the CWL file or the CWL data to validate.
+
+        Returns:
+            tuple: (bool, str) indicating whether the validation was successful and a message.
+        """
+        workflowobj = None
+        if isinstance(cwl_data, str) and os.path.exists(cwl_data):
+            # Validate from a CWL file path
+            try:
+                self.loading_context, workflowobj, uri = fetch_document(cwl_data, self.loading_context)
+                self.loading_context, uri = resolve_and_validate_document(self.loading_context, workflowobj, uri, preprocess_only=False)
+                logging.info("CWL file is valid.")
+                return True, "CWL file is valid."
+            except Exception as e:
+                logging.error(f"Validation failed: {e}")
+                return False, f"Validation failed: {e}"
+
+        return self.manual_validation(cwl_data if isinstance(cwl_data, dict) else {})
+
+    def manual_validation(self, cwl_data):
+        """
+        Perform manual validation of CWL data.
 
         Args:
             cwl_data (dict): The CWL data to validate.
