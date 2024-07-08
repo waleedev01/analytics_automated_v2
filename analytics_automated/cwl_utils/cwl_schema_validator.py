@@ -68,6 +68,9 @@ class CWLSchemaValidator:
             if not inputs:
                 errors.append("Missing 'inputs' in CWL file")
             else:
+                if not isinstance(inputs, dict):
+                    errors.append("Please define inputs in CWL as dictionary")
+
                 for input_name, input_data in inputs.items():
                     if 'type' not in input_data:
                         errors.append(f"Missing 'type' for input '{input_name}'")
@@ -77,6 +80,9 @@ class CWLSchemaValidator:
             if not outputs:
                 errors.append("Missing 'outputs' in CWL file")
             else:
+                if not isinstance(outputs, dict):
+                    errors.append("Please define outputs in CWL as dictionary")
+                    
                 for output_name, output_data in outputs.items():
                     if 'type' not in output_data:
                         errors.append(f"Missing 'type' for output '{output_name}'")
