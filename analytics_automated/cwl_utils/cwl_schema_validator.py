@@ -131,6 +131,16 @@ class CWLSchemaValidator:
                     errors.append("Missing 'baseCommand' in CommandLineTool")
                 elif not isinstance(cwl_data.get('baseCommand'), (str, list)):
                     errors.append("'baseCommand' must be a string or list of strings")
+                
+                # Validate optional fields if present
+                if 'arguments' in cwl_data and not isinstance(cwl_data.get('arguments'), list):
+                    errors.append("'arguments' must be a list")
+                if 'stdin' in cwl_data and not isinstance(cwl_data.get('stdin'), str):
+                    errors.append("'stdin' must be a string")
+                if 'stdout' in cwl_data and not isinstance(cwl_data.get('stdout'), str):
+                    errors.append("'stdout' must be a string")
+                if 'stderr' in cwl_data and not isinstance(cwl_data.get('stderr'), str):
+                    errors.append("'stderr' must be a string")
 
             if errors:
                 raise ValueError("; ".join(errors))
