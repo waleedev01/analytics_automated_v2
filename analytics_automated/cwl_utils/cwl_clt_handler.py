@@ -124,7 +124,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
                 input_name = parts[1]
                 if not input_name in input_li:
                     raise ValueError(f"Unexpected input field {input_name}, should be in {input_li}")
-                input_idx = input_li.index(input_name)
+                input_idx = input_li.index(input_name) + 1
                 return f"$I{input_idx}"
             # Handle Output
             if "$O" in value:
