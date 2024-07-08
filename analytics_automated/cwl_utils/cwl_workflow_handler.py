@@ -65,7 +65,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
             messages.append(error_message)
             return
 
-        task_arr.append(step_name)
+        task_arr.append(task.name)
 
     # Check for circular dependencies
     for step_name, source_list in step_source.items():
