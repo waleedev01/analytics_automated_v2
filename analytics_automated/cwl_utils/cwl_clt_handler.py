@@ -37,21 +37,6 @@ def handle_env_variable_req(requirements: list) -> dict[str, str]:
         logging.error(f"Error handling environment variable requirements: {e}")
     return {}
 
-
-def filter_workflow_req(requirements):
-    """
-    Remove requirement should not be inherited by task
-    """
-    logging.info(f"Filtering workflow requirements: {requirements}")
-    try:
-        return list(filter(lambda req: req['class'] not in ['ScatterFeatureRequirement',
-                                                            'SubworkflowFeatureRequirement'],
-                           requirements))
-    except Exception as e:
-        logging.error(f"Error filtering workflow requirements: {e}")
-        return []
-
-
 def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     def map_format(format_uri, mapping):
         logging.info(f"Mapping format URI: {format_uri}")
@@ -98,19 +83,6 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         except Exception as e:
             logging.error(f"Error parsing CWL outputs: {e}")
         return parsed_outputs
-
-    def update_dict_with_no_conflict(original: dict, updates: dict) -> dict:
-        """
-        Update the task env variable with values from the workflow, without overwriting existing env variables.
-        """
-        logging.info(f"Updating dictionary with no conflict. Original: {original}, Updates: {updates}")
-        try:
-            for key, value in updates.items():
-                if key not in original:
-                    original[key] = value
-        except Exception as e:
-            logging.error(f"Error updating dictionary with no conflict: {e}")
-        return original
 
     def dynamic_value_judge(input_li: list, max_out: int, value: str) -> str:
         try:
@@ -193,13 +165,6 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         "custom_exit_status": custom_exit_status,
         "custom_exit_behaviour": custom_exit_behaviour,
     }
-
-    # Inherit Requirement from workflow
-    if workflow_req:
-        logging.info(f"Inheriting requirements from workflow: {workflow_req}")
-        inherited_req = filter_workflow_req(workflow_req)
-        inherited_env_var_li = handle_env_variable_req(inherited_req)
-        update_dict_with_no_conflict(original=task['environments'], updates=inherited_env_var_li)
 
     if stdout:
         task['stdout_glob'] = f".{stdout.split('.')[-1]}"
@@ -320,6 +285,22 @@ def save_task_to_db(task_data, messages):
             backend=backend,
         ).first()
 
+        # Check if the environments is a dictionary or a list
+        environments = task_data['environments']
+        if isinstance(environments, dict):
+            environment_items = environments.items()
+        elif isinstance(environments, list):
+            env_dict = {}
+            for env in environments:
+                if not isinstance(env, dict):
+                    messages.append("Environment variables should be a dictionary")
+                    return None
+                env_dict[env.get('envName')] = env.get('envValue')
+            environment_items = env_dict.items()
+        else:
+            messages.append("Environment variables should be a dictionary or a list")
+            return None
+
         if existing_task:
             message = f"Found existing task with name: {existing_task}"
             logging.info(message)
@@ -388,7 +369,7 @@ def save_task_to_db(task_data, messages):
             except Exception as e:
                 logging.error(f"Error saving parameter for task {task_data['name']}: {e}")
 
-        for env_var_name, env_var_value in task_data['environments'].items():
+        for env_var_name, env_var_value in environment_items:
             try:
                 # TODO: There are values that dynamic generated during CWL execution,
                 #  should be handled during Celery execution. (For example: $(inputs.message))
