@@ -102,7 +102,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
             if "$O" in value:
                 if len(value) < 3 or not value[2].isdigit():
                     raise ValueError(f"Missing Output index in {value}")
-                if value[2] > max_out:
+                if int(value[2]) > max_out:
                     raise IndexError(f"Only {max_out} in the task, index {value[2]} does not exist")
             return value
         except Exception as e:
