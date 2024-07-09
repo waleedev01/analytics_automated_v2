@@ -74,7 +74,7 @@ def get_data(s, uuid, current_step, in_globs):
             data = content
         s.input_data.close()
         local_glob = in_globs[0].lstrip(".")
-        data_dict[uuid+"."+local_glob] = data
+        data_dict[uuid+"."+local_glob] = data # where it gives uuid.input
     else:
         previous_step = current_step-1
         # print("DATA GETTING STEP ID"+str(previous_step))
@@ -495,6 +495,8 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
     in_globs, out_globs, iglob, oglob = build_file_globs(t)
     logger.info("GETTING PREVIOUS DATA:" + str(step_id))
     data_dict, previous_step = get_data(s, uuid, current_step, in_globs)
+    logger.info("IN_GLOB:" + str(in_globs))
+    logger.info("DATA_DICT:" + str(data_dict))
     logger.info("SETTING STDOUT GLOB:" + str(step_id))
     stdoglob = ".stdout"
     if t.stdout_glob is not None and len(t.stdout_glob) > 0:

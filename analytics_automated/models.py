@@ -5,13 +5,6 @@ from django.core.exceptions import ValidationError
 
 
 class TimeStampedModel(models.Model):
-    """
-    An abstract base class model that provides self-updating ``created``
-    and ``modified`` fields.
-
-    use with
-    class Flavor(TimeStampedModel):
-    """
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
@@ -20,8 +13,6 @@ class TimeStampedModel(models.Model):
 
 
 class QueueType(models.Model):
-    # Handling choices
-    # http://www.b-list.org/weblog/2007/nov/02/handle-choices-right-way/
     LOCALHOST = 1
     GRIDENGINE = 2
     R = 3
@@ -31,7 +22,6 @@ class QueueType(models.Model):
         (GRIDENGINE, "GridEngine"),
         (R, "R"),
         (PYTHON, "Python")
-        # add more when more backends are complete
     )
     name = models.CharField(max_length=512, null=True, blank=True, unique=True)
     execution_behaviour = models.IntegerField(null=False, blank=False,
@@ -41,41 +31,33 @@ class QueueType(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        app_label = 'analytics_automated'
 
-# Create your models here.
+
 class Backend(models.Model):
     name = models.CharField(max_length=64, unique=True, null=False,
                             blank=False, db_index=True)
     queue_type = models.ForeignKey(QueueType, on_delete=models.SET_NULL,
-                                   null=True,
-                                   related_name='queues')
-    # removing log in details as remote backend is NOT YET IMPLEMENTED
-    # ip = models.GenericIPAddressField(default="127.0.0.1", null=False,
-    #                                   blank=False)
-    # port = models.IntegerField(default=80, null=False, blank=False)
+                                   null=True, related_name='queues')
     root_path = models.CharField(max_length=256, null=False, default="/tmp/",
                                  blank=False)
 
     def __str__(self):
         return self.name
-# TODO:Not clear if the path to the processed file root should be in the
-# backend or in the task table. I guess it is more of a property of the
-# backend though This will likely expand lots as we understand the complexity
-# of the backend set ups. adding it to task allows tasks to write to different
-# places, the backend would be the default location in that instance.
+
+    class Meta:
+        app_label = 'analytics_automated'
 
 
 class BackendUser(models.Model):
-    # Handling choices
-    # http://www.b-list.org/weblog/2007/nov/02/handle-choices-right-way/
     LOW = 0
     MEDIUM = 1
     HIGH = 2
     PRIORITY_CHOICES = (
         (LOW, "low"),
         (MEDIUM, "medium"),
-        (HIGH, "high"),
-        # add more when more backends are complete
+        (HIGH, "high")
     )
     backend = models.ForeignKey(Backend, on_delete=models.SET_NULL, null=True,
                                 related_name='users')
@@ -87,19 +69,23 @@ class BackendUser(models.Model):
                                    choices=PRIORITY_CHOICES,
                                    default=MEDIUM)
 
+    class Meta:
+        app_label = 'analytics_automated'
+
 
 class Job(models.Model):
     name = models.CharField(max_length=64, unique=True, null=False,
                             blank=False, db_index=True)
     runnable = models.BooleanField(default=False, blank=False)
+    requirements = models.JSONField(null=True, blank=True)  # New field for requirements
+    cwl_version = models.CharField(max_length=32, null=True, blank=True)  # New field for CWL version
 
     def __str__(self):
         return self.name
 
     class Meta:
         ordering = ('pk', )
-# TODO: set runnable true if all it's tasks exists, set false if a task
-# needed has been deleted
+        app_label = 'analytics_automated'
 
 
 class ValidatorTypes(models.Model):
@@ -108,9 +94,11 @@ class ValidatorTypes(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        app_label = 'analytics_automated'
+
 
 class Validator(models.Model):
-
     def validate_re_string(value):
         is_valid = False
         try:
@@ -130,12 +118,14 @@ class Validator(models.Model):
     def __str__(self):
         return self.validation_type.name
 
+    class Meta:
+        app_label = 'analytics_automated'
+
 
 class Task(models.Model):
-    CONTINUE = 0   # The task should continue to the next step
-    TERMINATE = 1  # The task should terminate
-    FAIL = 3       # The task should terminate and raise an error
-    #                the job has stopped
+    CONTINUE = 0
+    TERMINATE = 1
+    FAIL = 3
     COMPLETION_CHOICES = (
         (CONTINUE, "Continue Running Tasks"),
         (TERMINATE, "Stop Running Tasks (do not raise error)"),
@@ -157,14 +147,26 @@ class Task(models.Model):
                                           blank=True)
     custom_exit_behaviour = models.IntegerField(null=True, blank=True,
                                                 choices=COMPLETION_CHOICES,)
+    requirements = models.JSONField(null=True, blank=True)  # New field for requirements
+    hints = models.JSONField(null=True, blank=True)  # New field for hints
+    arguments = models.JSONField(null=True, blank=True)  # New field for arguments
+    stdin = models.CharField(max_length=256, null=True, blank=True)
+    stdout = models.CharField(max_length=256, null=True, blank=True)
+    stderr = models.CharField(max_length=256, null=True, blank=True)
+    success_codes = models.JSONField(null=True, blank=True)  # New field for success codes
+    temporary_fail_codes = models.JSONField(null=True, blank=True)  # New field for temporary fail codes
+    permanent_fail_codes = models.JSONField(null=True, blank=True)  # New field for permanent fail codes
+    label = models.CharField(max_length=256, null=True, blank=True)
+    doc = models.TextField(null=True, blank=True)
+    shell_quote = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
-# TODO: deleting a task should set any jobs to runnable false where it is
-# missing
+
+    class Meta:
+        app_label = 'analytics_automated'
 
 
-#Attach to a task some config information if the user wants to add this
 class Configuration(models.Model):
     SOFTWARE = 0
     DATASET = 1
@@ -187,6 +189,9 @@ class Configuration(models.Model):
         d = dict(Configuration.CONFIGURATION_CHOICES)
         return(d[self.type])
 
+    class Meta:
+        app_label = 'analytics_automated'
+
 
 class Step(models.Model):
     job = models.ForeignKey(Job, related_name='steps',
@@ -200,6 +205,7 @@ class Step(models.Model):
 
     class Meta:
         ordering = ['ordering']
+        app_label = 'analytics_automated'
 
 
 class Environment(models.Model):
@@ -210,6 +216,9 @@ class Environment(models.Model):
 
     def __str__(self):
         return self.env
+
+    class Meta:
+        app_label = 'analytics_automated'
 
 
 class Parameter(models.Model):
@@ -222,22 +231,25 @@ class Parameter(models.Model):
                                   blank=False)
     spacing = models.BooleanField(default=True, blank=False)
     switchless = models.BooleanField(default=False, blank=False)
+    secondary_files = models.JSONField(null=True, blank=True)  # New field for secondary files
 
     def __str__(self):
         return self.flag
 
     def save(self, *args, **kwargs):
-        self.rest_alias = str(self.task)+"_"+self.rest_alias
+        self.rest_alias = str(self.task) + "_" + self.rest_alias
         super(Parameter, self).save(*args, **kwargs)
+
+    class Meta:
+        app_label = 'analytics_automated'
 
 
 class Batch(models.Model):
-    SUBMITTED = 0  # a job has been submitted but no worker has claimed it
-    RUNNING = 1    # job submitted and worker has claimed it
-    COMPLETE = 2   # All tasks complete and results available
-    ERROR = 3      # A task has failed, the job has stopped
-    CRASH = 4      # Something crashed, went away of segfaulted in some way
-    #                the job has stopped
+    SUBMITTED = 0
+    RUNNING = 1
+    COMPLETE = 2
+    ERROR = 3
+    CRASH = 4
     STATUS_CHOICES = (
         (SUBMITTED, "Submitted"),
         (RUNNING, "Running"),
@@ -263,14 +275,16 @@ class Batch(models.Model):
         d = dict(Batch.STATUS_CHOICES)
         return(d[self.status])
 
+    class Meta:
+        app_label = 'analytics_automated'
+
 
 class Submission(TimeStampedModel):
-    SUBMITTED = 0  # a job has been submitted but no worker has claimed it
-    RUNNING = 1    # job submitted and worker has claimed it
-    COMPLETE = 2   # All tasks complete and results available
-    ERROR = 3      # A task has failed, the job has stopped
-    CRASH = 4      # Something crashed, went away of segfaulted in some way
-    #                the job has stopped
+    SUBMITTED = 0
+    RUNNING = 1
+    COMPLETE = 2
+    ERROR = 3
+    CRASH = 4
     STATUS_CHOICES = (
         (SUBMITTED, "Submitted"),
         (RUNNING, "Running"),
@@ -288,7 +302,7 @@ class Submission(TimeStampedModel):
         (HIGH, "High"),
     )
 
-    job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True,)
+    job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True)
     submission_name = models.CharField(max_length=64, null=False, blank=False)
     UUID = models.CharField(max_length=64, unique=True, null=True, blank=False,
                             db_index=True)
@@ -320,9 +334,6 @@ class Submission(TimeStampedModel):
 
     @transaction.atomic
     def update_submission_state(s, claim, new_status, step, id, message, host):
-        """
-            Updates the Submission object with some book keeping
-        """
         s.claimed = claim
         s.status = new_status
         s.last_message = message
@@ -335,8 +346,10 @@ class Submission(TimeStampedModel):
                                    message=message)
         m.save()
 
+    class Meta:
+        app_label = 'analytics_automated'
 
-# Store results data
+
 class Result(TimeStampedModel):
     submission = models.ForeignKey(Submission, related_name='results',
                                    on_delete=models.CASCADE)
@@ -351,6 +364,9 @@ class Result(TimeStampedModel):
     def __str__(self):
         return self.name
 
+    class Meta:
+        app_label = 'analytics_automated'
+
 
 # keep a timestamped history of all the messages sent for this jobs
 class Message(TimeStampedModel):
@@ -362,3 +378,6 @@ class Message(TimeStampedModel):
 
     def __str__(self):
         return str(self.pk)
+
+    class Meta:
+        app_label = 'analytics_automated'

@@ -1,5 +1,6 @@
 *.py[cod]
 *.json
+!analytics_automated/cwl_utils/format_uri_mapping.json
 *~
 DEADJOE
 media/temp
@@ -20,3 +21,4 @@ analytics_automated_project/settings/production.py
 analytics_automated_project/settings/staging_secrets.json
 analytics_automated_project/settings/production_secrets.json
 analytics_automated_project/settings/base_secrets.json
+.idea

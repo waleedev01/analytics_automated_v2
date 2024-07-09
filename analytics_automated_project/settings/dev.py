@@ -8,6 +8,7 @@ from .base import *
 DEV_SECRETS_PATH = SETTINGS_PATH.child("dev_secrets.json")
 with open(os.path.join(DEV_SECRETS_PATH)) as f: secrets = json.loads(f.read())
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
