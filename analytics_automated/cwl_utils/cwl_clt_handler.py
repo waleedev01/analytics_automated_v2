@@ -16,6 +16,10 @@ NOT_TASK_REQUIREMENTS = [
 dynamic_input_file_pattern = r"input.[^_]+.basename"
 FORMAT_MAP = r"analytics_automated/cwl_utils/format_uri_mapping.json"
 
+# Feature Need to be discussed
+ADD_INPUT_FIELD = True
+SPECIAL_ARGUMENT = r'$TMP/$ID'
+
 
 def load_format_mapping(file_path):
     with open(file_path, 'r') as file:
@@ -211,41 +215,6 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     else:
         executable_parts = [base_command]
 
-    in_globs = []
-    position_parameter = 1
-    position_input = 1
-    try:
-        format_mapping = load_format_mapping(FORMAT_MAP)
-        for idx, input_data in enumerate(task['inputs']):
-            position = input_data['input_binding'].get('position')
-
-            if position is None:
-                # Handle no "position" key in input_binding
-                position = len(executable_parts)
-
-            file_type = input_data['type']
-            if file_type != 'File':
-                executable_parts.insert(position, f"$P{position_parameter}")
-                position_parameter += 1
-            else:
-                insert_value = f"$I{position_input}"
-                input_prefix = input_data['input_binding'].get('prefix')
-                if input_prefix:
-                    if not input_data['input_binding'].get('separate', True):
-                        insert_value = f"{input_prefix}$I{position_input}"
-                    else:
-                        insert_value = f"{input_prefix} $I{position_input}"
-                executable_parts.insert(position, insert_value)
-                position_input += 1
-                if 'format' in input_data:
-                    file_format = map_format(input_data['format'], mapping=format_mapping)
-                    in_globs.append(file_format)
-                else:
-                    in_globs.append('.input')
-    except Exception as e:
-        logging.error(f"Error processing inputs for task {name}: {e}")
-    del position_parameter, position_input
-
     try:
         max_out = len(task['outputs'])
         task_name_li = [t['name'] for t in task['inputs'] if t['type'] == 'File']
@@ -261,6 +230,8 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
                         arg_li[i] = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
                                                         value=arg_li[i])
                     argument_str = '/'.join(arg_li)
+                    if SPECIAL_ARGUMENT in argument_str:
+                        ADD_INPUT_FIELD = False
                 else:
                     argument_str = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
                                                                 value=argument)
@@ -286,6 +257,41 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     except Exception as e:
         logging.error(f"Error processing arguments for task {name}: {e}")
     del max_out, task_name_li
+
+    in_globs = []
+    position_parameter = 1
+    position_input = 1
+    try:
+        format_mapping = load_format_mapping(FORMAT_MAP)
+        for idx, input_data in enumerate(task['inputs']):
+            position = input_data['input_binding'].get('position')
+
+            if position is None:
+                # Handle no "position" key in input_binding
+                position = len(executable_parts)
+
+            file_type = input_data['type']
+            if file_type != 'File':
+                executable_parts.insert(position, f"$P{position_parameter}")
+                position_parameter += 1
+            elif ADD_INPUT_FIELD:
+                insert_value = f"$I{position_input}"
+                input_prefix = input_data['input_binding'].get('prefix')
+                if input_prefix:
+                    if not input_data['input_binding'].get('separate', True):
+                        insert_value = f"{input_prefix}$I{position_input}"
+                    else:
+                        insert_value = f"{input_prefix} $I{position_input}"
+                executable_parts.insert(position, insert_value)
+                position_input += 1
+                if 'format' in input_data:
+                    file_format = map_format(input_data['format'], mapping=format_mapping)
+                    in_globs.append(file_format)
+                else:
+                    in_globs.append('.input')
+    except Exception as e:
+        logging.error(f"Error processing inputs for task {name}: {e}")
+    del position_parameter, position_input
 
     try:
         executable_parts_str = [str(item) for item in executable_parts]
