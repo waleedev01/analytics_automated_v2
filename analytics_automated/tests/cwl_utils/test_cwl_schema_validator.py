@@ -19,6 +19,10 @@ class TestCWLSchemaValidator(unittest.TestCase):
         filepath = os.path.join(self.test_files_dir, filename)
         with open(filepath, 'r') as file:
             return yaml.safe_load(file)
+    
+    def get_cwl_file_path(self, filename):
+        """Get the path to a CWL file in the fixtures directory."""
+        return os.path.join(self.test_files_dir, filename)
 
     def test_validate_cwl_valid_workflow(self):
         """Test validation of a valid CWL workflow."""
@@ -26,6 +30,48 @@ class TestCWLSchemaValidator(unittest.TestCase):
         is_valid, message = self.validator.validate_cwl(valid_workflow)
         self.assertTrue(is_valid)
         self.assertEqual(message, "CWL file is valid.")
+    
+    def test_validate_cwl_valid_workflow_from_file(self):
+        """Test validation of a valid CWL workflow from a file path."""
+        valid_workflow_path = self.get_cwl_file_path('valid_workflow.cwl')
+        is_valid, message = self.validator.validate_cwl(valid_workflow_path)
+        self.assertTrue(is_valid)
+        self.assertEqual(message, "CWL file is valid.")
+
+    def test_validate_cwl_valid_workflow_with_optional_fields(self):
+        """Test validation of a valid CWL workflow with optional fields."""
+        valid_workflow = self.load_cwl_file('valid_workflow_with_optional_fields.cwl')
+        is_valid, message = self.validator.validate_cwl(valid_workflow)
+        self.assertTrue(is_valid)
+        self.assertEqual(message, "CWL file is valid.")
+
+    def test_validate_cwl_invalid_arguments(self):
+        """Test validation of a CWL CommandLineTool with invalid 'arguments'."""
+        invalid_workflow = self.load_cwl_file('invalid_workflow_invalid_arguments.cwl')
+        is_valid, message = self.validator.validate_cwl(invalid_workflow)
+        self.assertFalse(is_valid)
+        self.assertIn("'arguments' must be a list", message)
+
+    def test_validate_cwl_invalid_stdin(self):
+        """Test validation of a CWL CommandLineTool with invalid 'stdin'."""
+        invalid_workflow = self.load_cwl_file('invalid_workflow_invalid_stdin.cwl')
+        is_valid, message = self.validator.validate_cwl(invalid_workflow)
+        self.assertFalse(is_valid)
+        self.assertIn("'stdin' must be a string", message)
+
+    def test_validate_cwl_invalid_stdout(self):
+        """Test validation of a CWL CommandLineTool with invalid 'stdout'."""
+        invalid_workflow = self.load_cwl_file('invalid_workflow_invalid_stdout.cwl')
+        is_valid, message = self.validator.validate_cwl(invalid_workflow)
+        self.assertFalse(is_valid)
+        self.assertIn("'stdout' must be a string", message)
+
+    def test_validate_cwl_invalid_stderr(self):
+        """Test validation of a CWL CommandLineTool with invalid 'stderr'."""
+        invalid_workflow = self.load_cwl_file('invalid_workflow_invalid_stderr.cwl')
+        is_valid, message = self.validator.validate_cwl(invalid_workflow)
+        self.assertFalse(is_valid)
+        self.assertIn("'stderr' must be a string", message)
 
     def test_validate_cwl_missing_version(self):
         """Test validation of a CWL file missing 'cwlVersion'."""
@@ -168,9 +214,12 @@ class TestCWLSchemaValidator(unittest.TestCase):
         self.assertFalse(is_valid)
         self.assertIn("Missing 'baseCommand' in CommandLineTool", message)
 
-
-
-
+    def test_validate_cwl_invalid_file_path(self):
+        """Test validation of an invalid CWL file path."""
+        invalid_workflow_path = self.get_cwl_file_path('non_existent_file.cwl')
+        is_valid, message = self.validator.validate_cwl(invalid_workflow_path)
+        self.assertFalse(is_valid)
+        self.assertIn("Validation failed", message)
 
 if __name__ == '__main__':
     unittest.main()
