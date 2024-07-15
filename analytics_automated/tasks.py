@@ -4,6 +4,8 @@ import time
 import socket
 import uuid
 import pprint
+import os
+import subprocess
 from commandRunner.localRunner import *
 from commandRunner.rRunner import *
 from commandRunner.pythonRunner import *
@@ -674,3 +676,102 @@ def chord_end(self, uuid, step_id, current_step):
                                            socket.gethostname())
     Batch.update_batch_state(s.batch, state)
     __handle_batch_email(s)
+
+
+
+# @shared_task
+# def check_software_requirements(requirements):
+#     try:
+#         for req in requirements:
+#             package_name = req['package']
+#             required_version = req['version']
+
+#             # Use subprocess or another method to check installed package version
+#             installed_version = subprocess.check_output(['pip', 'show', package_name]).decode('utf-8')
+#             installed_version = json.loads(installed_version)
+#             if installed_version['version'] != required_version:
+#                 raise Exception(f"Package {package_name} version {required_version} is required but {installed_version['version']} is installed.")
+#     except Exception as e:
+#         return str(e)
+#     return "SoftwareRequirement check passed successfully"
+
+@shared_task(bind=True, default_retry_delay=5 * 60, rate_limit=40, max_retries=5)
+def prepare_initial_workdir(self, task_id, initial_workdir):
+    """
+    Task to prepare the initial working directory based on InitialWorkDirRequirement.
+    
+    Args:
+    - task_id (str): Unique identifier of the task.
+    - initial_workdir (list): List of dictionaries specifying files and directories to create.
+                              Example format: [{"class": "File", "path": "/path/to/file.txt"}]
+    """
+    try:
+        for entry in initial_workdir:
+            if entry.get("class") == "File":
+                file_path = entry.get("path")
+                if not os.path.exists(file_path):
+                    # Create the file if it doesn't exist
+                    open(file_path, 'a').close()  # Create an empty file
+                logger.info(f"Created file: {file_path}")
+            elif entry.get("class") == "Directory":
+                dir_path = entry.get("path")
+                if not os.path.exists(dir_path):
+                    # Create the directory if it doesn't exist
+                    os.makedirs(dir_path)
+                logger.info(f"Created directory: {dir_path}")
+        
+        # Log success or completion message
+        logger.info(f"Initial workdir preparation completed for task ID: {task_id}")
+        
+    except Exception as e:
+        # Log and handle exceptions
+        logger.error(f"Error preparing initial workdir for task ID {task_id}: {str(e)}")
+        raise
+
+
+@shared_task(bind=True, default_retry_delay=5 * 60, rate_limit=40, max_retries=5)
+def check_software_requirements(self, task_id, software_requirements):
+    """
+    Task to check if software requirements are met in the execution environment.
+
+    Args:
+    - task_id (str): Unique identifier of the task.
+    - software_requirements (list): List of dictionaries specifying software requirements.
+                                    Example format: [{"package": "samtools", "version": "1.10"}]
+    """
+    try:
+        for req in software_requirements:
+            package = req.get("package")
+            required_version = req.get("version")
+
+            # Check if package is installed
+            try:
+                installed_version = subprocess.check_output([package, "--version"]).decode().strip()
+            except subprocess.CalledProcessError:
+                raise RuntimeError(f"{package} is not installed.")
+
+            # Check if installed version matches required version
+            if not check_version_compatibility(installed_version, required_version):
+                raise RuntimeError(f"{package} version {installed_version} does not match required version {required_version}.")
+
+        logger.info(f"Software requirements check completed successfully for task ID: {task_id}")
+
+    except Exception as e:
+        logger.error(f"Error checking software requirements for task ID {task_id}: {str(e)}")
+        raise
+
+def check_version_compatibility(installed_version, required_version):
+    """
+    Function to check if installed version meets the required version.
+
+    Args:
+    - installed_version (str): Installed version of the software package.
+    - required_version (str): Required version specified in the CWL.
+
+    Returns:
+    - bool: True if installed version meets the required version, False otherwise.
+    """
+    # Implement version comparison logic based on your requirements
+    # Example: For semantic versioning comparison
+    # Return True if installed_version >= required_version
+    return True  # Placeholder, implement your logic here
