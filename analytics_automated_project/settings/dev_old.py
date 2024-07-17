@@ -26,9 +26,23 @@ CORS_ORIGIN_WHITELIST = (
 
 SECRET_KEY = get_secret("SECRET_KEY", secrets)
 
-DEBUG = False
+DEBUG = True
 
-INSTALLED_APPS = INSTALLED_APPS + ('debug_toolbar',)
+INSTALLED_APPS = (
+    'bootstrap_admin',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django_celery_beat',
+    'analytics_automated',
+    'rest_framework',
+    'corsheaders',
+    'smuggler',
+    'debug_toolbar',
+)
 
 DEBUG_TOOLBAR_CONFIG = {
     'JQUERY_URL': "/static/js/jquery.min.js",
