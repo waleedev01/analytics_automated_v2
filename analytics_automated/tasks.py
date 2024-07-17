@@ -514,6 +514,9 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
     if t.stdout_glob is not None and len(t.stdout_glob) > 0:
         stdoglob = "."+t.stdout_glob.lstrip(".")
 
+    #handle the task initial_workdir_requirement
+    handle_initial_workdir_requirement(t.requirements,str(step_id),t.backend.root_path)
+    
     # update submission tracking to note that this is running
     logger.info("SETTING RUN FLAG:" + str(step_id))
     with transaction.atomic():
@@ -754,7 +757,7 @@ def chord_end(self, uuid, step_id, current_step):
 #         raise
 
 @shared_task
-def handle_initial_workdir_requirement(requirements, workdir):
+def handle_initial_workdir_requirement(requirements,step_id):
     initial_workdir_requirement = next((req for req in requirements if req['class'] == 'InitialWorkDirRequirement'), None)
     
     if initial_workdir_requirement:
@@ -765,8 +768,8 @@ def handle_initial_workdir_requirement(requirements, workdir):
                 src = item['location']
                 dst = os.path.join(workdir, os.path.basename(src))
                 shutil.copy(src, dst)
-    
-    return f"Initial workdir setup completed in {workdir}"
+
+    logger.info("Step id "+ step_id + ":Initial workdir setup completed")
 
 @shared_task
 def check_software_requirement(requirements):
