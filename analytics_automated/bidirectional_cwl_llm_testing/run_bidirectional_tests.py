@@ -46,9 +46,13 @@ def run_pipeline():
     except Exception as e:
         logging.error(f"Pipeline failed: {e}")
 
-    write_results_to_csv(results, 'analytics_automated/bidirectional_cwl_llm_testing/pipeline_results.csv')
+    write_results_to_csv(results, 'analytics_automated/bidirectional_cwl_llm_testing/validation_results/validation_results.csv')
 
 def write_results_to_csv(results, csv_path):
+    total_matches = 0
+    total_errors = 0
+    total_partial_matches = 0
+
     with open(csv_path, 'w', newline='') as csvfile:
         fieldnames = [
             'file_name', 'step', 'result',
@@ -88,6 +92,13 @@ def write_results_to_csv(results, csv_path):
                 logging.debug(f"Full error match: {matches_error_count}")
                 logging.debug(f"Partial error match: {matches_partial_error}")
 
+                if matches_valid_count:
+                    total_matches += 1
+                if matches_error_count:
+                    total_errors += 1
+                if matches_partial_error:
+                    total_partial_matches += 1
+
                 writer.writerow({
                     'file_name': result.get('file_name'),
                     'step': result.get('step'),
@@ -119,6 +130,16 @@ def write_results_to_csv(results, csv_path):
                     'expected_str': result.get('expected_str'),
                     'got_str': result.get('got_str')
                 })
+
+    logging.info(f"Total matches: {total_matches}")
+    logging.info(f"Total errors: {total_errors}")
+    logging.info(f"Total partial matches: {total_partial_matches}")
+
+    # Write overall stats to a summary file
+    with open(csv_path.replace('.csv', '_summary.txt'), 'w') as summary_file:
+        summary_file.write(f"Total matches: {total_matches}\n")
+        summary_file.write(f"Total errors: {total_errors}\n")
+        summary_file.write(f"Total partial matches: {total_partial_matches}\n")
 
 if __name__ == "__main__":
     run_pipeline()

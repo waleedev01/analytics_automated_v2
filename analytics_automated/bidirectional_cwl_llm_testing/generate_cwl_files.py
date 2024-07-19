@@ -36,7 +36,7 @@ def generate_cwl_file(prompt):
         logging.error(f"Error generating CWL file: {e}")
         raise
 
-def generate_cwl_files(output_dir, num_files=10):
+def generate_cwl_files(output_dir, num_files):
     os.makedirs(output_dir, exist_ok=True)
 
     prompts = [
