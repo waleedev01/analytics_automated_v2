@@ -1,6 +1,6 @@
 cwlVersion: v1.0
 class: CommandLineTool
-baseCommand: cat
+baseCommand: echo
 
 requirements:
   - class: InitialWorkDirRequirement
@@ -18,8 +18,11 @@ inputs:
     type: File
     inputBinding:
       position: 1
+      prefix: "--input-file"
 
 outputs:
-  output:
+  output_file:
     type: stdout
+
+stdout: /home/gty/vv-project/celery-requirement/analytics_automated_v2/analytics_automated/output/output.txt
 
