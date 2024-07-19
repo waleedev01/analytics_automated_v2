@@ -1,1 +1,1 @@
-{"file_name": "cwl_file_1.cwl", "step": "validation", "result": "failure", "message": "Expected: {'is_valid': True, 'error': None}, Got: {'is_valid': False, 'error': 'Validation failed: Missing 'cwlVersion' in CWL file; Missing 'class' in CWL file; Missing 'inputs' in CWL file; Missing 'outputs' in CWL file'}"}
+{"file_name": "cwl_file_1.cwl", "step": "validation", "result": "failure", "message": "Expected: {'is_valid': True, 'error': None}, Got: {'is_valid': False, 'error': 'Validation failed: Missing 'baseCommand' in CommandLineTool'}"}

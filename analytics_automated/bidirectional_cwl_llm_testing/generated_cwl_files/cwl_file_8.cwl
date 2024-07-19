@@ -1,21 +1,10 @@
 cwlVersion: v1.0
 class: CommandLineTool
-
 inputs:
-  input_file:
-    type: File
-    inputBinding:
-      position: 1
-
+  - id: input_file
+    type: String
 outputs:
-  output_file:
+  - id: output_file
     type: File
-    outputBinding:
-      glob: $(inputs.input_file.basename)
-
 baseCommand: echo
-
-requirements:
-  InlineJavascriptRequirement: {}
-
-stdout: output.txt
+arguments: ["Hello, world!"]

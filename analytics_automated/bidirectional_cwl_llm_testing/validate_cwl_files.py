@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import yaml
 from analytics_automated.cwl_utils.cwl_schema_validator import CWLSchemaValidator
 
 # Setup logging
@@ -17,7 +18,7 @@ def validate_cwl_files(input_dir, output_dir):
             expected_path = os.path.join(input_dir, f"{file_name}.expected")
             
             with open(file_path, 'r') as file:
-                cwl_data = file.read()
+                cwl_data = yaml.safe_load(file)
 
             with open(expected_path, 'r') as file:
                 expected_result = json.load(file)

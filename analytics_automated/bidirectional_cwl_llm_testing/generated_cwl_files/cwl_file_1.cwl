@@ -2,14 +2,14 @@ cwlVersion: v1.2
 class: CommandLineTool
 
 inputs:
-  input_file:
+  fastq_file:
     type: File
     inputBinding:
       position: 1
       prefix: --input
 
 outputs:
-  output_file:
+  trimmed_fastq_file:
     type: File
     outputBinding:
-      glob: output.txt
+      glob: output/*.fastq

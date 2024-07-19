@@ -1,6 +1,8 @@
 {
-    "unsupportedVersion": "1.0.0",
+    "cwlVersion": "1.3",
+    "class": "CommandLineTool",
     "inputs": [],
     "outputs": [],
-    "steps": []
+    "baseCommand": "echo",
+    "stdout": "output.txt"
 }

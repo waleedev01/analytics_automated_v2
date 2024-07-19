@@ -1,5 +1,8 @@
 cwlVersion: v1.0
 class: CommandLineTool
+requirements:
+  - class: InvalidRequirement
+    someInvalidField: invalidValue
 inputs:
   input_file:
     type: File
@@ -10,10 +13,4 @@ outputs:
     type: File
     outputBinding:
       glob: output.txt
-requirements:
-  - class: NonExistentRequirement
-    foo: bar
-baseCommand: echo
-arguments:
-  - valueFrom: $(inputs.input_file.path)
-    prefix: "Input file: "
+baseCommand: cat

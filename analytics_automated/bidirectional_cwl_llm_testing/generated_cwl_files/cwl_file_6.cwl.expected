@@ -1,1 +1,1 @@
-{"is_valid": false, "error": "Validation failed: Unsupported CWL version: v1.3"}
+{"is_valid": false, "error": "Validation failed: Unsupported CWL version: 1.0.0"}

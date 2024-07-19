@@ -1,21 +1,18 @@
 cwlVersion: v1.0
 class: CommandLineTool
-
 baseCommand: echo
-
 outputs:
-  output_file:
+  - id: output_message
     type: stdout
 
 requirements:
-  InlineJavascriptRequirement: {}
+  - class: InlineJavascriptRequirement
 
-inputs:
-  input_file:
-    type: File
+label: Echo tool
+doc: |
+  Simple tool to echo a message
+hints: []
 
-outputs:
-  output_file:
-    type: File
-    outputBinding:
-      glob: "output.txt"
+arguments: []
+
+stdout: output_message

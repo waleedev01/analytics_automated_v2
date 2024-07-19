@@ -40,15 +40,15 @@ def generate_cwl_files(output_dir, num_files=10):
         ("Generate an invalid CWL file with missing 'outputs'.", 
          {"is_valid": False, "error": "Validation failed: Missing 'outputs' in CWL file"}),
         ("Generate an invalid CWL file with unsupported 'cwlVersion'.", 
-         {"is_valid": False, "error": "Validation failed: Unsupported CWL version: v1.3"}),
+         {"is_valid": False, "error": "Validation failed: Unsupported CWL version: 1.0.0"}),
         ("Generate an invalid CWL file with unsupported 'class'.", 
-         {"is_valid": False, "error": "Validation failed: Unsupported class: UnsupportedClass"}),
+         {"is_valid": False, "error": "Validation failed: Unsupported class: InvalidClass"}),
         ("Generate an invalid CWL file with incorrect 'inputs' type.", 
          {"is_valid": False, "error": "Validation failed: Please define inputs in CWL as dictionary"}),
         ("Generate an invalid CWL file with incorrect 'outputs' type.", 
          {"is_valid": False, "error": "Validation failed: Please define outputs in CWL as dictionary"}),
         ("Generate an invalid CWL file with invalid requirement.", 
-         {"is_valid": False, "error": "Validation failed: Unsupported requirement: InlineJavascriptRequirement"})
+         {"is_valid": False, "error": "Validation failed: Unsupported requirement: NonExistentRequirement"})
     ]
 
     for i, (prompt, expected_result) in enumerate(prompts):
