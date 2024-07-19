@@ -1,1 +1,15 @@
-{"file_name": "cwl_file_7.cwl", "step": "validation", "result": "failure", "message": "Expected: {'is_valid': False, 'error': 'Validation failed: Unsupported class: InvalidClass'}, Got: {'is_valid': False, 'error': 'Validation failed: Unsupported class: Task'}"}
+{
+    "file_name": "cwl_file_7.cwl",
+    "step": "validation",
+    "result": "success",
+    "expected": {
+        "is_valid": false,
+        "error": "Validation failed: Unsupported class"
+    },
+    "expected_str": "{\"is_valid\": false, \"error\": \"Validation failed: Unsupported class\"}",
+    "got": {
+        "is_valid": false,
+        "error": "Validation failed: Unsupported class: InvalidClass; Missing 'inputs' in CWL file; Missing 'outputs' in CWL file"
+    },
+    "got_str": "{\"is_valid\": false, \"error\": \"Validation failed: Unsupported class: InvalidClass; Missing 'inputs' in CWL file; Missing 'outputs' in CWL file\"}"
+}

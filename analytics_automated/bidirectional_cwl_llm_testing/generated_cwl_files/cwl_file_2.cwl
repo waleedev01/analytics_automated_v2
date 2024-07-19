@@ -1,17 +1,8 @@
-steps:
-  - id: step1
-    run: script.sh
-    inputs:
-      message: string
-
+class: CommandLineTool
 inputs:
-  message:
-    type: string
-
+  input_file:
+    type: File
 outputs:
-  output_message:
-    type: string
-
-requirements:
-  DockerRequirement:
-    dockerPull: ubuntu:latest
+  output_file:
+    type: File
+baseCommand: echo

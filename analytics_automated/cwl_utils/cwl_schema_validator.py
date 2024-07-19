@@ -100,10 +100,12 @@ class CWLSchemaValidator:
             else:
                 if not isinstance(inputs, dict):
                     errors.append("Please define inputs in CWL as dictionary")
-
-                for input_name, input_data in inputs.items():
-                    if 'type' not in input_data:
-                        errors.append(f"Missing 'type' for input '{input_name}'")
+                else:
+                    for input_name, input_data in inputs.items():
+                        if 'type' not in input_data:
+                            errors.append(f"Missing 'type' for input '{input_name}'")
+                        elif input_data['type'] != 'File':
+                            errors.append(f"Only 'File' type is supported for input '{input_name}'")
 
             # Check for the presence of 'outputs'
             outputs = cwl_data.get('outputs')
@@ -112,10 +114,12 @@ class CWLSchemaValidator:
             else:
                 if not isinstance(outputs, dict):
                     errors.append("Please define outputs in CWL as dictionary")
-                    
-                for output_name, output_data in outputs.items():
-                    if 'type' not in output_data:
-                        errors.append(f"Missing 'type' for output '{output_name}'")
+                else:
+                    for output_name, output_data in outputs.items():
+                        if 'type' not in output_data:
+                            errors.append(f"Missing 'type' for output '{output_name}'")
+                        elif output_data['type'] != 'File':
+                            errors.append(f"Only 'File' type is supported for output '{output_name}'")
 
             # If class is 'Workflow', ensure 'steps' are present and valid
             if cwl_class == "Workflow":
@@ -133,11 +137,11 @@ class CWLSchemaValidator:
 
             # If class is 'CommandLineTool', validate command line tool specifics
             if cwl_class == "CommandLineTool":
-                if 'baseCommand' not in cwl_data:
+                if 'baseCommand' not in cwl_data and not cwl_data.get('arguments', []):
                     errors.append("Missing 'baseCommand' in CommandLineTool")
-                elif not isinstance(cwl_data.get('baseCommand'), (str, list)):
+                elif 'baseCommand' in cwl_data and not isinstance(cwl_data.get('baseCommand'), (str, list)):
                     errors.append("'baseCommand' must be a string or list of strings")
-                
+
                 # Validate optional fields if present
                 if 'arguments' in cwl_data and not isinstance(cwl_data.get('arguments'), list):
                     errors.append("'arguments' must be a list")

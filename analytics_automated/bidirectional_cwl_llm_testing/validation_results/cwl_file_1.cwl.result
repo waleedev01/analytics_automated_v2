@@ -1,1 +1,15 @@
-{"file_name": "cwl_file_1.cwl", "step": "validation", "result": "failure", "message": "Expected: {'is_valid': True, 'error': None}, Got: {'is_valid': False, 'error': 'Validation failed: Missing 'baseCommand' in CommandLineTool'}"}
+{
+    "file_name": "cwl_file_1.cwl",
+    "step": "validation",
+    "result": "success",
+    "expected": {
+        "is_valid": true,
+        "error": "CWL file is valid."
+    },
+    "expected_str": "{\"is_valid\": true, \"error\": \"CWL file is valid.\"}",
+    "got": {
+        "is_valid": true,
+        "error": "CWL file is valid."
+    },
+    "got_str": "{\"is_valid\": true, \"error\": \"CWL file is valid.\"}"
+}

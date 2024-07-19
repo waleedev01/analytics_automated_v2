@@ -1,8 +1,8 @@
 cwlVersion: v1.0
 class: CommandLineTool
 requirements:
-  - class: InvalidRequirement
-    someInvalidField: invalidValue
+  - class: InlineJavascriptRequirement
+  - class: UnsupportedRequirement
 inputs:
   input_file:
     type: File
@@ -12,5 +12,6 @@ outputs:
   output_file:
     type: File
     outputBinding:
-      glob: output.txt
-baseCommand: cat
+      glob: $(inputs.input_file.basename)
+baseCommand: echo
+  - "$(inputs.input_file.path)" > "$(outputs.output_file.path)"

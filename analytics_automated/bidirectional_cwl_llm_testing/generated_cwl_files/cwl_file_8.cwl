@@ -6,5 +6,4 @@ inputs:
 outputs:
   - id: output_file
     type: File
-baseCommand: echo
-arguments: ["Hello, world!"]
+baseCommand: echo "Hello, world!"

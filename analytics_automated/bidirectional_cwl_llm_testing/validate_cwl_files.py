@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import yaml
+import csv
 from analytics_automated.cwl_utils.cwl_schema_validator import CWLSchemaValidator
 
 # Setup logging
@@ -27,7 +28,8 @@ def validate_cwl_files(input_dir, output_dir):
             expected_is_valid = expected_result.get("is_valid")
             expected_error = expected_result.get("error")
 
-            if is_valid != expected_is_valid or (expected_error and expected_error not in message):
+            # Ensure we compare the full error message to catch all validation errors
+            if is_valid != expected_is_valid or (expected_error and not message.startswith(expected_error)):
                 result_status = "failure"
             else:
                 result_status = "success"
@@ -36,13 +38,22 @@ def validate_cwl_files(input_dir, output_dir):
                 "file_name": file_name,
                 "step": "validation",
                 "result": result_status,
-                "message": f"Expected: {expected_result}, Got: {{'is_valid': {is_valid}, 'error': '{message}'}}"
+                "expected": expected_result,
+                "expected_str": json.dumps(expected_result),
+                "got": {
+                    "is_valid": is_valid,
+                    "error": message
+                },
+                "got_str": json.dumps({
+                    "is_valid": is_valid,
+                    "error": message
+                })
             }
             results.append(result)
 
             output_path = os.path.join(output_dir, f"{file_name}.result")
             with open(output_path, 'w') as file:
-                json.dump(result, file)
+                json.dump(result, file, indent=4)
 
     return results
 

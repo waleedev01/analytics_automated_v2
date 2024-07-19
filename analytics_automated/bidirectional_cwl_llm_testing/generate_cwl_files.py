@@ -9,6 +9,17 @@ logger = logging.getLogger(__name__)
 # Initialize the OpenAI client with your API key
 client = OpenAI(api_key='')
 
+# Define variables for prompts
+VALID_CWL_VERSIONS = ['v1.0', 'v1.1', 'v1.2']
+VALID_CWL_CLASSES = ['CommandLineTool', 'Workflow']
+UNSUPPORTED_REQUIREMENTS = [
+    'InlineJavascriptRequirement',
+    'ResourceRequirement',
+    'DockerRequirement',
+]
+FILE_TYPE = 'File'
+REQUIRED_FIELDS = ['cwlVersion', 'class', 'inputs', 'outputs']
+
 def generate_cwl_file(prompt):
     try:
         response = client.chat.completions.create(
@@ -27,28 +38,29 @@ def generate_cwl_file(prompt):
 
 def generate_cwl_files(output_dir, num_files=10):
     os.makedirs(output_dir, exist_ok=True)
-    
+
     prompts = [
-        ("Generate a valid CWL file with cwlVersion, class, inputs, and outputs properly defined.", 
-         {"is_valid": True, "error": None}),
-        ("Generate an invalid CWL file with missing 'cwlVersion'.", 
+        (f"Generate a valid CWL file with cwlVersion from {VALID_CWL_VERSIONS}, class from {VALID_CWL_CLASSES}, baseCommand, inputs, and outputs properly defined. "
+         f"Ensure the class is CommandLineTool, includes a baseCommand, and only {FILE_TYPE} type is used for inputs and outputs.", 
+         {"is_valid": True, "error": "CWL file is valid."}),
+        ("Generate an invalid CWL file with missing 'cwlVersion'. Ensure it has 'class', 'inputs', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Missing 'cwlVersion' in CWL file"}),
-        ("Generate an invalid CWL file with missing 'class'.", 
+        ("Generate an invalid CWL file with missing 'class'. Ensure it has 'cwlVersion', 'inputs', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Missing 'class' in CWL file"}),
-        ("Generate an invalid CWL file with missing 'inputs'.", 
+        ("Generate an invalid CWL file with missing 'inputs'. Ensure it has 'cwlVersion', 'class', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Missing 'inputs' in CWL file"}),
-        ("Generate an invalid CWL file with missing 'outputs'.", 
+        ("Generate an invalid CWL file with missing 'outputs'. Ensure it has 'cwlVersion', 'class', 'inputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Missing 'outputs' in CWL file"}),
-        ("Generate an invalid CWL file with unsupported 'cwlVersion'.", 
-         {"is_valid": False, "error": "Validation failed: Unsupported CWL version: 1.0.0"}),
-        ("Generate an invalid CWL file with unsupported 'class'.", 
-         {"is_valid": False, "error": "Validation failed: Unsupported class: InvalidClass"}),
-        ("Generate an invalid CWL file with incorrect 'inputs' type.", 
-         {"is_valid": False, "error": "Validation failed: Please define inputs in CWL as dictionary"}),
-        ("Generate an invalid CWL file with incorrect 'outputs' type.", 
-         {"is_valid": False, "error": "Validation failed: Please define outputs in CWL as dictionary"}),
-        ("Generate an invalid CWL file with invalid requirement.", 
-         {"is_valid": False, "error": "Validation failed: Unsupported requirement: NonExistentRequirement"})
+        (f"Generate an invalid CWL file with unsupported 'cwlVersion' not in {VALID_CWL_VERSIONS}. Ensure it has 'class', 'inputs', 'outputs', and 'baseCommand'.", 
+         {"is_valid": False, "error": "Validation failed: Unsupported CWL version"}),
+        (f"Generate an invalid CWL file with unsupported 'class' not in {VALID_CWL_CLASSES}. Ensure it has 'cwlVersion', 'inputs', 'outputs', and 'baseCommand'.", 
+         {"is_valid": False, "error": "Validation failed: Unsupported class"}),
+        (f"Generate an invalid CWL file with incorrect 'inputs' type, only {FILE_TYPE} is allowed. Ensure it has 'cwlVersion', 'class', 'outputs', and 'baseCommand'.", 
+         {"is_valid": False, "error": "Validation failed: Only 'File' type is supported for inputs"}),
+        (f"Generate an invalid CWL file with incorrect 'outputs' type, only {FILE_TYPE} is allowed. Ensure it has 'cwlVersion', 'class', 'inputs', and 'baseCommand'.", 
+         {"is_valid": False, "error": "Validation failed: Only 'File' type is supported for outputs"}),
+        (f"Generate an invalid CWL file with unsupported requirement from {UNSUPPORTED_REQUIREMENTS}. Ensure it has 'cwlVersion', 'class', 'inputs', 'outputs', and 'baseCommand'.", 
+         {"is_valid": False, "error": "Validation failed: Unsupported requirement"})
     ]
 
     for i, (prompt, expected_result) in enumerate(prompts):

@@ -1,18 +1,10 @@
 cwlVersion: v1.0
 class: CommandLineTool
-
-inputs:
+inputs: 
   input_file:
     type: File
-    inputBinding:
-      position: 1
-      prefix: "--input-file"
+baseCommand: echo "Hello World"
 
-outputs:
-  output_file:
-    type: File
-    outputBinding:
-      glob: output.txt
-    type: String  # Incorrect type for output
-
-baseCommand: cat
+outputs: 
+  - id: output_file
+    type: Directory

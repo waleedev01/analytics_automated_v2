@@ -1,1 +1,15 @@
-{"file_name": "cwl_file_2.cwl", "step": "validation", "result": "success", "message": "Expected: {'is_valid': False, 'error': \"Validation failed: Missing 'cwlVersion' in CWL file\"}, Got: {'is_valid': False, 'error': 'Validation failed: Missing 'cwlVersion' in CWL file; Missing 'class' in CWL file; Please define requirements in CWL as list'}"}
+{
+    "file_name": "cwl_file_2.cwl",
+    "step": "validation",
+    "result": "success",
+    "expected": {
+        "is_valid": false,
+        "error": "Validation failed: Missing 'cwlVersion' in CWL file"
+    },
+    "expected_str": "{\"is_valid\": false, \"error\": \"Validation failed: Missing 'cwlVersion' in CWL file\"}",
+    "got": {
+        "is_valid": false,
+        "error": "Validation failed: Missing 'cwlVersion' in CWL file"
+    },
+    "got_str": "{\"is_valid\": false, \"error\": \"Validation failed: Missing 'cwlVersion' in CWL file\"}"
+}

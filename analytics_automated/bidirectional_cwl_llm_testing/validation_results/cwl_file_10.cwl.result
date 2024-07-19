@@ -1,1 +1,15 @@
-{"file_name": "cwl_file_10.cwl", "step": "validation", "result": "failure", "message": "Expected: {'is_valid': False, 'error': 'Validation failed: Unsupported requirement: NonExistentRequirement'}, Got: {'is_valid': True, 'error': 'CWL file is valid.'}"}
+{
+    "file_name": "cwl_file_10.cwl",
+    "step": "validation",
+    "result": "success",
+    "expected": {
+        "is_valid": false,
+        "error": "Validation failed: Unsupported requirement"
+    },
+    "expected_str": "{\"is_valid\": false, \"error\": \"Validation failed: Unsupported requirement\"}",
+    "got": {
+        "is_valid": false,
+        "error": "Validation failed: Unsupported requirement: InlineJavascriptRequirement"
+    },
+    "got_str": "{\"is_valid\": false, \"error\": \"Validation failed: Unsupported requirement: InlineJavascriptRequirement\"}"
+}
