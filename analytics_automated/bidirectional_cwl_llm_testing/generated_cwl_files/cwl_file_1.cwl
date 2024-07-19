@@ -1,9 +1,15 @@
-cwlVersion: v1.0
+cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: echo
+
 inputs:
-  message:
-    type: string
+  input_file:
+    type: File
     inputBinding:
       position: 1
-outputs: []
+      prefix: --input
+
+outputs:
+  output_file:
+    type: File
+    outputBinding:
+      glob: output.txt

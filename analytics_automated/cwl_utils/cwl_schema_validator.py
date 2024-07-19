@@ -12,7 +12,7 @@ UNSUPPORTED_REQUIREMENTS = [
     'DockerRequirement',
 ]
 
-VALID_CWL_VERSIONS = ['v1.0', 'v1.1', 'v1.2', 'v1.3']
+VALID_CWL_VERSIONS = ['v1.0', 'v1.1', 'v1.2']
 VALID_CWL_CLASSES = ['CommandLineTool', 'Workflow']
 
 class CWLSchemaValidator:
@@ -77,7 +77,7 @@ class CWLSchemaValidator:
             requirements = cwl_data.get('requirements', [])
             if requirements:
                 if not isinstance(requirements, list):
-                    errors.append("Please define requirement in CWL as list")
+                    errors.append("Please define requirements in CWL as list")
                 else:
                     for item in requirements:
                         if item.get('class') in UNSUPPORTED_REQUIREMENTS:

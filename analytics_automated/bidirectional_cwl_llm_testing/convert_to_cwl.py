@@ -29,4 +29,4 @@ def convert_to_cwl_files(output_dir):
     return results
 
 if __name__ == "__main__":
-    #convert_to_cwl_files('analytics_automated/llm_testing/converted_cwl_files')
+    convert_to_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/converted_cwl_files')

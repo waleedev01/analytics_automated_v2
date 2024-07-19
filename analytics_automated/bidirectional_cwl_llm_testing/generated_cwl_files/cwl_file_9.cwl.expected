@@ -1,1 +1,1 @@
-{"is_valid": true, "error": null}
+{"is_valid": false, "error": "Validation failed: Please define outputs in CWL as dictionary"}

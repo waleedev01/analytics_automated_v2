@@ -1,1 +1,1 @@
-{"is_valid": true, "error": null}
+{"is_valid": false, "error": "Validation failed: Missing 'outputs' in CWL file"}

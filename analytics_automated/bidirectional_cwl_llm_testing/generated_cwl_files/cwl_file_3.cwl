@@ -1,20 +1,18 @@
 cwlVersion: v1.0
-class: CommandLineTool
+id: my_workflow
 inputs:
   input_file:
     type: File
-    label: Input file
+    label: "Input file"
 outputs:
   output_file:
     type: File
-    label: Output file
-baseCommand: cat
-stdout: output.txt
-requirements:
-  InlineJavascriptRequirement: {}
-  InitialWorkDirRequirement:
-    listing:
-      - entry: $(inputs.input_file)
-        entryName: input.txt
-        writable: false
-stdout: output.txt
+    outputBinding:
+      glob: "$(inputs.input_file.basename)"
+steps:
+  step1:
+    run: tool.cwl
+    in:
+      input: input_file
+    out:
+      - output: output_file
