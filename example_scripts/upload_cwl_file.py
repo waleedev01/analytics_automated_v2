@@ -18,9 +18,9 @@ from analytics_automated.cwl_utils.cwl_parser import read_cwl_file
 url = 'http://127.0.0.1:8000/analytics_automated/submission.json'
 
 # Specify the file path of task1.cwl
-cwl_file_path = '/home/gty/vv-project/cavid/analytics_automated_v2/analytics_automated/tests/example_cwl_files/test2.cwl'
+cwl_file_path = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/analytics_automated/tests/example_cwl_files/test2.cwl'
 
-input_file_path = '/home/gty/vv-project/cavid/analytics_automated_v2/example_scripts/input.txt'
+input_file_path = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/example_scripts/input.txt'
 
 # Prepare payload for file upload
 files = {
@@ -31,7 +31,7 @@ files = {
 data = {
     'job': 'test2.cwl',  # Assuming 'psipred' is the job identifier
     'submission_name': 'memembed2_submission',  # Name for the submission
-    'email': '1115428019@ucl.ac.uk',  # Email associated with the submission,
+    'email': 'zczqtg0@ucl.ac.uk',  # Email associated with the submission,
 }
 test = []
 #read_cwl_file(cwl_file_path,'test2.cwl',test)

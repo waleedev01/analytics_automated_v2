@@ -517,6 +517,9 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
     #handle the task initial_workdir_requirement
     handle_initial_workdir_requirement(t.requirements,str(step_id),t.backend.root_path)
     
+    #check the software requirement version
+    #check_software_requirement(t.requirements)
+    
     # update submission tracking to note that this is running
     logger.info("SETTING RUN FLAG:" + str(step_id))
     with transaction.atomic():
@@ -757,7 +760,9 @@ def chord_end(self, uuid, step_id, current_step):
 #         raise
 
 @shared_task
-def handle_initial_workdir_requirement(requirements,step_id):
+def handle_initial_workdir_requirement(requirements,step_id,src):
+    if requirements is None:
+        return f"No initial workdir setup in this step"
     initial_workdir_requirement = next((req for req in requirements if req['class'] == 'InitialWorkDirRequirement'), None)
     
     if initial_workdir_requirement:
@@ -765,14 +770,22 @@ def handle_initial_workdir_requirement(requirements,step_id):
         
         for item in listing:
             if item['class'] == 'File':
-                src = item['location']
-                dst = os.path.join(workdir, os.path.basename(src))
-                shutil.copy(src, dst)
+                if 'entryname' in item and 'entry' in item:
+                    dst = os.path.join(src, item['entryname'])
+                    logging.info(f"Writing to file: {dst}")
+                    try:
+                        with open(dst, 'w') as f:
+                            f.write(item['entry'])
+                        logging.info(f"Successfully wrote to {dst}")
+                    except Exception as e:
+                        logging.error(f"Failed to write to {dst}: {e}")
 
     logger.info("Step id "+ step_id + ":Initial workdir setup completed")
 
 @shared_task
 def check_software_requirement(requirements):
+    if requirements is None:
+        return f"No software_requirement in this step"
     software_requirement = next((req for req in requirements if req['class'] == 'SoftwareRequirement'), None)
     
     if software_requirement:
