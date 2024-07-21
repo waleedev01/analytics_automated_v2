@@ -19,7 +19,7 @@ class CWLParserTest(TestCase):
         this_backend = add_fake_backend(name="local1", root_path="/tmp/")
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         # filenames = ['task1', 'task2', 'task3', 'task4', 'workflow']
-        filenames = ['create_fasta_S01', 'create_fasta_S02']
+        filenames = ['create_fasta_S01', 'run_legacy_psiblast_S1']
         message = []
         for filename in filenames:
             file_path = os.path.join(base_dir, 'tests', 'example_cwl_files', f'{filename}.cwl')
