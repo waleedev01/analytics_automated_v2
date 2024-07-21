@@ -1,7 +1,7 @@
 import logging
 import re
 import json
-from ..models import Backend, Task, Parameter, Environment
+from ..models import Backend, Task, Parameter, Environment, Configuration
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ def handle_env_variable_req(requirements: list) -> dict[str, str]:
     """
     Extract envVarRequirement as environment variable list
     """
-    logging.info(f"Handling environment variable requirements: {requirements}")
+    logging.info(f"- Handling environment variable requirements -")
     try:
         for requirement in requirements:
             if requirement['class'] == 'EnvVarRequirement':
@@ -40,6 +40,33 @@ def handle_env_variable_req(requirements: list) -> dict[str, str]:
     except Exception as e:
         logging.error(f"Error handling environment variable requirements: {e}")
     return {}
+
+
+def handle_hint_software_hint(requirements: list) -> list:
+    """
+    Extract SoftwareRequirement hint as configuration list
+    """
+    logging.info(f"- Handling hint software package -")
+    try:
+        for requirement in requirements:
+            if requirement['class'] == 'SoftwareRequirement':
+                logging.info(f"Found software package requirement: {requirement['packages']}")
+                s_packages = requirement['packages']
+                if isinstance(s_packages, dict):
+                    software_req_li = []
+                    for p_name, p_attr in s_packages.items():
+                        p_attr['package'] = p_name
+                        p_attr['version'] = ",".join(p_attr.get('version', ""))
+                        software_req_li.append(p_attr)
+                    return software_req_li
+                if isinstance(s_packages, list):
+                    for p in s_packages:
+                        p['version'] = ",".join(p['version'])
+                    return s_packages
+    except Exception as e:
+        logging.error(f"Error handling software package requirements: {e}")
+    return []
+
 
 def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     def map_format(format_uri, mapping):
@@ -155,6 +182,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         "requirements": requirements,
         "environments": handle_env_variable_req(requirements),
         "hints": hints,
+        "configurations": handle_hint_software_hint(hints),
         "arguments": arguments,
         "stdin": stdin,
         "stdout": stdout,
@@ -387,6 +415,18 @@ def save_task_to_db(task_data, messages):
                     )
             except Exception as e:
                 logging.error(f"Error saving environment variable for task {task_data['name']}: {e}")
+
+        for package in task_data['configurations']:
+            try:
+                Configuration.objects.create(
+                    task=task,
+                    type=0,
+                    name=package['package'],
+                    version=package.get('version',None),
+                    parameters=package.get('parameter', None)
+                )
+            except Exception as e:
+                logging.error(f"Error saving configration for task {task_data['name']}: {e}")
 
         message = f"Task saved successfully: {task_data['name']}"
         logging.info(message)
