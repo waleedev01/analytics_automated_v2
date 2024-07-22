@@ -1,7 +1,7 @@
 import logging
 import re
 import json
-from ..models import Backend, Task, Parameter, Environment
+from ..models import Backend, Task, Parameter, Environment, Configuration
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +15,11 @@ NOT_TASK_REQUIREMENTS = [
 ]
 dynamic_input_file_pattern = r"input.[^_]+.basename"
 FORMAT_MAP = r"analytics_automated/cwl_utils/format_uri_mapping.json"
+CONFIGURATION_CHOICES = {
+    "Software": 0,
+    "Dataset": 1,
+    "Misc.": 2,
+}
 
 # Feature Need to be discussed
 ADD_INPUT_FIELD = True
@@ -31,7 +36,7 @@ def handle_env_variable_req(requirements: list) -> dict[str, str]:
     """
     Extract envVarRequirement as environment variable list
     """
-    logging.info(f"Handling environment variable requirements: {requirements}")
+    logging.info(f"- Handling environment variable requirements -")
     try:
         for requirement in requirements:
             if requirement['class'] == 'EnvVarRequirement':
@@ -40,6 +45,43 @@ def handle_env_variable_req(requirements: list) -> dict[str, str]:
     except Exception as e:
         logging.error(f"Error handling environment variable requirements: {e}")
     return {}
+
+
+def handle_hint_software_hint(requirements: list) -> list:
+    """
+    Extract SoftwareRequirement hint as configuration list
+    """
+    logging.info(f"- Handling hint software package -")
+    try:
+        for requirement in requirements:
+            if requirement['class'] == 'SoftwareRequirement':
+                logging.info(f"Found software package requirement: {requirement['packages']}")
+                s_packages = requirement['packages']
+                if isinstance(s_packages, dict):
+                    software_req_li = []
+                    for p_name, p_attr in s_packages.items():
+                        p_attr['name'] = p_name
+                        p_attr['version'] = ",".join(p_attr.get('version', ""))
+                        p_attr['type'] = "Software"
+                        software_req_li.append(p_attr)
+                    return software_req_li
+                if isinstance(s_packages, list):
+                    for p in s_packages:
+                        p['name'] = p['package']
+                        p['version'] = ",".join(p['version'])
+                        p['type'] = "Software"
+                    return s_packages
+    except Exception as e:
+        logging.error(f"Error handling software package requirements: {e}")
+    return []
+
+
+def handle_aa_custom_configuration(configrations: list) -> list:
+    for config in configrations:
+        if config.get('name') is None:
+            raise ValueError("The name of Configuration object should not be empty!")
+    return configrations
+
 
 def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     def map_format(format_uri, mapping):
@@ -96,7 +138,8 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
             if re.search(dynamic_input_file_pattern, value):
                 parts = value.split('.')
                 if len(parts) <= 2:
-                    raise ValueError(f"Value '{value}' is not in the expected format 'inputs.input_field_name.basename'")
+                    raise ValueError(
+                        f"Value '{value}' is not in the expected format 'inputs.input_field_name.basename'")
                 input_name = parts[1]
                 if not input_name in input_li:
                     raise ValueError(f"Unexpected input field {input_name}, should be in {input_li}")
@@ -145,7 +188,15 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
             custom_exit_status = DEFAULT_CUSTOM_EXIT_STATUS
 
     except Exception as e:
-        logging.error(f"Failed to parse custom fields for task {name}: {e}")
+        logging.error(f"Failed to parse custom exit behaviour fields for task {name}: {e}")
+
+    aa_task_config_li = []
+    software_hints = []
+    try:
+        aa_task_config_li = handle_aa_custom_configuration(cwl_data.get("AAConfiguration", []))
+        software_hints = handle_hint_software_hint(hints)
+    except Exception as e:
+        logging.error(f"Failed to parse custom configration fields for task {name}: {e}")
 
     task = {
         "name": name,
@@ -155,6 +206,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         "requirements": requirements,
         "environments": handle_env_variable_req(requirements),
         "hints": hints,
+        "configurations": aa_task_config_li + software_hints,
         "arguments": arguments,
         "stdin": stdin,
         "stdout": stdout,
@@ -199,7 +251,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
                         ADD_INPUT_FIELD = False
                 else:
                     argument_str = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
-                                                                value=argument)
+                                                       value=argument)
                 if not argument_separate and argument_prefix:
                     argument_str = argument_prefix + argument_str
                 elif argument_separate and argument_prefix:
@@ -387,6 +439,18 @@ def save_task_to_db(task_data, messages):
                     )
             except Exception as e:
                 logging.error(f"Error saving environment variable for task {task_data['name']}: {e}")
+
+        for package in task_data['configurations']:
+            try:
+                c = Configuration.objects.create(
+                    task=task,
+                    type=CONFIGURATION_CHOICES.get(package.get('type'), 0),
+                    name=package['name'],
+                    version=package.get('version', None),
+                    parameters=package.get('parameter', None)
+                )
+            except Exception as e:
+                logging.error(f"Error saving configration for task {task_data['name']}: {e}")
 
         message = f"Task saved successfully: {task_data['name']}"
         logging.info(message)
