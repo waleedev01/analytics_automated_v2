@@ -53,9 +53,9 @@ def parse_cwl_workflow(cwl_data, filename, messages):
 
                 task = check_existing_task_in_db(task_name, messages)
                 if task:
-                    step_source[step_name] = set(source_arr)
+                    step_source[task_name] = set(source_arr)
                 else:
-                    error_message = f"Cancel job creation with name '{filename}' due to missing task file: {step_name}"
+                    error_message = f"Cancel job creation with name '{filename}' due to missing task file: {task_name}"
                     logging.error(error_message)
                     messages.append(error_message)
                     return

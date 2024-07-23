@@ -1,6 +1,6 @@
 cwlVersion: v1.0
 class: CommandLineTool
-baseCommand: [echo]
+baseCommand: echo
 inputs:
   input1:
     type: File
