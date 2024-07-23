@@ -38,8 +38,9 @@ class TestCWLCLTParser(unittest.TestCase):
         clt = read_cwl_file(filepath, 'some_tool', messages)
         self.assertIsNotNone(clt)
         self.assertEqual(clt.name, "some_tool")
+        self.assertEqual(clt.in_glob, ".input")
         self.assertEqual(clt.out_glob, ".txt")
-        self.assertEqual(clt.executable, "echo") # there should be also $I1
+        self.assertEqual(clt.executable, "echo $I1")
     
     def test_parse_cwl_clt_with_parameters(self):
         """Test parsing of a valid CWL workflow."""
@@ -48,8 +49,9 @@ class TestCWLCLTParser(unittest.TestCase):
         clt = read_cwl_file(filepath, 'valid_clt_with_parameters', messages)
         self.assertIsNotNone(clt)
         self.assertEqual(clt.name, "valid_clt_with_parameters")
+        self.assertEqual(clt.in_glob, ".ss")
         self.assertEqual(clt.out_glob, ".txt")
-        self.assertEqual(clt.executable, "echo $P1 $P2") # there should be also $I1
+        self.assertEqual(clt.executable, "echo $P1 $P2 $I1")
         params = Parameter.objects.filter(task=clt)
         self.assertEqual(len(params), 2)
 
