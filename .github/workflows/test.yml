@@ -89,5 +89,5 @@ jobs:
       
       - name: Generate unit tests report
         run: |
-          coverage html --include="analytics_automated/cwl_utils/cwl_clt_handler.py,analytics_automated/cwl_utils/cwl_parser.py,analytics_automated/cwl_utils/cwl_schema_validator.py,analytics_automated/cwl_utils/cwl_workflow_handler.py"
+          coverage report --include="analytics_automated/cwl_utils/cwl_clt_handler.py,analytics_automated/cwl_utils/cwl_parser.py,analytics_automated/cwl_utils/cwl_schema_validator.py,analytics_automated/cwl_utils/cwl_workflow_handler.py"
     
