@@ -32,7 +32,7 @@ class TestCWLCLTParser(unittest.TestCase):
         return os.path.join(self.test_files_dir, filename)
 
     def test_parse_cwl_clt_valid(self):
-        """Test parsing of a valid CWL workflow."""
+        """Test parsing of a valid CWL CommandLineTool."""
         filepath = os.path.join(self.test_files_dir, 'some_tool.cwl')
         messages = []
         clt = read_cwl_file(filepath, 'some_tool', messages)
@@ -43,7 +43,7 @@ class TestCWLCLTParser(unittest.TestCase):
         self.assertEqual(clt.executable, "echo $I1")
     
     def test_parse_cwl_clt_with_parameters(self):
-        """Test parsing of a valid CWL workflow."""
+        """Test parsing of a valid CWL CommandLineTool with Parameters."""
         filepath = os.path.join(self.test_files_dir, 'valid_clt_with_parameters.cwl')
         messages = []
         clt = read_cwl_file(filepath, 'valid_clt_with_parameters', messages)
@@ -56,7 +56,7 @@ class TestCWLCLTParser(unittest.TestCase):
         self.assertEqual(len(params), 2)
 
     def test_parse_cwl_clt_existing(self):
-        """Test parsing of a valid CWL workflow."""
+        """Test parsing of an existing CWL CommandLineTool."""
         filepath = os.path.join(self.test_files_dir, 'some_tool.cwl')
         messages = []
         clt = read_cwl_file(filepath, 'some_tool', messages)
@@ -67,8 +67,16 @@ class TestCWLCLTParser(unittest.TestCase):
         self.assertIsNotNone(clt)
         self.assertIn("Found existing task with name: some_tool", messages)
     
+    def test_parse_cwl_clt_dynamic_value(self):
+        """Test parsing of a CWL CommandLineTool with Dynamic Value."""
+        filepath = os.path.join(self.test_files_dir, 'dynamic_value.cwl')
+        messages = []
+        clt = read_cwl_file(filepath, 'dynamic_value', messages)
+        self.assertIsNotNone(clt)
+        self.assertEqual(clt.executable, "echo $ID $TMP/$ID/$I1 $O1")
+    
     def test_parse_cwl_clt_invalid_validation(self):
-        """Test parsing of a valid CWL workflow."""
+        """Test parsing of an invalid CWL CommandLineTool."""
         filepath = os.path.join(self.test_files_dir, 'invalid_workflow_invalid_arguments.cwl')
         messages = []
         clt = read_cwl_file(filepath, 'invalid_workflow_invalid_arguments', messages)
@@ -76,27 +84,11 @@ class TestCWLCLTParser(unittest.TestCase):
         self.assertIn("Validation Failed: Validation failed: 'arguments' must be a list", messages)
     
     def test_parse_cwl_clt_not_found(self):
-        """Test parsing of a valid CWL workflow."""
+        """Test parsing of a not found CWL CommandLineTool."""
         filepath = os.path.join(self.test_files_dir, 'not_found.cwl')
         messages = []
         clt = read_cwl_file(filepath, 'not_found', messages)
         self.assertIsNone(clt)
-    
-    def test_parse_cwl_clt_invalid_validation(self):
-        """Test parsing of a valid CWL workflow."""
-        filepath = os.path.join(self.test_files_dir, 'workflow_invalid_steps.cwl')
-        messages = []
-        clt = read_cwl_file(filepath, 'workflow_invalid_steps', messages)
-        self.assertIsNone(clt)
-        self.assertIn("Cancel job creation with name 'workflow_invalid_steps' due to failure when creating task file: step1", messages)
-    
-    def test_parse_cwl_clt_dynamic_value(self):
-        """Test parsing of a valid CWL workflow."""
-        filepath = os.path.join(self.test_files_dir, 'dynamic_value.cwl')
-        messages = []
-        clt = read_cwl_file(filepath, 'dynamic_value', messages)
-        self.assertIsNotNone(clt)
-        self.assertEqual(clt.executable, "echo $ID $TMP/$ID/$I1 $O1")
     
     def tearDown(self):
         clearDatabase()
@@ -114,18 +106,8 @@ class TestCWLWorkflowParser(unittest.TestCase):
         """Load a CWL file from the fixtures directory."""
         return os.path.join(self.test_files_dir, filename)
 
-    def test_parse_cwl_workflow_without_existing_task(self):
-        """Test parsing of a valid CWL workflow."""
-        filepath = os.path.join(self.test_files_dir, 'valid_workflow.cwl')
-        messages = []
-        workflow = read_cwl_file(filepath, 'valid_workflow', messages)
-        self.assertIsNone(workflow)
-        self.assertIn("Task file not found: some_tool", messages)
-        self.assertIn("Cancel job creation with name 'valid_workflow' due to missing task file: some_tool", messages)
-        self.assertEqual(len(messages), 2)
-
     def test_parse_cwl_workflow_inline_valid(self):
-        """Test parsing of a valid CWL workflow."""
+        """Test parsing of a valid inline CWL workflow."""
         filepath = os.path.join(self.test_files_dir, 'valid_workflow_with_steps.cwl')
         messages = []
         workflow = read_cwl_file(filepath, 'valid_workflow_with_steps', messages)
@@ -135,7 +117,7 @@ class TestCWLWorkflowParser(unittest.TestCase):
         self.assertEqual(len(steps), 3)
     
     def test_parse_cwl_workflow_separate_valid(self):
-        """Test parsing of a valid CWL workflow."""
+        """Test parsing of a valid separate CWL workflow."""
         filepath = os.path.join(self.test_files_dir, 'separate_clt.cwl')
         messages = []
         clt = read_cwl_file(filepath, 'separate_clt', messages)
@@ -151,7 +133,7 @@ class TestCWLWorkflowParser(unittest.TestCase):
         self.assertIn("Job 'workflow_separate_clt' created with tasks: separate_clt", messages)
     
     def test_parse_cwl_workflow_existing(self):
-        """Test parsing of a valid CWL workflow."""
+        """Test parsing of existing CWL workflow."""
         filepath = os.path.join(self.test_files_dir, 'valid_workflow_with_steps.cwl')
         messages = []
         workflow = read_cwl_file(filepath, 'valid_workflow_with_steps', messages)
@@ -162,13 +144,31 @@ class TestCWLWorkflowParser(unittest.TestCase):
         self.assertIsNotNone(workflow)
         self.assertIn("Found existing job with name: valid_workflow_with_steps", messages)
     
+    def test_parse_cwl_workflow_without_existing_task(self):
+        """Test parsing of a CWL workflow without existing task."""
+        filepath = os.path.join(self.test_files_dir, 'valid_workflow.cwl')
+        messages = []
+        workflow = read_cwl_file(filepath, 'valid_workflow', messages)
+        self.assertIsNone(workflow)
+        self.assertIn("Task file not found: some_tool", messages)
+        self.assertIn("Cancel job creation with name 'valid_workflow' due to missing task file: some_tool", messages)
+        self.assertEqual(len(messages), 2)
+    
     def test_parse_cwl_workflow_circular(self):
-        """Test parsing of a valid CWL workflow."""
+        """Test parsing of a circular dependency CWL workflow."""
         filepath = os.path.join(self.test_files_dir, 'circular_workflow.cwl')
         messages = []
         workflow = read_cwl_file(filepath, 'circular_workflow', messages)
         self.assertIsNone(workflow)
         self.assertIn("Cancel job creation with name 'circular_workflow' due to circular dependency in step: some_tool_1", messages)
+    
+    def test_parse_cwl_workflow_invalid_step(self):
+        """Test parsing of an invalid CWL workflow step."""
+        filepath = os.path.join(self.test_files_dir, 'workflow_invalid_steps.cwl')
+        messages = []
+        clt = read_cwl_file(filepath, 'workflow_invalid_steps', messages)
+        self.assertIsNone(clt)
+        self.assertIn("Cancel job creation with name 'workflow_invalid_steps' due to failure when creating task file: step1", messages)
     
     def tearDown(self):
         clearDatabase()
