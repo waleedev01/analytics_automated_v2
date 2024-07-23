@@ -22,3 +22,4 @@ analytics_automated_project/settings/staging_secrets.json
 analytics_automated_project/settings/production_secrets.json
 analytics_automated_project/settings/base_secrets.json
 .idea
+htmlcov
