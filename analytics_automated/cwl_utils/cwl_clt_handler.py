@@ -19,7 +19,6 @@ CONFIGURATION_CHOICES = {
     "Misc.": 2,
 }
 
-
 def load_format_mapping(file_path):
     with open(file_path, 'r') as file:
         format_mapping = json.load(file)
@@ -140,6 +139,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     label = cwl_data.get("label")
     doc = cwl_data.get("doc")
     shell_quote = cwl_data.get("shellQuote", False)
+    ADD_INPUT_FIELD = True
     try:
         # custom field, Get values from cwl_data or use default values if not present
         incomplete_outputs_behaviour = cwl_data.get("AAIncompleteOutputsBehaviour",
