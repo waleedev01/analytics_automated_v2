@@ -143,10 +143,6 @@ class Task(models.Model):
     incomplete_outputs_behaviour = models.IntegerField(null=False, blank=False,
                                                        choices=COMPLETION_CHOICES,
                                                        default=FAIL)
-    custom_exit_status = models.CharField(max_length=256, null=True,
-                                          blank=True)
-    custom_exit_behaviour = models.IntegerField(null=True, blank=True,
-                                                choices=COMPLETION_CHOICES,)
     requirements = models.JSONField(null=True, blank=True)  # New field for requirements
     hints = models.JSONField(null=True, blank=True)  # New field for hints
     arguments = models.JSONField(null=True, blank=True)  # New field for arguments
@@ -166,6 +162,29 @@ class Task(models.Model):
     class Meta:
         app_label = 'analytics_automated'
 
+class CustomExit(models.Model):
+    CONTINUE = 0
+    TERMINATE = 1
+    FAIL = 3
+    COMPLETION_CHOICES = (
+        (CONTINUE, "Continue Running Tasks"),
+        (TERMINATE, "Stop Running Tasks (do not raise error)"),
+        (FAIL, "Stop Running Tasks (raise error)")
+    )
+
+    task = models.ForeignKey(Task, null=False, related_name="custom_exit",
+                             on_delete=models.CASCADE)
+    custom_exit_status = models.CharField(max_length=256, null=True,
+                                          blank=True)
+    custom_exit_behaviour = models.IntegerField(null=True, blank=True,
+                                                choices=COMPLETION_CHOICES,)
+    
+    def returnType(self):
+        d = dict(CustomExit.COMPLETION_CHOICES)
+        return(d[self.custom_exit_behaviour])
+
+    class Meta:
+        app_label = 'analytics_automated'
 
 class Configuration(models.Model):
     SOFTWARE = 0

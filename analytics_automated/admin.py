@@ -5,7 +5,7 @@ from django.utils.safestring import mark_safe
 
 from .models import Backend, Job, Task, Step, Parameter, Result, Validator
 from .models import Submission, BackendUser, Message, Environment, QueueType
-from .models import Batch, Configuration
+from .models import Batch, Configuration, CustomExit
 from .forms import *
 
 
@@ -50,6 +50,11 @@ class ResultInline(admin.TabularInline):
     extra = 0
 
 
+class CustomExitInLine(admin.TabularInline):
+    model = CustomExit
+    extra = 0
+
+
 class QueueTypeAdmin(admin.ModelAdmin):
     fieldsets = []
     list_display = ('name', 'execution_behaviour')
@@ -90,11 +95,9 @@ class TaskAdmin(admin.ModelAdmin):
         (None,               {'fields': ['name']}),
         ('Details', {'fields': ['backend', 'description', 'in_glob',
                                 'out_glob', 'stdout_glob', 'executable']}),
-        ('Job termination behaviour', {'fields': ['incomplete_outputs_behaviour',
-                                                  'custom_exit_status',
-                                                  'custom_exit_behaviour', ]}),
+        ('Job termination behaviour', {'fields': ['incomplete_outputs_behaviour', ]}),
     ]
-    inlines = [ParameterInline, EnvironmentInline, ConfigurationInline]
+    inlines = [CustomExitInLine, ParameterInline, EnvironmentInline, ConfigurationInline]
     list_display = ('name', 'processing_backend', 'in_glob', 'out_glob',
                     'executable_string')
 
