@@ -91,8 +91,9 @@ class TaskAdmin(admin.ModelAdmin):
         ('Details', {'fields': ['backend', 'description', 'in_glob',
                                 'out_glob', 'stdout_glob', 'executable']}),
         ('Job termination behaviour', {'fields': ['incomplete_outputs_behaviour',
-                                                  'custom_exit_status',
-                                                  'custom_exit_behaviour', ]}),
+                                                  'custom_success_exit',
+                                                  'custom_terminate_exit',
+                                                  'custom_fail_exit', ]}),
     ]
     inlines = [ParameterInline, EnvironmentInline, ConfigurationInline]
     list_display = ('name', 'processing_backend', 'in_glob', 'out_glob',
