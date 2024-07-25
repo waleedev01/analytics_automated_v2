@@ -200,7 +200,7 @@ def prepare_exit_statuses(uuid, ce, state, step_id, self,
     '''
     valid_exit_status = [0, ]
 
-    if ce is not None:
+    if len(ce) > 0:
         custom_exit_statuses_map = {}
         for custom_exit in ce:
             statuses = custom_exit['custom_exit_status'].replace(" ", "")
@@ -655,7 +655,7 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
 
     __handle_batch_email(s)
     # if we need to terminate the chain send that signal here
-    if ce is not None:
+    if len(ce) > 0:
         if exit_status in custom_exit_statuses_map.get(Task.TERMINATE, []):
             if self.request.chain:
                 self.request.chain = None
