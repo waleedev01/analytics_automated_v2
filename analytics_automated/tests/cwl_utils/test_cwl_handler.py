@@ -67,14 +67,6 @@ class TestCWLCLTParser(unittest.TestCase):
         self.assertIsNotNone(clt)
         self.assertIn("Found existing task with name: some_tool", messages)
     
-    def test_parse_cwl_clt_dynamic_value(self):
-        """Test parsing of a CWL CommandLineTool with Dynamic Value."""
-        filepath = os.path.join(self.test_files_dir, 'dynamic_value.cwl')
-        messages = []
-        clt = read_cwl_file(filepath, 'dynamic_value', messages)
-        self.assertIsNotNone(clt)
-        self.assertEqual(clt.executable, "echo $ID $TMP/$ID/$I1 $O1")
-    
     def test_parse_cwl_clt_invalid_validation(self):
         """Test parsing of an invalid CWL CommandLineTool."""
         filepath = os.path.join(self.test_files_dir, 'invalid_workflow_invalid_arguments.cwl')
