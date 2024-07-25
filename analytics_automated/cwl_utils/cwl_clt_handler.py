@@ -1,5 +1,4 @@
 import logging
-import re
 import json
 from ..models import Backend, Task, Parameter, Environment, Configuration
 
@@ -13,16 +12,12 @@ NOT_TASK_REQUIREMENTS = [
     {'class': 'ScatterFeatureRequirement'},
     {'class': 'SubworkflowFeatureRequirement'},
 ]
-dynamic_input_file_pattern = r"input.[^_]+.basename"
 FORMAT_MAP = r"analytics_automated/cwl_utils/format_uri_mapping.json"
 CONFIGURATION_CHOICES = {
     "Software": 0,
     "Dataset": 1,
     "Misc.": 2,
 }
-
-SPECIAL_ARGUMENT = r'$TMP/$ID'
-
 
 def load_format_mapping(file_path):
     with open(file_path, 'r') as file:
@@ -128,31 +123,6 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
             logging.error(f"Error parsing CWL outputs: {e}")
         return parsed_outputs
 
-    def dynamic_value_judge(input_li: list, max_out: int, value: str) -> str:
-        try:
-            if value == '$(runtime.tmpdir)':
-                return "$TMP"
-            # Check if the value matches the dynamic input file pattern
-            if re.search(dynamic_input_file_pattern, value):
-                parts = value.split('.')
-                if len(parts) <= 2:
-                    raise ValueError(
-                        f"Value '{value}' is not in the expected format 'inputs.input_field_name.basename'")
-                input_name = parts[1]
-                if not input_name in input_li:
-                    raise ValueError(f"Unexpected input field {input_name}, should be in {input_li}")
-                input_idx = input_li.index(input_name) + 1
-                return f"$I{input_idx}"
-            # Handle Output
-            if "$O" in value:
-                if len(value) < 3 or not value[2].isdigit():
-                    raise ValueError(f"Missing Output index in {value}")
-                if int(value[2]) > max_out:
-                    raise IndexError(f"Only {max_out} in the task, index {value[2]} does not exist")
-            return value
-        except Exception as e:
-            logging.error(f"Error generating dynamic output directory: {e}")
-
     logging.info(f"Parsing CWL command line tool: {name}")
     base_command = cwl_data.get("baseCommand")
     inputs = cwl_data.get("inputs", [])
@@ -232,25 +202,12 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         executable_parts = [base_command]
 
     try:
-        max_out = len(task['outputs'])
-        task_name_li = [t['name'] for t in task['inputs'] if t['type'] == 'File']
         for argument_item in arguments:
             if isinstance(argument_item, dict):
-                argument = argument_item['valueFrom']
+                argument_str = argument_item['valueFrom']
                 argument_position = argument_item.get('position')
                 argument_prefix = argument_item.get('prefix')
                 argument_separate = argument_item.get('separate', True)
-                if '/' in argument:
-                    arg_li = argument.split('/')
-                    for i in range(len(arg_li)):
-                        arg_li[i] = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
-                                                        value=arg_li[i])
-                    argument_str = '/'.join(arg_li)
-                    if SPECIAL_ARGUMENT in argument_str:
-                        ADD_INPUT_FIELD = False
-                else:
-                    argument_str = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
-                                                       value=argument)
                 if not argument_separate and argument_prefix:
                     argument_str = argument_prefix + argument_str
                 elif argument_separate and argument_prefix:
@@ -260,19 +217,9 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
                 else:
                     executable_parts.append(argument_str)
             else:
-                argument = argument_item
-                if '/' in argument:
-                    arg_li = argument.split('/')
-                    for i in range(len(arg_li)):
-                        arg_li[i] = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
-                                                        value=arg_li[i])
-                    executable_parts.append('/'.join(arg_li))
-                else:
-                    executable_parts.append(dynamic_value_judge(input_li=task_name_li, max_out=max_out,
-                                                                value=argument))
+                executable_parts.append(argument_item)
     except Exception as e:
         logging.error(f"Error processing arguments for task {name}: {e}")
-    del max_out, task_name_li
 
     in_globs = []
     position_parameter = 1
@@ -290,7 +237,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
             if file_type != 'File':
                 executable_parts.insert(position, f"$P{position_parameter}")
                 position_parameter += 1
-            elif ADD_INPUT_FIELD:
+            else:
                 insert_value = f"$I{position_input}"
                 input_prefix = input_data['input_binding'].get('prefix')
                 if input_prefix:
