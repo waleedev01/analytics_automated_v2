@@ -267,7 +267,7 @@ def handle_task_exit(exit_status, valid_exit_status, custom_exit_statuses_map,
     if exit_status in valid_exit_status:
         # Here we test the custom exit status. And do as it requires
         # skipping the regular raise() if needed
-        if exit_status in custom_exit_statuses_map[Task.TERMINATE]:
+        if exit_status in custom_exit_statuses_map.get(Task.TERMINATE, []):
             custom_exit_termination = True
         
         found_endings = []
@@ -299,7 +299,7 @@ def handle_task_exit(exit_status, valid_exit_status, custom_exit_statuses_map,
             if t.incomplete_outputs_behaviour == Task.CONTINUE:
                 # by default we insert whatever results we have and keep going
                 insert_data(run.output_data, s, t, current_step, previous_step)
-    elif exit_status in custom_exit_statuses_map[Task.FAIL]:
+    elif exit_status in custom_exit_statuses_map.get(Task.FAIL, []):
             # if we hit an exit status that we ought to fail on raise an error
         insert_data(run.output_data, s, t, current_step, previous_step)
         Submission.update_submission_state(s, True, state, step_id,
@@ -713,7 +713,7 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
         # logger.debug(uuid+": completing job due to custom exit: " +
         #              str(custom_exit_statuses))
         logger.debug(uuid+": completing job due to custom exit: " + 
-                     str(custom_exit_statuses_map[Task.TERMINATE]))
+                     str(custom_exit_statuses_map.get(Task.TERMINATE, [])))
     if incomplete_outputs_termination:
         complete_job = True
         logger.debug(uuid+": completing job due to incomplete outputs")
@@ -751,7 +751,7 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
     __handle_batch_email(s)
     # if we need to terminate the chain send that signal here
     if ce is not None:
-        if exit_status in custom_exit_statuses_map[Task.TERMINATE]:
+        if exit_status in custom_exit_statuses_map.get(Task.TERMINATE, []):
             if self.request.chain:
                 self.request.chain = None
 
