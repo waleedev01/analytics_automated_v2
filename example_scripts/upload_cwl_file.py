@@ -22,21 +22,30 @@ cwl_file_path = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/
 
 input_file_path = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/example_scripts/input.txt'
 
+input_pdb_path = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/tasks/MemEmbed-master/examples/2x2v.pdb'
+
 # Prepare payload for file upload
 files = {
     'input_data': ('input.txt', open(input_file_path, 'rb'))
 }
 
+filepdb = {
+    'input_data': ('2x2v.pdb', open(input_file_path, 'rb'))
+}
+
 # Additional data for the submission
 data = {
-    'job': 'test2.cwl',  # Assuming 'psipred' is the job identifier
-    'submission_name': 'memembed2_submission',  # Name for the submission
+    'job': 'memembed',  # Assuming 'psipred' is the job identifier
+    'submission_name': 'memembed_submission',  # Name for the submission
     'email': 'zczqtg0@ucl.ac.uk',  # Email associated with the submission,
+    'memembed_algorithm': '1',  # Replace with actual parameters required by your job
+    'memembed_barrel': 'TRUE',  #'TRUE' or 'FALSE'
+    'memembed_termini': '8'
 }
 test = []
 #read_cwl_file(cwl_file_path,'test2.cwl',test)
 # Make POST request to upload the file
-response = requests.post(url, data=data, files=files)
+response = requests.post(url, data=data, files=filepdb)
 
 # Print the response content
 print(response.text)

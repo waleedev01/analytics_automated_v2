@@ -1,0 +1,34 @@
+Using beta-barrel potential...
+Membrane protein orientation using a knowledge-based statistical potential
+(c) Tim Nugent 2013
+Version 1.15
+
+Performing grid search...
+Lowest energy 2334.249000 after 1 function evaluations.
+Lowest energy 2332.670700 after 9 function evaluations.
+Lowest energy 2331.884200 after 12 function evaluations.
+Lowest energy 2330.904300 after 426 function evaluations.
+Lowest energy 2330.700700 after 427 function evaluations.
+Lowest energy 2325.929800 after 114259 function evaluations.
+Lowest energy 2325.417300 after 114677 function evaluations.
+Lowest energy 2325.276100 after 115094 function evaluations.
+Lowest energy 2324.763200 after 115510 function evaluations.
+Lowest energy 2323.484400 after 115513 function evaluations.
+Lowest energy 2323.169100 after 115929 function evaluations.
+Lowest energy 2323.133100 after 117179 function evaluations.
+Lowest energy 2321.910900 after 117595 function evaluations.
+Lowest energy 2321.472600 after 118013 function evaluations.
+Lowest energy 2321.155300 after 118429 function evaluations.
+Lowest energy 2320.254300 after 118846 function evaluations.
+Lowest energy 2319.192800 after 120097 function evaluations.
+Lowest energy 2318.974100 after 120514 function evaluations.
+Lowest energy 2318.285500 after 121348 function evaluations.
+Lowest energy 2318.277100 after 897815 function evaluations.
+Lowest energy 2318.127700 after 2097144 function evaluations.
+Lowest energy 2317.993900 after 2101296 function evaluations.
+Lowest energy 2317.775200 after 2251835 function evaluations.
+Lowest energy 2317.225700 after 10516802 function evaluations.
+Inverting to satisfy N-terminal constraint...
+Total function calls:	54343857
+Final Energy:		2317.2257
+Written /home/gty/vv-project/celery-requirement/analytics_automated_v2/tasks/MemEmbed-master/examples/2x2v_EMBED.pdb
