@@ -6,7 +6,7 @@ def move_custom_exit_to_separate_table(apps, schema_editor):
     Task = apps.get_model('analytics_automated', 'Task')
     CustomExit = apps.get_model('analytics_automated', 'CustomExit')
 
-    for row in Task.objects.all():
+    for row in Task.objects.filter(custom_exit_status__isnull=False, custom_exit_behaviour__isnull=False):
         CustomExit.objects.create(task=row, custom_exit_status=row.custom_exit_status, custom_exit_behaviour=row.custom_exit_behaviour)
 
 class Migration(migrations.Migration):

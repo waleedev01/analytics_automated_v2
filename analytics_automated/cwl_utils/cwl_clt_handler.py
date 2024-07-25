@@ -391,7 +391,7 @@ def save_task_to_db(task_data, messages):
             except Exception as e:
                 logging.error(f"Error saving success code for task {task_data['name']}: {e}")
         
-         # Check if the terminate custom exit behaviour already exists
+        # Check if the terminate custom exit behaviour already exists
         existing_ce1 = CustomExit.objects.filter(
             task=task,
             custom_exit_behaviour=1,
