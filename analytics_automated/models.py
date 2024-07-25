@@ -143,10 +143,12 @@ class Task(models.Model):
     incomplete_outputs_behaviour = models.IntegerField(null=False, blank=False,
                                                        choices=COMPLETION_CHOICES,
                                                        default=FAIL)
-    custom_exit_status = models.CharField(max_length=256, null=True,
+    custom_success_exit = models.CharField(max_length=256, null=True,
                                           blank=True)
-    custom_exit_behaviour = models.IntegerField(null=True, blank=True,
-                                                choices=COMPLETION_CHOICES,)
+    custom_terminate_exit = models.CharField(max_length=256, null=True,
+                                          blank=True)
+    custom_fail_exit = models.CharField(max_length=256, null=True,
+                                          blank=True)
     requirements = models.JSONField(null=True, blank=True)  # New field for requirements
     hints = models.JSONField(null=True, blank=True)  # New field for hints
     arguments = models.JSONField(null=True, blank=True)  # New field for arguments
