@@ -1,3 +1,0 @@
-Total matches: 102
-Total errors: 39
-Total partial matches: 72
