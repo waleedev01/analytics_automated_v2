@@ -1,0 +1,19 @@
+psipred:
+/home/gty/vv-project/celery-requirement/analytics_automated_v2/tasks/psipred-master/bin/psipred $I1 /home/gty/vv-project/celery-requirement/analytics_automated_v2/tasks/psipred-master/data/weights.dat /home/gty/vv-project/celery-requirement/analytics_automated_v2/tasks/psipred-master/data/weights.dat2 /home/gty/vv-project/celery-requirement/analytics_automated_v2/tasks/psipred-master/data/weights.dat3
+
+dmp:
+python /home/dbuchan/Code/DMPmetal/pytorch_dmp2e2e_pred.py -i $I1
+python /home/gty/vv-project/celery-requirement/analytics_automated_v2/tasks/DMPmetal-main/pytorch_dmp2e2e_pred.py -i $I1
+
+memembed:
+/home/dbuchan/Code/bin/memembed $P1 $P2 $P3 $I1
+/home/gty/vv-project/celery-requirement/analytics_automated_v2/tasks/MemEmbed-master/bin/memembed $P1 $P2 $P3 $I1
+
+bin/memembed -s 3 -n out examples/2x2v.pdb
+
+/home/gty/vv-project/celery-requirement/analytics_automated_v2/tasks/MemEmbed-master/bin/memembed -s 3 -n out examples/2x2v.pdb
+
+
+bin/memembed -s 1 -a 8 examples/3o7qA.pdb
+
+/home/gty/vv-project/celery-requirement/analytics_automated_v2/tasks/MemEmbed-master/bin/memembed -s 1 -a 8 /home/gty/vv-project/celery-requirement/analytics_automated_v2/tasks/MemEmbed-master/examples/3o7qA.pdb
