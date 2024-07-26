@@ -560,6 +560,16 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
                             if s.batch.status != Batch.ERROR and s.batch.status != Batch.CRASH:
                                 Batch.update_batch_state(s.batch, state)
                     return
+        else:
+            state = Submission.ERROR
+            Submission.update_submission_state(s, True, state, step_id,
+                                                   self.request.id,
+                                                   "Failed with missing"
+                                                   " outputs: exit_code from previous step",
+                                                   socket.gethostname())
+            Batch.update_batch_state(s.batch, state)
+            logger.error("Failed with missing outputs: exit_code from previous step")
+            raise OSError("Failed with missing outputs: exit_code from previous step")
 
     # update submission tracking to note that this is running
     logger.info("SETTING RUN FLAG:" + str(step_id))
