@@ -23,7 +23,7 @@ class TestCWLParser:
         baseCommand: echo
         inputs:
           input1:
-            type: string
+            type: File
         outputs:
           output1:
             type: stdout
