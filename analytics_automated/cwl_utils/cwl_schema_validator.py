@@ -162,6 +162,15 @@ class CWLSchemaValidator:
                     errors.append("'stdout' must be a string")
                 if 'stderr' in cwl_data and not isinstance(cwl_data.get('stderr'), str):
                     errors.append("'stderr' must be a string")
+                
+                requirements = cwl_data.get('requirements', [])
+                if requirements:
+                    if not isinstance(requirements, list):
+                        errors.append("Please define requirement in CWL as list")
+                    else:
+                        for item in requirements:
+                            if item.get('class') in ['InlineJavascriptRequirement']:
+                                errors.append(f"Unsupported requirement: {item['class']}")
 
             if errors:
                 raise ValueError("; ".join(errors))
