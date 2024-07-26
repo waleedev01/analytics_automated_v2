@@ -26,7 +26,7 @@ class TestCWLParser:
             type: File
         outputs:
           output1:
-            type: stdout
+            type: File
         """
         cwl_file = tmpdir.join("echo.cwl")
         cwl_file.write(cwl_content)
