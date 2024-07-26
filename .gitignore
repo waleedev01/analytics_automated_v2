@@ -22,3 +22,5 @@ analytics_automated_project/settings/staging_secrets.json
 analytics_automated_project/settings/production_secrets.json
 analytics_automated_project/settings/base_secrets.json
 .idea
+analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files
+analytics_automated/bidirectional_cwl_llm_testing/validation_results

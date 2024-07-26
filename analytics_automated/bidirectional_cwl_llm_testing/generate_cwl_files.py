@@ -1,7 +1,7 @@
 import os
 import json
-from openai import OpenAI
 import logging
+from openai import OpenAI
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -18,7 +18,6 @@ UNSUPPORTED_REQUIREMENTS = [
     'DockerRequirement',
 ]
 FILE_TYPE = 'File'
-REQUIRED_FIELDS = ['cwlVersion', 'class', 'inputs', 'outputs']
 
 def generate_cwl_file(prompt):
     try:
@@ -33,7 +32,7 @@ def generate_cwl_file(prompt):
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        logging.error(f"Error generating CWL file: {e}")
+        logger.error(f"Error generating CWL file: {e}")
         raise
 
 def generate_cwl_files(output_dir, num_files):
@@ -42,6 +41,9 @@ def generate_cwl_files(output_dir, num_files):
     prompts = [
         (f"Generate a valid CWL file with cwlVersion from {VALID_CWL_VERSIONS}, class from {VALID_CWL_CLASSES}, baseCommand, inputs, and outputs properly defined. "
          f"Ensure the class is CommandLineTool, includes a baseCommand, and only {FILE_TYPE} type is used for inputs and outputs.", 
+         {"is_valid": True, "error": "CWL file is valid."}),
+        (f"Generate a valid CWL file with cwlVersion from {VALID_CWL_VERSIONS}, class from {VALID_CWL_CLASSES}, baseCommand, inputs, and outputs properly defined. "
+         f"Ensure the class is Workflow, includes steps, and only {FILE_TYPE} type is used for inputs and outputs.", 
          {"is_valid": True, "error": "CWL file is valid."}),
         ("Generate an invalid CWL file with missing 'cwlVersion'. Ensure it has 'class', 'inputs', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Missing 'cwlVersion' in CWL file"}),
@@ -64,16 +66,20 @@ def generate_cwl_files(output_dir, num_files):
     ]
 
     for i, (prompt, expected_result) in enumerate(prompts):
-        try:
-            cwl_content = generate_cwl_file(prompt)
-            file_name = f'cwl_file_{i+1}.cwl'
-            with open(os.path.join(output_dir, file_name), 'w') as f:
-                f.write(cwl_content)
-            with open(os.path.join(output_dir, f'{file_name}.expected'), 'w') as f:
-                json.dump(expected_result, f)
-            logging.info(f"Generated {file_name} and expected result")
-        except Exception as e:
-            logging.error(f"Failed to generate CWL file {i+1}: {e}")
+        for j in range(num_files):
+            try:
+                cwl_content = generate_cwl_file(prompt)
+                file_type = 'valid' if expected_result['is_valid'] else 'invalid'
+                file_name = f'cwl_{file_type}_{i+1}_{j+1}.cwl'
+                expected_result['file_type'] = file_type
+                expected_result['file_name'] = file_name
+                with open(os.path.join(output_dir, file_name), 'w') as f:
+                    f.write(cwl_content)
+                with open(os.path.join(output_dir, f'{file_name}.expected'), 'w') as f:
+                    json.dump(expected_result, f)
+                logging.info(f"Generated {file_name} and expected result")
+            except Exception as e:
+                logging.error(f"Failed to generate CWL file {i+1}_{j+1}: {e}")
 
 if __name__ == "__main__":
     generate_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files', 10)
