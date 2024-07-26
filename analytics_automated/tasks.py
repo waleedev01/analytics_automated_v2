@@ -792,7 +792,7 @@ def check_software_requirement(requirements):
         packages = software_requirement.get('packages', [])
         
         for package in packages:
-            package_name = package.get('package')
+            package_name = package.get('name')
             package_version = package.get('version')
             
             if not package_name:
