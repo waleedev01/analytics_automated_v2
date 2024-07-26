@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from cwltool.load_tool import fetch_document, resolve_and_validate_document
 from cwltool.context import LoadingContext
 
@@ -7,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 # List of unsupported requirements in CWL files
 UNSUPPORTED_REQUIREMENTS = [
-    'InlineJavascriptRequirement',
     'ResourceRequirement',
     'DockerRequirement',
 ]
@@ -130,6 +130,21 @@ class CWLSchemaValidator:
                             errors.append(f"Missing 'in' for step '{step_name}'")
                         if 'out' not in step_data:
                             errors.append(f"Missing 'out' for step '{step_name}'")
+                        if 'when' in step_data:
+                            if cwl_version not in ['v1.2', 'v1.3']:
+                                errors.append(f"'when' is only supported in CWL v1.2 and above")
+                            
+                            when_condition = step_data.get('when')
+                            if not when_condition.startswith('$(inputs.exit_code'):
+                                errors.append(f"Invalid 'when' condition for step '{step_name}'. Currently, we only support 'exit_code' condition with format '$(inputs.exit_code ...)'")
+                            
+                            pattern = r'==|!=|>=|<=|>|<'
+                            exit_code = re.split(pattern, when_condition)[-1]
+                            exit_code = exit_code.replace(')', '')
+                            try:
+                                int(exit_code)
+                            except ValueError:
+                                errors.append(f"Invalid 'exit_code' value in 'when' condition for step '{step_name}'")
 
             # If class is 'CommandLineTool', validate command line tool specifics
             if cwl_class == "CommandLineTool":
