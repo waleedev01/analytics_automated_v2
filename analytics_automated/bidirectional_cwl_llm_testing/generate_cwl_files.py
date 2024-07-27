@@ -44,11 +44,11 @@ def generate_cwl_files(output_dir, num_files):
     os.makedirs(output_dir, exist_ok=True)
 
     prompts = [
-        (f"Generate a valid CWL file with cwlVersion from {VALID_CWL_VERSIONS}, class from {VALID_CWL_CLASSES}, baseCommand, inputs, and outputs properly defined. "
+        (f"Generate a valid CWL file with cwlVersion from {VALID_CWL_VERSIONS}, class from {VALID_CWL_CLASSES}, baseCommand, inputs, and outputs properly defined as dictionaries. "
          f"Ensure the class is CommandLineTool, includes a baseCommand, and supports any type for inputs and outputs.", 
          {"is_valid": True, "error": "CWL file is valid."}),
-        (f"Generate a valid CWL file with cwlVersion from {VALID_CWL_VERSIONS}, class from {VALID_CWL_CLASSES}, baseCommand, inputs, and outputs properly defined. "
-         f"Ensure the class is Workflow, includes steps, and supports any type for inputs and outputs.", 
+        (f"Generate a valid CWL file with cwlVersion from {VALID_CWL_VERSIONS}, class from {VALID_CWL_CLASSES}, baseCommand, inputs, and outputs properly defined as dictionaries. "
+         f"Ensure the class is Workflow, includes steps defined as dictionaries, and supports any type for inputs and outputs.", 
          {"is_valid": True, "error": "CWL file is valid."}),
         ("Generate an invalid CWL file with missing 'cwlVersion'. Ensure it has 'class', 'inputs', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Missing 'cwlVersion' in CWL file"}),
@@ -62,7 +62,7 @@ def generate_cwl_files(output_dir, num_files):
          {"is_valid": False, "error": "Validation failed: Unsupported CWL version"}),
         (f"Generate an invalid CWL file with unsupported 'class' not in {VALID_CWL_CLASSES}. Ensure it has 'cwlVersion', 'inputs', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Unsupported class"}),
-        (f"Generate an invalid CWL file with unsupported requirement in the 'requirements' field. Use a requirement that is not in not in {SUPPORTED_REQUIREMENTS}. Ensure it has 'cwlVersion', 'class', 'inputs', 'outputs', and 'baseCommand'.", 
+        (f"Generate an invalid CWL file with unsupported requirement in the 'requirements' field. Use a requirement that is not in {SUPPORTED_REQUIREMENTS}. Ensure it has 'cwlVersion', 'class', 'inputs', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Unsupported requirement"})
     ]
 

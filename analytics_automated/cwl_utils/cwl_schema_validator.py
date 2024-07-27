@@ -83,10 +83,12 @@ class CWLSchemaValidator:
                     errors.append("Please define requirements in CWL as list")
                 else:
                     for item in requirements:
-                        if item.get('class') not in SUPPORTED_REQUIREMENTS:
-                            errors.append(f"Unsupported requirement: {item['class']}")
+                        if not isinstance(item, dict):
+                            errors.append(f"Unsupported requirement format: {item}")
+                        elif item.get('class') not in SUPPORTED_REQUIREMENTS:
+                            errors.append(f"Unsupported requirement: {item.get('class')}")
                         elif cwl_class == "CommandLineTool" and item.get('class') == "InlineJavascriptRequirement":
-                            errors.append(f"Unsupported requirement: {item['class']} for CommandLineTool")
+                            errors.append(f"Unsupported requirement: {item.get('class')} for CommandLineTool")
 
             # Validate hints if present
             hints = cwl_data.get('hints', [])
@@ -95,8 +97,10 @@ class CWLSchemaValidator:
                     errors.append("Please define hints in CWL as list")
                 else:
                     for item in hints:
-                        if item.get('class') not in SUPPORTED_REQUIREMENTS:
-                            errors.append(f"Unsupported hint: {item['class']}")
+                        if not isinstance(item, dict):
+                            errors.append(f"Unsupported hint format: {item}")
+                        elif item.get('class') not in SUPPORTED_REQUIREMENTS:
+                            errors.append(f"Unsupported hint: {item.get('class')}")
 
             # Check for the presence of 'inputs'
             inputs = cwl_data.get('inputs')
@@ -163,10 +167,12 @@ class CWLSchemaValidator:
                 requirements = cwl_data.get('requirements', [])
                 if requirements:
                     if not isinstance(requirements, list):
-                        errors.append("Please define requirement in CWL as list")
+                        errors.append("Please define requirements in CWL as list")
                     else:
                         for item in requirements:
-                            if item.get('class') == "InlineJavascriptRequirement":
+                            if not isinstance(item, dict):
+                                errors.append(f"Unsupported requirement format: {item}")
+                            elif item.get('class') == "InlineJavascriptRequirement":
                                 errors.append(f"Unsupported requirement: {item['class']} for CommandLineTool")
 
             if errors:
