@@ -102,35 +102,23 @@ class CWLSchemaValidator:
             inputs = cwl_data.get('inputs')
             if not inputs:
                 errors.append("Missing 'inputs' in CWL file")
-            else:
-                if not isinstance(inputs, dict):
-                    errors.append("Please define inputs in CWL as dictionary")
-                else:
-                    for input_name, input_data in inputs.items():
-                        if 'type' not in input_data:
-                            errors.append(f"Missing 'type' for input '{input_name}'")
-                        #elif input_data['type'] != 'File':
-                        #    errors.append(f"Only 'File' type is supported for input '{input_name}'")
+            elif not isinstance(inputs, dict):
+                errors.append("Please define inputs in CWL as dictionary")
 
             # Check for the presence of 'outputs'
             outputs = cwl_data.get('outputs')
             if not outputs:
                 errors.append("Missing 'outputs' in CWL file")
-            else:
-                if not isinstance(outputs, dict):
-                    errors.append("Please define outputs in CWL as dictionary")
-                else:
-                    for output_name, output_data in outputs.items():
-                        if 'type' not in output_data:
-                            errors.append(f"Missing 'type' for output '{output_name}'")
-                        #elif output_data['type'] != 'File':
-                        #   errors.append(f"Only 'File' type is supported for output '{output_name}'")
+            elif not isinstance(outputs, dict):
+                errors.append("Please define outputs in CWL as dictionary")
 
             # If class is 'Workflow', ensure 'steps' are present and valid
             if cwl_class == "Workflow":
                 steps = cwl_data.get('steps')
                 if not steps:
                     errors.append("Missing 'steps' in CWL file")
+                elif not isinstance(steps, dict):
+                    errors.append("Please define steps in CWL as dictionary")
                 else:
                     for step_name, step_data in steps.items():
                         if 'run' not in step_data:

@@ -19,7 +19,6 @@ SUPPORTED_REQUIREMENTS = [
     'SoftwareRequirement',
     'InlineJavascriptRequirement'
 ]
-FILE_TYPE = 'File'
 
 def generate_cwl_file(prompt):
     try:
@@ -32,7 +31,11 @@ def generate_cwl_file(prompt):
             ],
             model="gpt-3.5-turbo",
         )
-        return response.choices[0].message.content.strip()
+        cwl_content = response.choices[0].message.content.strip()
+        # Remove the expected result if it is included in the file content
+        if "This CWL file is" in cwl_content:
+            cwl_content = cwl_content.split("This CWL file is")[0].strip()
+        return cwl_content
     except Exception as e:
         logger.error(f"Error generating CWL file: {e}")
         raise
@@ -42,10 +45,10 @@ def generate_cwl_files(output_dir, num_files):
 
     prompts = [
         (f"Generate a valid CWL file with cwlVersion from {VALID_CWL_VERSIONS}, class from {VALID_CWL_CLASSES}, baseCommand, inputs, and outputs properly defined. "
-         f"Ensure the class is CommandLineTool, includes a baseCommand, and only {FILE_TYPE} type is used for inputs and outputs.", 
+         f"Ensure the class is CommandLineTool, includes a baseCommand, and supports any type for inputs and outputs.", 
          {"is_valid": True, "error": "CWL file is valid."}),
         (f"Generate a valid CWL file with cwlVersion from {VALID_CWL_VERSIONS}, class from {VALID_CWL_CLASSES}, baseCommand, inputs, and outputs properly defined. "
-         f"Ensure the class is Workflow, includes steps, and only {FILE_TYPE} type is used for inputs and outputs.", 
+         f"Ensure the class is Workflow, includes steps, and supports any type for inputs and outputs.", 
          {"is_valid": True, "error": "CWL file is valid."}),
         ("Generate an invalid CWL file with missing 'cwlVersion'. Ensure it has 'class', 'inputs', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Missing 'cwlVersion' in CWL file"}),
@@ -59,11 +62,7 @@ def generate_cwl_files(output_dir, num_files):
          {"is_valid": False, "error": "Validation failed: Unsupported CWL version"}),
         (f"Generate an invalid CWL file with unsupported 'class' not in {VALID_CWL_CLASSES}. Ensure it has 'cwlVersion', 'inputs', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Unsupported class"}),
-        (f"Generate an invalid CWL file with incorrect 'inputs' type, any type is allowed. Ensure it has 'cwlVersion', 'class', 'outputs', and 'baseCommand'.", 
-         {"is_valid": False, "error": "Validation failed: Only 'File' type is supported for inputs"}),
-        (f"Generate an invalid CWL file with incorrect 'outputs' type, any type is allowed. Ensure it has 'cwlVersion', 'class', 'inputs', and 'baseCommand'.", 
-         {"is_valid": False, "error": "Validation failed: Only 'File' type is supported for outputs"}),
-        (f"Generate an invalid CWL file with unsupported requirement not in {SUPPORTED_REQUIREMENTS}. Ensure it has 'cwlVersion', 'class', 'inputs', 'outputs', and 'baseCommand'.", 
+        (f"Generate an invalid CWL file with unsupported requirement in the 'requirements' field. Use a requirement that is not in not in {SUPPORTED_REQUIREMENTS}. Ensure it has 'cwlVersion', 'class', 'inputs', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Unsupported requirement"})
     ]
 
