@@ -1,7 +1,8 @@
 import logging
-import re
 import json
-from ..models import Backend, Task, Parameter, Environment
+import re
+import string
+from ..models import Backend, Task, Parameter, Environment, Configuration
 
 logger = logging.getLogger(__name__)
 
@@ -13,13 +14,12 @@ NOT_TASK_REQUIREMENTS = [
     {'class': 'ScatterFeatureRequirement'},
     {'class': 'SubworkflowFeatureRequirement'},
 ]
-dynamic_input_file_pattern = r"input.[^_]+.basename"
 FORMAT_MAP = r"analytics_automated/cwl_utils/format_uri_mapping.json"
-
-# Feature Need to be discussed
-ADD_INPUT_FIELD = True
-SPECIAL_ARGUMENT = r'$TMP/$ID'
-
+CONFIGURATION_CHOICES = {
+    "Software": 0,
+    "Dataset": 1,
+    "Misc.": 2,
+}
 
 def load_format_mapping(file_path):
     try:
@@ -45,6 +45,43 @@ def handle_env_variable_req(requirements: list) -> dict[str, str]:
     except Exception as e:
         logging.error(f"Error handling environment variable requirements: {e}")
     return {}
+
+
+def handle_hint_software_hint(requirements: list) -> list:
+    """
+    Extract SoftwareRequirement hint as configuration list
+    """
+    logging.info(f"- Handling hint software package -")
+    try:
+        for requirement in requirements:
+            if requirement['class'] == 'SoftwareRequirement':
+                logging.info(f"Found software package requirement: {requirement['packages']}")
+                s_packages = requirement['packages']
+                if isinstance(s_packages, dict):
+                    software_req_li = []
+                    for p_name, p_attr in s_packages.items():
+                        p_attr['name'] = p_name
+                        p_attr['version'] = ",".join(p_attr.get('version', ""))
+                        p_attr['type'] = "Software"
+                        software_req_li.append(p_attr)
+                    return software_req_li
+                if isinstance(s_packages, list):
+                    for p in s_packages:
+                        p['name'] = p['package']
+                        p['version'] = ",".join(p['version'])
+                        p['type'] = "Software"
+                    return s_packages
+    except Exception as e:
+        logging.error(f"Error handling software package requirements: {e}")
+    return []
+
+
+def handle_aa_custom_configuration(configrations: list) -> list:
+    for config in configrations:
+        if config.get('name') is None:
+            raise ValueError("The name of Configuration object should not be empty!")
+    return configrations
+
 
 def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     def map_format(format_uri, mapping):
@@ -93,31 +130,6 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
             logging.error(f"Error parsing CWL outputs: {e}")
         return parsed_outputs
 
-    def dynamic_value_judge(input_li: list, max_out: int, value: str) -> str:
-        try:
-            if value == '$(runtime.tmpdir)':
-                return "$TMP"
-            # Check if the value matches the dynamic input file pattern
-            if re.search(dynamic_input_file_pattern, value):
-                parts = value.split('.')
-                if len(parts) <= 2:
-                    raise ValueError(f"Value '{value}' is not in the expected format 'inputs.input_field_name.basename'")
-                input_name = parts[1]
-                if not input_name in input_li:
-                    raise ValueError(f"Unexpected input field {input_name}, should be in {input_li}")
-                input_idx = input_li.index(input_name) + 1
-                return f"$I{input_idx}"
-            # Handle Output
-            if "$O" in value:
-                if len(value) < 3 or not value[2].isdigit():
-                    raise ValueError(f"Missing Output index in {value}")
-                if int(value[2]) > max_out:
-                    raise IndexError(f"Only {max_out} in the task, index {value[2]} does not exist")
-            return value
-        except Exception as e:
-            logging.error(f"Error generating dynamic output directory: {e}")
-            return ""
-
     logging.info(f"Parsing CWL command line tool: {name}")
     base_command = cwl_data.get("baseCommand")
     inputs = cwl_data.get("inputs", {})
@@ -128,30 +140,25 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     stdin = cwl_data.get("stdin")
     stdout = cwl_data.get("stdout")
     stderr = cwl_data.get("stderr")
-    success_codes = cwl_data.get("successCodes", [])
-    temporary_fail_codes = cwl_data.get("temporaryFailCodes", [])
-    permanent_fail_codes = cwl_data.get("permanentFailCodes", [])
+    success_codes = cwl_data.get("successCodes", None)
+    permanent_fail_codes = cwl_data.get("permanentFailCodes", None)
     label = cwl_data.get("label")
     doc = cwl_data.get("doc")
     shell_quote = cwl_data.get("shellQuote", False)
+    ADD_INPUT_FIELD = True
+
+    aa_task_config_li = []
+    software_hints = []
     try:
-        # custom field, Get values from cwl_data or use default values if not present
-        incomplete_outputs_behaviour = cwl_data.get("AAIncompleteOutputsBehaviour",
-                                                    DEFAULT_INCOMPLETE_OUTPUTS_BEHAVIOUR)
-        custom_exit_status = cwl_data.get("AACustomExitStatus")
-        custom_exit_behaviour = cwl_data.get("AACustomExitBehaviour")
-        # Ensure custom_exit_behaviour is provided if custom_exit_status is present
-        if custom_exit_status is not None and custom_exit_behaviour is None:
-            raise ValueError(
-                f"Missing CustomExitBehaviour for task {name}:"
-                f" If you provide a custom exit status, you must provide a behaviour.")
-
-        # If custom_exit_status is None, set it to the default value
-        if custom_exit_status is None:
-            custom_exit_status = DEFAULT_CUSTOM_EXIT_STATUS
-
+        aa_task_config_li = handle_aa_custom_configuration(cwl_data.get("AAConfiguration", []))
+        software_hints = handle_hint_software_hint(hints)
     except Exception as e:
-        logging.error(f"Failed to parse custom fields for task {name}: {e}")
+        logging.error(f"Failed to parse custom configration fields for task {name}: {e}")
+    
+    if success_codes is not None:
+        success_codes = ",".join(map(str, success_codes))
+    if permanent_fail_codes is not None:
+        permanent_fail_codes = ",".join(map(str, permanent_fail_codes))
 
     task = {
         "name": name,
@@ -161,19 +168,16 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         "requirements": requirements,
         "environments": handle_env_variable_req(requirements),
         "hints": hints,
+        "configurations": aa_task_config_li + software_hints,
         "arguments": arguments,
         "stdin": stdin,
         "stdout": stdout,
         "stderr": stderr,
         "success_codes": success_codes,
-        "temporary_fail_codes": temporary_fail_codes,
         "permanent_fail_codes": permanent_fail_codes,
         "label": label,
         "doc": doc,
         "shell_quote": shell_quote,
-        "incomplete_outputs_behaviour": incomplete_outputs_behaviour,
-        "custom_exit_status": custom_exit_status,
-        "custom_exit_behaviour": custom_exit_behaviour,
     }
 
     if stdout:
@@ -187,25 +191,12 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         executable_parts = [base_command]
 
     try:
-        max_out = len(task['outputs'])
-        task_name_li = [t['name'] for t in task['inputs'] if t['type'] == 'File']
         for argument_item in arguments:
             if isinstance(argument_item, dict):
-                argument = argument_item['valueFrom']
+                argument_str = argument_item['valueFrom']
                 argument_position = argument_item.get('position')
                 argument_prefix = argument_item.get('prefix')
                 argument_separate = argument_item.get('separate', True)
-                if '/' in argument:
-                    arg_li = argument.split('/')
-                    for i in range(len(arg_li)):
-                        arg_li[i] = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
-                                                        value=arg_li[i])
-                    argument_str = '/'.join(arg_li)
-                    if SPECIAL_ARGUMENT in argument_str:
-                        ADD_INPUT_FIELD = False
-                else:
-                    argument_str = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
-                                                                value=argument)
                 if not argument_separate and argument_prefix:
                     argument_str = argument_prefix + argument_str
                 elif argument_separate and argument_prefix:
@@ -215,19 +206,9 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
                 else:
                     executable_parts.append(argument_str)
             else:
-                argument = argument_item
-                if '/' in argument:
-                    arg_li = argument.split('/')
-                    for i in range(len(arg_li)):
-                        arg_li[i] = dynamic_value_judge(input_li=task_name_li, max_out=max_out,
-                                                        value=arg_li[i])
-                    executable_parts.append('/'.join(arg_li))
-                else:
-                    executable_parts.append(dynamic_value_judge(input_li=task_name_li, max_out=max_out,
-                                                                value=argument))
+                executable_parts.append(argument_item)
     except Exception as e:
         logging.error(f"Error processing arguments for task {name}: {e}")
-    del max_out, task_name_li
 
     in_globs = []
     position_parameter = 1
@@ -243,9 +224,14 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
 
             file_type = input_data['type']
             if file_type != 'File':
+                # Skip exit_code as input parameter
+                if file_type == 'int' and input_data['name'] == 'exit_code':
+                    in_globs.append("exit_code.txt")
+                    continue
+        
                 executable_parts.insert(position, f"$P{position_parameter}")
                 position_parameter += 1
-            elif ADD_INPUT_FIELD:
+            else:
                 insert_value = f"$I{position_input}"
                 input_prefix = input_data['input_binding'].get('prefix')
                 if input_prefix:
@@ -273,6 +259,10 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         for idx, output_data in enumerate(task['outputs']):
             if output_data['type'] == 'File' and 'glob' in output_data['output_binding']:
                 suffix = f".{output_data['output_binding'].get('glob').split('.')[-1]}"
+                out_globs.append(suffix)
+            # Include exit_code in out_glob as exit_code.txt
+            elif output_data['type'] == 'int' and output_data['output_binding']['outputEval'] == "$(runtime.exitCode)":
+                suffix = 'exit_code.txt'
                 out_globs.append(suffix)
         out_glob = ",".join(out_globs)
 
@@ -325,9 +315,8 @@ def save_task_to_db(task_data, messages):
             existing_task.stdout_glob = task_data['stdout_glob']
             existing_task.executable = task_data['executable']
             existing_task.requirements = task_data['requirements']
-            existing_task.incomplete_outputs_behaviour = task_data['incomplete_outputs_behaviour']
-            existing_task.custom_exit_status = task_data['custom_exit_status']
-            existing_task.custom_exit_behaviour = task_data['custom_exit_behaviour']
+            existing_task.custom_success_exit = task_data['success_codes']
+            existing_task.custom_terminate_exit = task_data['permanent_fail_codes']
             existing_task.save()
 
             existing_parameter = Parameter.objects.filter(task=existing_task)
@@ -351,9 +340,8 @@ def save_task_to_db(task_data, messages):
                 stdout_glob=task_data['stdout_glob'],
                 executable=task_data['executable'],
                 requirements=task_data['requirements'],
-                incomplete_outputs_behaviour=task_data['incomplete_outputs_behaviour'],
-                custom_exit_status=task_data['custom_exit_status'],
-                custom_exit_behaviour=task_data['custom_exit_behaviour'],
+                custom_success_exit=task_data['success_codes'],
+                custom_terminate_exit=task_data['permanent_fail_codes'],
             )
             message = f"Task saved successfully: {task_data['name']}"
             logging.info(message)
@@ -363,6 +351,10 @@ def save_task_to_db(task_data, messages):
                 # Skip inputs with File type
                 file_type = input_data['type']
                 if file_type == 'File':
+                    continue
+
+                # Skip exit_code as input parameter
+                if file_type == 'int' and input_data['name'] == 'exit_code':
                     continue
 
                 flag = input_data.get('input_binding').get('prefix')
@@ -393,6 +385,18 @@ def save_task_to_db(task_data, messages):
                     )
             except Exception as e:
                 logging.error(f"Error saving environment variable for task {task_data['name']}: {e}")
+
+        for package in task_data['configurations']:
+            try:
+                c = Configuration.objects.create(
+                    task=task,
+                    type=CONFIGURATION_CHOICES.get(package.get('type'), 0),
+                    name=package['name'],
+                    version=package.get('version', None),
+                    parameters=package.get('parameter', None)
+                )
+            except Exception as e:
+                logging.error(f"Error saving configration for task {task_data['name']}: {e}")
 
         message = f"Task saved successfully: {task_data['name']}"
         logging.info(message)

@@ -12,6 +12,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
     step_source = {}
     task_arr = []
     task_details = []
+    condition_arr = []
     workflow_req = cwl_data.get("requirements", [])
 
     for step_name, step_detail in steps.items():
@@ -31,6 +32,10 @@ def parse_cwl_workflow(cwl_data, filename, messages):
                 source_arr.append(input_detail.split('/')[0])
 
         task_run = step_detail.get("run")
+        task_when = step_detail.get("when", None)
+        if task_when is not None:
+            task_when = task_when[9:-1] #remove $(inputs.)
+        condition_arr.append(task_when)
 
         try:
             if isinstance(task_run, dict) and task_run.get("class") == "CommandLineTool":
@@ -53,9 +58,9 @@ def parse_cwl_workflow(cwl_data, filename, messages):
 
                 task = check_existing_task_in_db(task_name, messages)
                 if task:
-                    step_source[step_name] = set(source_arr)
+                    step_source[task_name] = set(source_arr)
                 else:
-                    error_message = f"Cancel job creation with name '{filename}' due to missing task file: {task_run}"
+                    error_message = f"Cancel job creation with name '{filename}' due to missing task file: {task_name}"
                     logging.error(error_message)
                     messages.append(error_message)
                     return
@@ -97,60 +102,52 @@ def parse_cwl_workflow(cwl_data, filename, messages):
     requirements = cwl_data.get("requirements")
 
     try:
-        logging.debug("Starting job processing for filename: %s", filename)
-
         # Check if the job already exists
         existing_job = Job.objects.filter(name=filename).first()
 
         if existing_job:
-            logging.info("Found existing job with name: %s", filename)
+            message = f"Found existing job with name: {filename}"
+            logging.info(message)
+            messages.append(message)
 
-            # Updating existing job details
             existing_job.name = filename
             existing_job.cwl_version = cwl_version
             existing_job.requirements = requirements
             existing_job.save()
-            logging.debug("Updated job details for: %s", filename)
 
-            # Deleting existing steps associated with the job
-            existing_steps = Step.objects.filter(job=existing_job)
-            for step in existing_steps:
-                logging.debug("Deleting step ID %s for job %s", step.id, filename)
+            existing_step = Step.objects.filter(job=existing_job)
+            for step in existing_step:
                 step.delete()
 
             job = existing_job
             keyword = "updated"
-            logging.info("Job updated: %s", filename)
         else:
-            # Creating new job
             job = Job.objects.create(
                 name=filename, 
                 runnable=True,
                 cwl_version=cwl_version,
                 requirements=requirements)
             keyword = "created"
-            logging.info("Job created with name: %s", filename)
 
-        # Processing each task
-        for task_name in task_arr:
-            logging.debug("Processing task: %s", task_name)
+        for idx, task_name in enumerate(task_arr):
             try:
                 # Create steps for the job
                 task = Task.objects.get(name=task_name)
-                Step.objects.create(job=job, task=task, ordering=order_mapping_final[task_name])
-                logging.info("Step created for task %s in job %s", task_name, filename)
+                Step.objects.create(job=job, task=task, ordering=order_mapping_final[task_name], condition=condition_arr[idx])
 
-                # Environment variable handling
+                # Create inherited workflow environment variables for the task
                 if workflow_req:
                     curr_env = Environment.objects.filter(task=task)
-                    env_dict = {env.env: env.value for env in curr_env}
+                    env_dict = {}
+                    for env in curr_env:
+                        env_dict[env.env] = env.value
+
                     inherited_req = filter_workflow_req(workflow_req)
                     inherited_env_var_li = handle_env_variable_req(inherited_req)
 
                     for key, value in inherited_env_var_li.items():
                         if key not in env_dict:
                             Environment.objects.create(task=task, env=key, value=value)
-                            logging.debug("Environment variable %s created for task %s", key, task_name)
             except ObjectDoesNotExist:
                 error_message = f"Task {task_name} does not exist in the database"
                 logging.error(error_message)
@@ -159,13 +156,12 @@ def parse_cwl_workflow(cwl_data, filename, messages):
                 error_message = f"Integrity error when creating step for task {task_name}: {e}"
                 logging.error(error_message)
                 messages.append(error_message)
-
     except Exception as e:
         error_message = f"Error creating or updating job {filename}: {e}"
         logging.error(error_message)
         messages.append(error_message)
         return None
-    
+
     messages.append(f"Job '{filename}' {keyword} with tasks: {', '.join(task_arr)}")
     logging.info(f"Job '{filename}' {keyword} with tasks: {', '.join(task_arr)}")
     return job
