@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from cwltool.load_tool import fetch_document, resolve_and_validate_document
 from cwltool.context import LoadingContext
 
@@ -7,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 # List of unsupported requirements in CWL files
 UNSUPPORTED_REQUIREMENTS = [
-    'InlineJavascriptRequirement',
     'ResourceRequirement',
     'DockerRequirement',
 ]
@@ -104,8 +104,8 @@ class CWLSchemaValidator:
                     for input_name, input_data in inputs.items():
                         if 'type' not in input_data:
                             errors.append(f"Missing 'type' for input '{input_name}'")
-                        elif input_data['type'] != 'File':
-                            errors.append(f"Only 'File' type is supported for input '{input_name}'")
+                        #elif input_data['type'] != 'File':
+                        #    errors.append(f"Only 'File' type is supported for input '{input_name}'")
 
             # Check for the presence of 'outputs'
             outputs = cwl_data.get('outputs')
@@ -118,8 +118,8 @@ class CWLSchemaValidator:
                     for output_name, output_data in outputs.items():
                         if 'type' not in output_data:
                             errors.append(f"Missing 'type' for output '{output_name}'")
-                        elif output_data['type'] != 'File':
-                            errors.append(f"Only 'File' type is supported for output '{output_name}'")
+                        #elif output_data['type'] != 'File':
+                        #   errors.append(f"Only 'File' type is supported for output '{output_name}'")
 
             # If class is 'Workflow', ensure 'steps' are present and valid
             if cwl_class == "Workflow":
@@ -134,6 +134,21 @@ class CWLSchemaValidator:
                             errors.append(f"Missing 'in' for step '{step_name}'")
                         if 'out' not in step_data:
                             errors.append(f"Missing 'out' for step '{step_name}'")
+                        if 'when' in step_data:
+                            if cwl_version not in ['v1.2']:
+                                errors.append(f"'when' is only supported in CWL v1.2 and above")
+                            
+                            when_condition = step_data.get('when')
+                            if not when_condition.startswith('$(inputs.exit_code'):
+                                errors.append(f"Invalid 'when' condition for step '{step_name}'. Currently, we only support 'exit_code' condition with format '$(inputs.exit_code ...)'")
+                            
+                            pattern = r'==|!=|>=|<=|>|<'
+                            exit_code = re.split(pattern, when_condition)[-1]
+                            exit_code = exit_code.replace(')', '')
+                            try:
+                                int(exit_code)
+                            except ValueError:
+                                errors.append(f"Invalid 'exit_code' value in 'when' condition for step '{step_name}'")
 
             # If class is 'CommandLineTool', validate command line tool specifics
             if cwl_class == "CommandLineTool":
@@ -151,6 +166,15 @@ class CWLSchemaValidator:
                     errors.append("'stdout' must be a string")
                 if 'stderr' in cwl_data and not isinstance(cwl_data.get('stderr'), str):
                     errors.append("'stderr' must be a string")
+                
+                requirements = cwl_data.get('requirements', [])
+                if requirements:
+                    if not isinstance(requirements, list):
+                        errors.append("Please define requirement in CWL as list")
+                    else:
+                        for item in requirements:
+                            if item.get('class') in ['InlineJavascriptRequirement']:
+                                errors.append(f"Unsupported requirement: {item['class']}")
 
             if errors:
                 raise ValueError("; ".join(errors))
