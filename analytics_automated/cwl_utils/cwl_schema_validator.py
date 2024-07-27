@@ -6,10 +6,13 @@ from cwltool.context import LoadingContext
 
 logger = logging.getLogger(__name__)
 
-# List of unsupported requirements in CWL files
-UNSUPPORTED_REQUIREMENTS = [
-    'ResourceRequirement',
-    'DockerRequirement',
+# List of supported requirements in CWL files
+SUPPORTED_REQUIREMENTS = [
+    'ShellCommandRequirement',
+    'EnvVarRequirement',
+    'InitialWorkDirRequirement',
+    'SoftwareRequirement',
+    'InlineJavascriptRequirement'
 ]
 
 VALID_CWL_VERSIONS = ['v1.0', 'v1.1', 'v1.2']
@@ -80,8 +83,10 @@ class CWLSchemaValidator:
                     errors.append("Please define requirements in CWL as list")
                 else:
                     for item in requirements:
-                        if item.get('class') in UNSUPPORTED_REQUIREMENTS:
+                        if item.get('class') not in SUPPORTED_REQUIREMENTS:
                             errors.append(f"Unsupported requirement: {item['class']}")
+                        elif cwl_class == "CommandLineTool" and item.get('class') == "InlineJavascriptRequirement":
+                            errors.append(f"Unsupported requirement: {item['class']} for CommandLineTool")
 
             # Validate hints if present
             hints = cwl_data.get('hints', [])
@@ -90,7 +95,7 @@ class CWLSchemaValidator:
                     errors.append("Please define hints in CWL as list")
                 else:
                     for item in hints:
-                        if item.get('class') in UNSUPPORTED_REQUIREMENTS:
+                        if item.get('class') not in SUPPORTED_REQUIREMENTS:
                             errors.append(f"Unsupported hint: {item['class']}")
 
             # Check for the presence of 'inputs'
@@ -173,8 +178,8 @@ class CWLSchemaValidator:
                         errors.append("Please define requirement in CWL as list")
                     else:
                         for item in requirements:
-                            if item.get('class') in ['InlineJavascriptRequirement']:
-                                errors.append(f"Unsupported requirement: {item['class']}")
+                            if item.get('class') == "InlineJavascriptRequirement":
+                                errors.append(f"Unsupported requirement: {item['class']} for CommandLineTool")
 
             if errors:
                 raise ValueError("; ".join(errors))

@@ -12,10 +12,12 @@ client = OpenAI(api_key='')
 # Define variables for prompts
 VALID_CWL_VERSIONS = ['v1.0', 'v1.1', 'v1.2']
 VALID_CWL_CLASSES = ['CommandLineTool', 'Workflow']
-UNSUPPORTED_REQUIREMENTS = [
-    'InlineJavascriptRequirement',
-    'ResourceRequirement',
-    'DockerRequirement',
+SUPPORTED_REQUIREMENTS = [
+    'ShellCommandRequirement',
+    'EnvVarRequirement',
+    'InitialWorkDirRequirement',
+    'SoftwareRequirement',
+    'InlineJavascriptRequirement'
 ]
 FILE_TYPE = 'File'
 
@@ -57,11 +59,11 @@ def generate_cwl_files(output_dir, num_files):
          {"is_valid": False, "error": "Validation failed: Unsupported CWL version"}),
         (f"Generate an invalid CWL file with unsupported 'class' not in {VALID_CWL_CLASSES}. Ensure it has 'cwlVersion', 'inputs', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Unsupported class"}),
-        (f"Generate an invalid CWL file with incorrect 'inputs' type, only {FILE_TYPE} is allowed. Ensure it has 'cwlVersion', 'class', 'outputs', and 'baseCommand'.", 
+        (f"Generate an invalid CWL file with incorrect 'inputs' type, any type is allowed. Ensure it has 'cwlVersion', 'class', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Only 'File' type is supported for inputs"}),
-        (f"Generate an invalid CWL file with incorrect 'outputs' type, only {FILE_TYPE} is allowed. Ensure it has 'cwlVersion', 'class', 'inputs', and 'baseCommand'.", 
+        (f"Generate an invalid CWL file with incorrect 'outputs' type, any type is allowed. Ensure it has 'cwlVersion', 'class', 'inputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Only 'File' type is supported for outputs"}),
-        (f"Generate an invalid CWL file with unsupported requirement from {UNSUPPORTED_REQUIREMENTS}. Ensure it has 'cwlVersion', 'class', 'inputs', 'outputs', and 'baseCommand'.", 
+        (f"Generate an invalid CWL file with unsupported requirement not in {SUPPORTED_REQUIREMENTS}. Ensure it has 'cwlVersion', 'class', 'inputs', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Unsupported requirement"})
     ]
 
