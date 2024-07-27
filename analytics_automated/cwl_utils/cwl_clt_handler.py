@@ -1,5 +1,7 @@
 import logging
 import json
+import re
+import string
 from ..models import Backend, Task, Parameter, Environment, Configuration
 
 logger = logging.getLogger(__name__)
@@ -133,8 +135,8 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     stdin = cwl_data.get("stdin")
     stdout = cwl_data.get("stdout")
     stderr = cwl_data.get("stderr")
-    success_codes = cwl_data.get("successCodes", [])
-    permanent_fail_codes = cwl_data.get("permanentFailCodes", [])
+    success_codes = cwl_data.get("successCodes", None)
+    permanent_fail_codes = cwl_data.get("permanentFailCodes", None)
     label = cwl_data.get("label")
     doc = cwl_data.get("doc")
     shell_quote = cwl_data.get("shellQuote", False)
@@ -148,8 +150,10 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     except Exception as e:
         logging.error(f"Failed to parse custom configration fields for task {name}: {e}")
     
-    success_codes = ",".join(map(str, success_codes))
-    permanent_fail_codes = ",".join(map(str, permanent_fail_codes))
+    if success_codes is not None:
+        success_codes = ",".join(map(str, success_codes))
+    if permanent_fail_codes is not None:
+        permanent_fail_codes = ",".join(map(str, permanent_fail_codes))
 
     task = {
         "name": name,
@@ -215,6 +219,11 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
 
             file_type = input_data['type']
             if file_type != 'File':
+                # Skip exit_code as input parameter
+                if file_type == 'int' and input_data['name'] == 'exit_code':
+                    in_globs.append("exit_code.txt")
+                    continue
+        
                 executable_parts.insert(position, f"$P{position_parameter}")
                 position_parameter += 1
             else:
@@ -245,6 +254,10 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         for idx, output_data in enumerate(task['outputs']):
             if output_data['type'] == 'File' and 'glob' in output_data['output_binding']:
                 suffix = f".{output_data['output_binding'].get('glob').split('.')[-1]}"
+                out_globs.append(suffix)
+            # Include exit_code in out_glob as exit_code.txt
+            elif output_data['type'] == 'int' and output_data['output_binding']['outputEval'] == "$(runtime.exitCode)":
+                suffix = 'exit_code.txt'
                 out_globs.append(suffix)
         out_glob = ",".join(out_globs)
 
@@ -333,6 +346,10 @@ def save_task_to_db(task_data, messages):
                 # Skip inputs with File type
                 file_type = input_data['type']
                 if file_type == 'File':
+                    continue
+
+                # Skip exit_code as input parameter
+                if file_type == 'int' and input_data['name'] == 'exit_code':
                     continue
 
                 flag = input_data.get('input_binding').get('prefix')

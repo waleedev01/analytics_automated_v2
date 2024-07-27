@@ -237,7 +237,7 @@ def prepare_exit_statuses(uuid, t, state, step_id, self,
 
 def handle_task_exit(exit_status, valid_exit_status, custom_exit_map,
                      run, out_globs, t, s, current_step, previous_step, self,
-                     state, step_id):
+                     state, step_id, exit_code_file):
     '''
         Not yet covered with unit tests
     '''
@@ -251,8 +251,19 @@ def handle_task_exit(exit_status, valid_exit_status, custom_exit_map,
 
         found_endings = []
         if run.output_data is not None:
+            # Remove exit code from previous task as output_data, we only need it as input
+            keys_to_remove = [key for key in run.output_data if key.endswith("_exit_code.txt")]
+
+            for key in keys_to_remove:
+                run.output_data.pop(key)
+
             for fName, fData in run.output_data.items():
                 found_endings.append("."+fName.split(".")[-1])
+
+        # Add exit code of this task execution to the results
+        if len(exit_code_file) > 0:
+            insert_data(exit_code_file, s, t, current_step, previous_step)
+            found_endings.append("exit_code.txt")
 
         if set(out_globs).issubset(found_endings):
             insert_data(run.output_data, s, t, current_step, previous_step)
@@ -379,10 +390,14 @@ def __construct_chain_string(steps, UUID, job_priority):
         queue_name = str(step.task.backend.queue_type)
         if step.ordering != prev_step:
             current_step += 1
+        
+        condition = ''
+        if step.condition is not None:
+            condition = step.condition
 
         # tchain += "task_runner.si('%s',%i,%i,%i,'%s') | " \
         task_string = "task_runner.subtask(('%s', %i, %i, %i, %i, '%s', " \
-                      "%s, %s, '%s', %i, %s), " \
+                      "%s, %s, '%s', %i, %s, '%s'), " \
                       "immutable=True, queue='%s')" \
                       % (UUID,
                          step.ordering,
@@ -395,6 +410,7 @@ def __construct_chain_string(steps, UUID, job_priority):
                          value,
                          step.task.backend.queue_type.execution_behaviour,
                          environment,
+                         condition,
                          queue_name)
 
         if step.ordering in task_strings:
@@ -478,7 +494,7 @@ def task_job_runner(self, *args, **kwargs):
              max_retries=5)
 def task_runner(self, uuid, step_id, current_step, step_counter,
                 total_steps, task_name, params, param_values, value,
-                execution_behaviour, environment):
+                execution_behaviour, environment, condition):
     """
         Here is the action. Takes and task name and a job UUID. Gets the task
         config from the db and the job data and runs the job.
@@ -510,6 +526,50 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
     stdoglob = ".stdout"
     if t.stdout_glob is not None and len(t.stdout_glob) > 0:
         stdoglob = "."+t.stdout_glob.lstrip(".")
+    
+    # Handle "when" condition
+    logger.info("CONDITION:" + str(condition))
+    if condition != '':
+        exit_code = data_dict.get(str(uuid)+"_"+str(step_counter-1)+'_exit_code.txt', None)
+        if exit_code is not None:
+            if 'exit_code' in condition:
+                exit_code = int(exit_code)
+                continue_task = eval(condition)
+                if not continue_task:
+                    Submission.update_submission_state(s, True, Submission.RUNNING,
+                                               step_id,
+                                               self.request.id,
+                                               'Skipping step: ' +
+                                               str(current_step),
+                                               socket.gethostname())
+                    if step_counter == total_steps:
+                        state = Submission.COMPLETE
+                        Submission.update_submission_state(s, True, state,
+                                               step_id,
+                                               self.request.id,
+                                               'Completed job at step # ' +
+                                               str(current_step-1),
+                                               socket.gethostname())
+                        
+                        batch_subs = Submission.objects.filter(batch=s.batch)
+                        complete_count = 0
+                        for sub in batch_subs:
+                            if sub.status == Submission.COMPLETE:
+                                complete_count += 1
+                        if complete_count == len(batch_subs):
+                            if s.batch.status != Batch.ERROR and s.batch.status != Batch.CRASH:
+                                Batch.update_batch_state(s.batch, state)
+                    return
+        else:
+            state = Submission.ERROR
+            Submission.update_submission_state(s, True, state, step_id,
+                                                   self.request.id,
+                                                   "Failed with missing"
+                                                   " outputs: exit_code from previous step",
+                                                   socket.gethostname())
+            Batch.update_batch_state(s.batch, state)
+            logger.error("Failed with missing outputs: exit_code from previous step")
+            raise OSError("Failed with missing outputs: exit_code from previous step")
 
     # update submission tracking to note that this is running
     logger.info("SETTING RUN FLAG:" + str(step_id))
@@ -599,6 +659,13 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
         # and make a decision later
         __handle_batch_email(s)
         raise OSError(run_message)
+    
+    # Collect this task exit code and save it to the result if exit code is the output in cwl
+    exit_code_file = {}
+    if 'exit_code.txt' in t.out_glob:
+        exit_code_file = {
+            str(uuid) + '_' + str(step_counter) + '_exit_code.txt': str(exit_status).encode('utf-8'),
+        }
 
     # if the command ran with success we'll send the file contents to the
     # database.
@@ -618,7 +685,7 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
                                                           run, out_globs, t, s,
                                                           current_step,
                                                           previous_step, self,
-                                                          state, step_id)
+                                                          state, step_id, exit_code_file)
 
     # decide if we should complete the job
     complete_job = False
