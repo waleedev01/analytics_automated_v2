@@ -2,6 +2,7 @@ import os
 import json
 import logging
 from openai import OpenAI
+import re
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -40,6 +41,23 @@ def generate_cwl_file(prompt):
         logger.error(f"Error generating CWL file: {e}")
         raise
 
+def extract_clt_filenames(workflow_content):
+    # Extract the filenames of the CommandLineTool files from the workflow content
+    pattern = r'run:\s*(\S+)'
+    matches = re.findall(pattern, workflow_content)
+    return matches
+
+def generate_clt_files(clt_filenames, output_dir):
+    for clt_filename in clt_filenames:
+        prompt = f"Generate a valid CWL CommandLineTool file named {clt_filename} with a baseCommand, inputs, and outputs properly defined."
+        try:
+            clt_content = generate_cwl_file(prompt)
+            with open(os.path.join(output_dir, clt_filename), 'w') as f:
+                f.write(clt_content)
+            logging.info(f"Generated CLT file: {clt_filename}")
+        except Exception as e:
+            logging.error(f"Failed to generate CLT file {clt_filename}: {e}")
+
 def generate_cwl_files(output_dir, num_files):
     os.makedirs(output_dir, exist_ok=True)
 
@@ -48,7 +66,8 @@ def generate_cwl_files(output_dir, num_files):
          f"Ensure the class is CommandLineTool, includes a baseCommand, and supports any type for inputs and outputs.", 
          {"is_valid": True, "error": "CWL file is valid."}),
         (f"Generate a valid CWL file with cwlVersion from {VALID_CWL_VERSIONS}, class from {VALID_CWL_CLASSES}, baseCommand, inputs, and outputs properly defined as dictionaries. "
-         f"Ensure the class is Workflow, includes steps defined as dictionaries, and supports any type for inputs and outputs.", 
+         f"Ensure the class is Workflow, includes steps defined as dictionaries, and supports any type for inputs and outputs. "
+         f"Also, include any necessary CommandLineTool files referenced within the workflow.", 
          {"is_valid": True, "error": "CWL file is valid."}),
         ("Generate an invalid CWL file with missing 'cwlVersion'. Ensure it has 'class', 'inputs', 'outputs', and 'baseCommand'.", 
          {"is_valid": False, "error": "Validation failed: Missing 'cwlVersion' in CWL file"}),
@@ -79,6 +98,12 @@ def generate_cwl_files(output_dir, num_files):
                 with open(os.path.join(output_dir, f'{file_name}.expected'), 'w') as f:
                     json.dump(expected_result, f)
                 logging.info(f"Generated {file_name} and expected result")
+
+                if expected_result['is_valid'] and 'Workflow' in cwl_content:
+                    # Extract CLT filenames and generate CLT files
+                    clt_filenames = extract_clt_filenames(cwl_content)
+                    generate_clt_files(clt_filenames, output_dir)
+                    
             except Exception as e:
                 logging.error(f"Failed to generate CWL file {i+1}_{j+1}: {e}")
 
