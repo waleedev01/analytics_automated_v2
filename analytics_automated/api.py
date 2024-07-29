@@ -38,6 +38,7 @@ from .validators import *
 from .r_keywords import *
 from .cmdline import *
 from .cwl_utils import cwl_parser
+from workflow_visualization import get_current_task_states  # Assuming this function exist
 
 
 
@@ -661,3 +662,14 @@ class CWLUploadView(APIView):
         except Exception as e:
             logging.error(f"Failed to process CWL files: {str(e)}")
             return Response({"error": str(e), "messages": messages}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class TaskStateView(APIView):
+    def get(self, request, submission_id):
+        try:
+            task_states = get_current_task_states(submission_id)
+            return Response(task_states, status=status.HTTP_200_OK)
+        except Submission.DoesNotExist:
+            return Response({"error": "Submission not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

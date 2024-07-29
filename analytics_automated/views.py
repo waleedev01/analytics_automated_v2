@@ -79,3 +79,15 @@ class CWLUploadPageView(View):
         except Exception as e:
             logging.error(f"Failed to process CWL files: {e}")
             return render(request, 'cwl/upload_cwl.html', {"message": str(e), "messages": messages})
+
+
+class VisualizationDashboardView(View):
+    """
+    View to handle the visualization dashboard.
+    """
+
+    def get(self, request):
+        """
+        Handle GET requests to render the visualization dashboard.
+        """
+        return render(request, 'visualization/dashboard.html')
