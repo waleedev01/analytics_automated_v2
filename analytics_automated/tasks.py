@@ -531,7 +531,7 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
     handle_initial_workdir_requirement(t.requirements,str(step_id),t.backend.root_path)
     
     #check the software requirement version
-    #check_software_requirement(t.requirements)
+    check_software_requirement(t.requirements)
 
 
     # Handle "when" condition
@@ -806,4 +806,4 @@ def check_software_requirement(requirements):
             except FileNotFoundError:
                 raise RuntimeError(f"Package {package_name} is required but not installed.")
     
-    return "Software requirements are satisfied."
+    logger.info("Software requirements are satisfied.")

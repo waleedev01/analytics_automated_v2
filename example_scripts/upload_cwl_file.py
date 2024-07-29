@@ -30,7 +30,7 @@ files = {
 }
 
 filepdb = {
-    'input_data': ('2x2v.pdb', open(input_file_path, 'rb'))
+    'input_data': ('2x2v.pdb', open(input_pdb_path, 'rb'))
 }
 
 # Additional data for the submission
@@ -43,10 +43,18 @@ data = {
     'memembed_termini': '8'
 }
 test = []
+
+
+
+data2 = {
+    'job': 'test.cwl',  # Assuming 'psipred' is the job identifier
+    'submission_name': 'memembed_submission',  # Name for the submission
+    'email': 'zczqtg0@ucl.ac.uk',  # Email associated with the submission,
+}
 #read_cwl_file(cwl_file_path,'test2.cwl',test)
 # Make POST request to upload the file
-response = requests.post(url, data=data, files=filepdb)
-
+#response = requests.post(url, data=data, files=filepdb)
+response = requests.post(url, data=data2, files=files)
 # Print the response content
 print(response.text)
 
