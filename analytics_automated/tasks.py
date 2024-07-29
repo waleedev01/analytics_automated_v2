@@ -527,6 +527,13 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
     if t.stdout_glob is not None and len(t.stdout_glob) > 0:
         stdoglob = "."+t.stdout_glob.lstrip(".")
     
+    #handle the task initial_workdir_requirement
+    handle_initial_workdir_requirement(t.requirements,str(step_id),t.backend.root_path)
+    
+    #check the software requirement version
+    #check_software_requirement(t.requirements)
+
+
     # Handle "when" condition
     logger.info("CONDITION:" + str(condition))
     if condition != '':
@@ -749,3 +756,54 @@ def chord_end(self, uuid, step_id, current_step):
                                            socket.gethostname())
     Batch.update_batch_state(s.batch, state)
     __handle_batch_email(s)
+
+@shared_task
+def handle_initial_workdir_requirement(requirements,step_id,src):
+    if requirements is None:
+        return f"No initial workdir setup in this step"
+    initial_workdir_requirement = next((req for req in requirements if req['class'] == 'InitialWorkDirRequirement'), None)
+    
+    if initial_workdir_requirement:
+        listing = initial_workdir_requirement.get('listing', [])
+        
+        for item in listing:
+            if item['class'] == 'File':
+                if 'entryname' in item and 'entry' in item:
+                    dst = os.path.join(src, item['entryname'])
+                    logging.info(f"Writing to file: {dst}")
+                    try:
+                        with open(dst, 'w') as f:
+                            f.write(item['entry'])
+                        logging.info(f"Successfully wrote to {dst}")
+                    except Exception as e:
+                        logging.error(f"Failed to write to {dst}: {e}")
+
+    logger.info("Step id "+ step_id + ":Initial workdir setup completed")
+
+@shared_task
+def check_software_requirement(requirements):
+    if requirements is None:
+        return f"No software_requirement in this step"
+    software_requirement = next((req for req in requirements if req['class'] == 'SoftwareRequirement'), None)
+    
+    if software_requirement:
+        packages = software_requirement.get('packages', [])
+        
+        for package in packages:
+            package_name = package.get('name')
+            package_version = package.get('version')
+            
+            if not package_name:
+                continue
+            
+            # Check if the package is installed
+            try:
+                result = subprocess.run([package_name, '--version'], capture_output=True, text=True)
+                installed_version = result.stdout.strip()
+                
+                if package_version and package_version not in installed_version:
+                    raise RuntimeError(f"Package {package_name} version {package_version} is required, but version {installed_version} is installed.")
+            except FileNotFoundError:
+                raise RuntimeError(f"Package {package_name} is required but not installed.")
+    
+    return "Software requirements are satisfied."
