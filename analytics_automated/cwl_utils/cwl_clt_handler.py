@@ -258,7 +258,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     return task
 
 
-def save_task_to_db(task_data, messages):
+def save_task_to_db(task_data, messages, cwl_content=None):
     try:
         backend = Backend.objects.get(id=1)  # Assuming a default backend ID
         logging.info(f"Saving task to database: {task_data['name']}")
@@ -299,6 +299,7 @@ def save_task_to_db(task_data, messages):
             existing_task.requirements = task_data['requirements']
             existing_task.custom_success_exit = task_data['success_codes']
             existing_task.custom_terminate_exit = task_data['permanent_fail_codes']
+            existing_task.cwl_content = cwl_content  # store the entire CLT CWL
             existing_task.save()
 
             existing_parameter = Parameter.objects.filter(task=existing_task)
@@ -324,6 +325,7 @@ def save_task_to_db(task_data, messages):
                 requirements=task_data['requirements'],
                 custom_success_exit=task_data['success_codes'],
                 custom_terminate_exit=task_data['permanent_fail_codes'],
+                cwl_content=cwl_content  # store the entire CLT CWL
             )
             message = f"Task saved successfully: {task_data['name']}"
             logging.info(message)
@@ -374,7 +376,7 @@ def save_task_to_db(task_data, messages):
                     parameters=package.get('parameter', None)
                 )
             except Exception as e:
-                logging.error(f"Error saving configration for task {task_data['name']}: {e}")
+                logging.error(f"Error saving configuration for task {task_data['name']}: {e}")
 
         message = f"Task saved successfully: {task_data['name']}"
         logging.info(message)
