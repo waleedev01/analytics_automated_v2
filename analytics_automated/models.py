@@ -203,6 +203,7 @@ class Step(models.Model):
     task = models.ForeignKey(Task, null=True,
                              on_delete=models.CASCADE)
     ordering = models.IntegerField(default=0, null=False, blank=False)
+    condition = models.CharField(max_length=256, null=True, blank=True)
 
     def __str__(self):
         return str(self.task)

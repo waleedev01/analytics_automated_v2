@@ -45,5 +45,6 @@
   "https://github.com/psipred/metsite/MetPred": ".MetPred",
   "https://github.com/psipred/metsite/DATA": ".DATA",
   "https://github.com/psipred/metsite/pro": ".pro",
-  "https://github.com/psipred/DMPmetal/dmpmetal": ".dmpmetal"
+  "https://github.com/psipred/DMPmetal/dmpmetal": ".dmpmetal",
+  ".txt": ".txt"
 }

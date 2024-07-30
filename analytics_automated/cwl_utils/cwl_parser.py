@@ -1,3 +1,4 @@
+import os
 import yaml
 import logging
 from .cwl_schema_validator import CWLSchemaValidator
@@ -39,6 +40,9 @@ def read_cwl_file(cwl_path, filename, messages):
         # Determine the class of the CWL (Workflow or CommandLineTool)
         cwl_class = cwl_data.get("class")
 
+        # Remove the file extension from the filename
+        filename_without_extension = os.path.splitext(filename)[0]
+
         if cwl_class == "Workflow":
             logging.info(f"Parsing workflow: {filename}")
             return parse_cwl_workflow(cwl_data, filename, messages, cwl_content)
@@ -46,11 +50,6 @@ def read_cwl_file(cwl_path, filename, messages):
             logging.info(f"Parsing CommandLineTool: {filename}")
             task_data = parse_cwl_clt(cwl_data, filename)
             return save_task_to_db(task_data, messages, cwl_content=cwl_content)
-        else:
-            error_message = f"Unsupported CWL class: {cwl_class}"
-            logger.error(error_message)
-            messages.append(error_message)
-            return None
     except Exception as e:
         # Log any exception that occurs during the processing
         error_message = f"Error reading CWL file {cwl_path}: {e}"
