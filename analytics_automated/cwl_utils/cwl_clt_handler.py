@@ -22,9 +22,14 @@ CONFIGURATION_CHOICES = {
 }
 
 def load_format_mapping(file_path):
-    with open(file_path, 'r') as file:
-        format_mapping = json.load(file)
-    return format_mapping
+    try:
+        with open(file_path, 'r') as file:
+            format_mapping = json.load(file)
+        logging.info(f"Format mapping loaded successfully from {file_path}")
+        return format_mapping
+    except Exception as e:
+        logging.error(f"Error loading format mapping from {file_path}: {e}")
+        return {}
 
 
 def handle_env_variable_req(requirements: list) -> dict[str, str]:
@@ -127,8 +132,8 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
 
     logging.info(f"Parsing CWL command line tool: {name}")
     base_command = cwl_data.get("baseCommand")
-    inputs = cwl_data.get("inputs", [])
-    outputs = cwl_data.get("outputs", [])
+    inputs = cwl_data.get("inputs", {})
+    outputs = cwl_data.get("outputs", {})
     requirements = cwl_data.get("requirements", [])
     hints = cwl_data.get("hints", [])
     arguments = cwl_data.get("arguments", [])
