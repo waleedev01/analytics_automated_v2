@@ -1,0 +1,17 @@
+{
+    "file_name": "cwl_invalid_9_7.cwl",
+    "step": "validation",
+    "result": "success",
+    "expected": {
+        "is_valid": false,
+        "error": "Validation failed: Unsupported requirement",
+        "file_type": "invalid",
+        "file_name": "cwl_invalid_9_7.cwl"
+    },
+    "expected_str": "{\"is_valid\": false, \"error\": \"Validation failed: Unsupported requirement\", \"file_type\": \"invalid\", \"file_name\": \"cwl_invalid_9_7.cwl\"}",
+    "got": {
+        "is_valid": false,
+        "error": "Validation failed: Unsupported requirement format: StepRequirement; Unsupported requirement format: StepRequirement"
+    },
+    "got_str": "{\"is_valid\": false, \"error\": \"Validation failed: Unsupported requirement format: StepRequirement; Unsupported requirement format: StepRequirement\"}"
+}

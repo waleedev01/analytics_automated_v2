@@ -1,0 +1,17 @@
+{
+    "file_name": "cwl_invalid_6_9.cwl",
+    "step": "validation",
+    "result": "success",
+    "expected": {
+        "is_valid": false,
+        "error": "Validation failed: Missing 'outputs' in CWL file",
+        "file_type": "invalid",
+        "file_name": "cwl_invalid_6_9.cwl"
+    },
+    "expected_str": "{\"is_valid\": false, \"error\": \"Validation failed: Missing 'outputs' in CWL file\", \"file_type\": \"invalid\", \"file_name\": \"cwl_invalid_6_9.cwl\"}",
+    "got": {
+        "is_valid": false,
+        "error": "Validation failed: Missing 'outputs' in CWL file"
+    },
+    "got_str": "{\"is_valid\": false, \"error\": \"Validation failed: Missing 'outputs' in CWL file\"}"
+}

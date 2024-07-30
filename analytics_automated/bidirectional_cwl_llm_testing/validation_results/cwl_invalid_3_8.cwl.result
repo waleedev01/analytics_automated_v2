@@ -1,0 +1,17 @@
+{
+    "file_name": "cwl_invalid_3_8.cwl",
+    "step": "validation",
+    "result": "success",
+    "expected": {
+        "is_valid": false,
+        "error": "Validation failed: Missing 'cwlVersion' in CWL file",
+        "file_type": "invalid",
+        "file_name": "cwl_invalid_3_8.cwl"
+    },
+    "expected_str": "{\"is_valid\": false, \"error\": \"Validation failed: Missing 'cwlVersion' in CWL file\", \"file_type\": \"invalid\", \"file_name\": \"cwl_invalid_3_8.cwl\"}",
+    "got": {
+        "is_valid": false,
+        "error": "Validation failed: Missing 'cwlVersion' in CWL file; Please define inputs in CWL as dictionary; Please define outputs in CWL as dictionary"
+    },
+    "got_str": "{\"is_valid\": false, \"error\": \"Validation failed: Missing 'cwlVersion' in CWL file; Please define inputs in CWL as dictionary; Please define outputs in CWL as dictionary\"}"
+}

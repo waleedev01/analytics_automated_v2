@@ -1,0 +1,17 @@
+{
+    "file_name": "cwl_invalid_5_3.cwl",
+    "step": "validation",
+    "result": "success",
+    "expected": {
+        "is_valid": false,
+        "error": "Validation failed: Missing 'inputs' in CWL file",
+        "file_type": "invalid",
+        "file_name": "cwl_invalid_5_3.cwl"
+    },
+    "expected_str": "{\"is_valid\": false, \"error\": \"Validation failed: Missing 'inputs' in CWL file\", \"file_type\": \"invalid\", \"file_name\": \"cwl_invalid_5_3.cwl\"}",
+    "got": {
+        "is_valid": false,
+        "error": "Validation failed: Missing 'inputs' in CWL file; Please define outputs in CWL as dictionary"
+    },
+    "got_str": "{\"is_valid\": false, \"error\": \"Validation failed: Missing 'inputs' in CWL file; Please define outputs in CWL as dictionary\"}"
+}

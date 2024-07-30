@@ -1,0 +1,17 @@
+{
+    "file_name": "cwl_invalid_7_6.cwl",
+    "step": "validation",
+    "result": "success",
+    "expected": {
+        "is_valid": false,
+        "error": "Validation failed: Unsupported CWL version",
+        "file_type": "invalid",
+        "file_name": "cwl_invalid_7_6.cwl"
+    },
+    "expected_str": "{\"is_valid\": false, \"error\": \"Validation failed: Unsupported CWL version\", \"file_type\": \"invalid\", \"file_name\": \"cwl_invalid_7_6.cwl\"}",
+    "got": {
+        "is_valid": false,
+        "error": "Validation failed: Unsupported CWL version: v2.0"
+    },
+    "got_str": "{\"is_valid\": false, \"error\": \"Validation failed: Unsupported CWL version: v2.0\"}"
+}
