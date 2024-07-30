@@ -22,7 +22,14 @@ from django.conf.urls.static import static
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from analytics_automated import api
-from analytics_automated.views import CWLUploadPageView  
+from analytics_automated.views import VisualizationDashboardView, CWLUploadPageView  
+
+
+
+# urlpatterns = [
+#     path('upload/', CWLUploadPageView.as_view(), name='upload'),
+#     path('dashboard/', VisualizationDashboardView.as_view(), name='dashboard'),
+# ]
 
 
 urlpatterns = [
@@ -50,7 +57,9 @@ urlpatterns = [
      url(r'^analytics_automated/uploadcwl/$',
          api.CWLUploadView.as_view(), name="uploadcwl"),  # Existing CWL upload pattern
      url(r'^analytics_automated/uploadcwlpage/$',
-         CWLUploadPageView.as_view(), name="uploadcwlpage"),  # New view for the cwl upload page
+         CWLUploadPageView.as_view(), name="uploadcwlpage"),
+     url(r'^analytics_automated/dashboard/$',
+         VisualizationDashboardView.as_view(), name='dashboard'),  # New view for the cwl upload page
      url(r'^login/$', auth_views.LoginView),
      url(r'^logout/$', auth_views.LogoutView),
 

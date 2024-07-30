@@ -38,7 +38,7 @@ from .validators import *
 from .r_keywords import *
 from .cmdline import *
 from .cwl_utils import cwl_parser
-from workflow_visualization import get_current_task_states  # Assuming this function exist
+from .workflow_visualization import *  # Assuming this function exist
 
 
 
