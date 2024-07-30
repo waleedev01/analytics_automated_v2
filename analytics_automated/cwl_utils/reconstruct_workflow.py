@@ -2,13 +2,16 @@ import logging
 import json
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from ..models import Job, Step, Task, Parameter, Environment
+from ..models import Job, Step, Task, Parameter
 
 logger = logging.getLogger(__name__)
 
 VALID_CWL_VERSIONS = ['v1.0', 'v1.1', 'v1.2', 'v1.3']
 
 def safe_json_loads(data):
+    """
+    Safely load JSON data from a string.
+    """
     if isinstance(data, str):
         try:
             return json.loads(data)
@@ -18,7 +21,10 @@ def safe_json_loads(data):
     return data
 
 def get_step_sources(job):
-    steps = Step.objects.filter(job=job).order_by('ordering')
+    """
+    Extract step sources for a job from the database.
+    """
+    steps = job.steps.all().order_by('ordering')
     step_source = {}
     for step in steps:
         sources = set()
@@ -31,6 +37,9 @@ def get_step_sources(job):
     return step_source
 
 def set_step_order(step_source):
+    """
+    Determine the order of steps in the workflow based on their dependencies.
+    """
     order_mapping = {}
     for step_name, source_list in step_source.items():
         if len(source_list) == 0:
@@ -41,8 +50,11 @@ def set_step_order(step_source):
     return order_mapping
 
 def get_workflow_details(job):
+    """
+    Construct the details of a workflow from its database representation.
+    """
     logger.debug(f"Starting to process workflow for job: {job.name}")
-    steps = Step.objects.filter(job=job).order_by('ordering')
+    steps = job.steps.all().order_by('ordering')
     workflow_steps = {}
 
     workflow_input = {
@@ -55,21 +67,18 @@ def get_workflow_details(job):
         step_detail = {
             "run": f"{step_name}.cwl",
             "in": {},
+            "out": []
         }
 
         # Process inputs
         if i == 0:
             step_detail["in"]["input"] = "input-file"
-        elif step_name == "psipred2":
-            step_detail["in"]["input"] = [f"{steps[i-1].task.name}/output"]
         else:
             step_detail["in"]["input"] = f"{steps[i-1].task.name}/output"
 
         # Process outputs
-        if task.out_glob and (',' in task.out_glob or step_name in ["run_legacy_psiblast2", "psipass2"]):
-            step_detail["out"] = ["output"]
-        else:
-            step_detail["out"] = "output"
+        if task.out_glob:
+            step_detail["out"] = [f"output"]
 
         workflow_steps[step_name] = step_detail
 
@@ -97,6 +106,9 @@ def get_workflow_details(job):
 
 @transaction.atomic
 def reconstruct_workflow(job_name):
+    """
+    Reconstruct a workflow from its database entry.
+    """
     logger.info(f"Starting workflow reconstruction for job: {job_name}")
     try:
         job = Job.objects.get(name=job_name)

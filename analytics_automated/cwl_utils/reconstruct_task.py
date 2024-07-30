@@ -9,6 +9,9 @@ from ..models import Task, Parameter, Environment
 logger = logging.getLogger(__name__)
 
 def load_format_mapping():
+    """
+    Load format URI mappings from a JSON file.
+    """
     format_map_path = os.path.join(settings.BASE_DIR, 'analytics_automated', 'cwl_utils', 'format_uri_mapping.json')
     try:
         with open(format_map_path, 'r') as file:
@@ -23,6 +26,9 @@ def load_format_mapping():
 FORMAT_MAP = load_format_mapping()
 
 def safe_json_loads(data):
+    """
+    Safely load JSON data from a string.
+    """
     if isinstance(data, str):
         try:
             return json.loads(data)
@@ -32,6 +38,9 @@ def safe_json_loads(data):
     return data
 
 def get_task_details(task):
+    """
+    Reconstructs the CWL CommandLineTool from the database task object.
+    """
     logger.debug(f"Starting to process task: {task.name}")
     
     task_detail = {
@@ -51,45 +60,55 @@ def get_task_details(task):
         input_name = next(iter(task_detail["inputs"]))
         task_detail["stdout"] = f"$(inputs.{input_name}.basename){task.stdout_glob}"
 
-    # Process optional attributes plus requirements
-    # task_detail.update(reconstruct_additional_attributes(task))
+    # Process optional attributes and requirements
+    if task.requirements:
+        task_detail["requirements"] = safe_json_loads(task.requirements)
+    
+    if task.arguments:
+        task_detail["arguments"] = safe_json_loads(task.arguments)
+    
+    if task.hints:
+        task_detail["hints"] = safe_json_loads(task.hints)
+
+    if task.stdin:
+        task_detail["stdin"] = task.stdin
+
+    if task.stdout:
+        task_detail["stdout"] = task.stdout
+
+    if task.stderr:
+        task_detail["stderr"] = task.stderr
 
     logger.debug(f"Final task detail: {task_detail}")
     return task_detail
 
 def reconstruct_inputs(task):
+    """
+    Reconstruct inputs for a CommandLineTool.
+    """
     inputs = {}
     params = task.parameters.all()
     
-    if params:
-        for param in params:
-            input_name = param.rest_alias or f"input_{task.name}_file"
-            input_detail = {
-                "type": "File",
-                "inputBinding": {"position": 1}
-            }
-            
-            if task.in_glob:
-                format_uri = next((k for k, v in FORMAT_MAP.items() if v == f".{task.in_glob.strip('.')}" or v == task.in_glob), None)
-                if format_uri:
-                    input_detail["format"] = format_uri
-            
-            inputs[input_name] = input_detail
-    else:
-        # If no parameters, create a default input
-        input_name = f"input_{task.name}_file"
-        inputs[input_name] = {
+    for param in params:
+        input_name = param.rest_alias
+        input_detail = {
             "type": "File",
             "inputBinding": {"position": 1}
         }
+        
         if task.in_glob:
             format_uri = next((k for k, v in FORMAT_MAP.items() if v == f".{task.in_glob.strip('.')}" or v == task.in_glob), None)
             if format_uri:
-                inputs[input_name]["format"] = format_uri
-
+                input_detail["format"] = format_uri
+        
+        inputs[input_name] = input_detail
+    
     return inputs
 
 def reconstruct_outputs(task):
+    """
+    Reconstruct outputs for a CommandLineTool.
+    """
     outputs = {}
     if task.out_glob:
         output_globs = task.out_glob.split(',')
@@ -101,27 +120,11 @@ def reconstruct_outputs(task):
             }
     return outputs
 
-# def reconstruct_additional_attributes(task):
-#     attributes = {}
-
-#     # Process environments
-#     environments = task.environment_set.all()
-#     if environments:
-#         attributes["requirements"] = [{
-#             "class": "EnvVarRequirement",
-#             "envDef": {env.env: env.value for env in environments}
-#         }]
-
-#     # Process stdin, stdout, stderr
-#     if task.stdin:
-#         attributes["stdin"] = task.stdin
-#     if task.stderr:
-#         attributes["stderr"] = task.stderr
-
-    # return attributes
-
 @transaction.atomic
 def reconstruct_task(task_name):
+    """
+    Reconstruct a CommandLineTool task from its database entry.
+    """
     logger.info(f"Starting task reconstruction for: {task_name}")
     try:
         task = Task.objects.get(name=task_name)

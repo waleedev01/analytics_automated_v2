@@ -73,4 +73,4 @@ def parse_and_save_cwl_files(input_dir, num_files = None, valid = None):
     return results, execution_time
 
 if __name__ == "__main__":
-    parse_and_save_cwl_files('generated_cwl_files')
+    parse_and_save_cwl_files('generated_cwl_files_valid')

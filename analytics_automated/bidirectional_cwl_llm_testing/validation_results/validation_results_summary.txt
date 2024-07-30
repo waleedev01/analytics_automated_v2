@@ -1,4 +1,4 @@
-Total CWL files generated (The total number of CWL files generated): 88
-Total validity matches (The count of how many times our validation results matched the validity (i.e., valid or invalid) as expected by OpenAI): 85
-Total exact error matches (The count of how many times our validation results matched the exact error message as expected by OpenAI): 45
-Total partial error matches (The count of how many times our validation results had a partial error match (i.e., the expected error was a substring of the actual error)): 84
+Total CWL files generated (The total number of CWL files generated): 387
+Total validity matches (The count of how many times our validation results matched the validity (i.e., valid or invalid) as expected by OpenAI): 351
+Total exact error matches (The count of how many times our validation results matched the exact error message as expected by OpenAI): 351
+Total partial error matches (The count of how many times our validation results had a partial error match (i.e., the expected error was a substring of the actual error)): 351

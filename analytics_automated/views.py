@@ -12,7 +12,7 @@ from django.views import View
 
 from .cwl_utils.cwl_parser import read_cwl_file
 from .cwl_utils.cwl_schema_validator import CWLSchemaValidator
-from .cwl_utils.reconstruct_cwl import reconstruct_cwl_files
+from .cwl_utils.reconstruct_cwl import get_task_details
 from .models import Job
 
 logger = logging.getLogger(__name__)

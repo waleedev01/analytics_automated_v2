@@ -1,7 +1,7 @@
 {
     "file_name": "cwl_valid_2_4.cwl",
     "step": "validation",
-    "result": "success",
+    "result": "failure",
     "expected": {
         "is_valid": true,
         "error": "CWL file is valid.",
@@ -10,8 +10,8 @@
     },
     "expected_str": "{\"is_valid\": true, \"error\": \"CWL file is valid.\", \"file_type\": \"valid\", \"file_name\": \"cwl_valid_2_4.cwl\"}",
     "got": {
-        "is_valid": true,
-        "error": "CWL file is valid."
+        "is_valid": false,
+        "error": "Validation failed: Missing 'out' for step 'step2'"
     },
-    "got_str": "{\"is_valid\": true, \"error\": \"CWL file is valid.\"}"
+    "got_str": "{\"is_valid\": false, \"error\": \"Validation failed: Missing 'out' for step 'step2'\"}"
 }

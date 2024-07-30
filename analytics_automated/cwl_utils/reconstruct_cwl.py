@@ -1,8 +1,7 @@
-import os
 import logging
-from django.core.exceptions import ObjectDoesNotExist
+import os
 from ruamel.yaml import YAML
-from ..models import Job, Step
+from ..models import Job
 from .reconstruct_task import get_task_details
 from .reconstruct_workflow import get_workflow_details
 
@@ -63,7 +62,7 @@ def reconstruct_cwl_files(job_name, output_directory):
     workflow_file_path = os.path.join(output_directory, f"{job_name}.cwl")
     save_cwl_file(workflow_detail, workflow_file_path)
 
-    steps = Step.objects.filter(job=job)
+    steps = job.steps.all()
     for step in steps:
         logger.debug(f"Processing step {step.ordering} for task: {step.task.name}")
         task = step.task

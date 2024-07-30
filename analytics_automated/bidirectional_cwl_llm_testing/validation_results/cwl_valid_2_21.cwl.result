@@ -1,0 +1,17 @@
+{
+    "file_name": "cwl_valid_2_21.cwl",
+    "step": "validation",
+    "result": "success",
+    "expected": {
+        "is_valid": true,
+        "error": "CWL file is valid.",
+        "file_type": "valid",
+        "file_name": "cwl_valid_2_21.cwl"
+    },
+    "expected_str": "{\"is_valid\": true, \"error\": \"CWL file is valid.\", \"file_type\": \"valid\", \"file_name\": \"cwl_valid_2_21.cwl\"}",
+    "got": {
+        "is_valid": true,
+        "error": "CWL file is valid."
+    },
+    "got_str": "{\"is_valid\": true, \"error\": \"CWL file is valid.\"}"
+}

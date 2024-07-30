@@ -7,4 +7,3 @@ inputs:
 outputs:
   output1:
     type: any
-```
