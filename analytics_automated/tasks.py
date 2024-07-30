@@ -200,33 +200,44 @@ def prepare_exit_statuses(uuid, t, state, step_id, self,
     '''
     valid_exit_status = [0, ]
     custom_exit_statuses = []
-    if t.custom_exit_status is not None:
-        statuses = t.custom_exit_status.replace(" ", "")
-        try:
-            if len(statuses) > 0:
-                custom_exit_statuses = list(map(int, statuses.split(",")))
-        except Exception as e:
-            exit_status_message = "Exit statuses contains non-numerical and " \
-                                  "other punctuation "+str(e) + \
-                                  " : "+str(current_step) + " : " + command
-            Submission.update_submission_state(s, True, state, step_id,
-                                               self.request.id,
-                                               exit_status_message,
-                                               socket.gethostname())
-            Batch.update_batch_state(s.batch, state)
-            __handle_batch_email(s)
-            logger.debug(uuid+": prepare_exit_statuses():"+exit_status_message)
-            raise OSError(exit_status_message)
-        if t.custom_exit_behaviour == Task.CONTINUE or \
-           t.custom_exit_behaviour == Task.TERMINATE:
-            valid_exit_status += custom_exit_statuses
 
-    return valid_exit_status, custom_exit_statuses
+    custom_exit_map = {}
+    if t.custom_success_exit is not None:
+        custom_exit_map[Task.CONTINUE] = t.custom_success_exit
+    if t.custom_terminate_exit is not None:
+        custom_exit_map[Task.TERMINATE] = t.custom_terminate_exit
+    if t.custom_fail_exit is not None:
+        custom_exit_map[Task.FAIL] = t.custom_fail_exit
+
+    if len(custom_exit_map) > 0:
+        for key in custom_exit_map.keys():
+            exit_code = custom_exit_map[key].replace(" ", "")
+            try:
+                if len(exit_code) > 0:
+                    parsed_exit_code = list(map(int, exit_code.split(",")))
+                    custom_exit_map[key] = parsed_exit_code
+            except Exception as e:
+                exit_status_message = "Exit statuses contains non-numerical and " \
+                                    "other punctuation "+str(e) + \
+                                    " : "+str(current_step) + " : " + command
+                Submission.update_submission_state(s, True, state, step_id,
+                                                self.request.id,
+                                                exit_status_message,
+                                                socket.gethostname())
+                Batch.update_batch_state(s.batch, state)
+                __handle_batch_email(s)
+                logger.debug(uuid+": prepare_exit_statuses():"+exit_status_message)
+                raise OSError(exit_status_message)
+        
+        valid_exit_status += custom_exit_map.get(Task.CONTINUE, [])
+        valid_exit_status += custom_exit_map.get(Task.TERMINATE, [])
+
+    return valid_exit_status, custom_exit_map
 
 
-def handle_task_exit(exit_status, valid_exit_status, custom_exit_statuses,
+def handle_task_exit(exit_status, valid_exit_status, custom_exit_map,
                      run, out_globs, t, s, current_step, previous_step, self,
-                     state, step_id):
+                     state, step_id, exit_code_file):
     '''
         Not yet covered with unit tests
     '''
@@ -235,14 +246,24 @@ def handle_task_exit(exit_status, valid_exit_status, custom_exit_statuses,
     if exit_status in valid_exit_status:
         # Here we test the custom exit status. And do as it requires
         # skipping the regular raise() if needed
-        if exit_status in custom_exit_statuses and \
-                       t.custom_exit_behaviour == Task.TERMINATE:
+        if exit_status in custom_exit_map.get(Task.TERMINATE, []):
             custom_exit_termination = True
 
         found_endings = []
         if run.output_data is not None:
+            # Remove exit code from previous task as output_data, we only need it as input
+            keys_to_remove = [key for key in run.output_data if key.endswith("_exit_code.txt")]
+
+            for key in keys_to_remove:
+                run.output_data.pop(key)
+
             for fName, fData in run.output_data.items():
                 found_endings.append("."+fName.split(".")[-1])
+
+        # Add exit code of this task execution to the results
+        if len(exit_code_file) > 0:
+            insert_data(exit_code_file, s, t, current_step, previous_step)
+            found_endings.append("exit_code.txt")
 
         if set(out_globs).issubset(found_endings):
             insert_data(run.output_data, s, t, current_step, previous_step)
@@ -268,8 +289,7 @@ def handle_task_exit(exit_status, valid_exit_status, custom_exit_statuses,
             if t.incomplete_outputs_behaviour == Task.CONTINUE:
                 # by default we insert whatever results we have and keep going
                 insert_data(run.output_data, s, t, current_step, previous_step)
-    elif exit_status in custom_exit_statuses and \
-            t.custom_exit_behaviour == Task.FAIL:
+    elif exit_status in custom_exit_map.get(Task.FAIL, []):
             # if we hit an exit status that we ought to fail on raise an error
         insert_data(run.output_data, s, t, current_step, previous_step)
         Submission.update_submission_state(s, True, state, step_id,
@@ -370,10 +390,14 @@ def __construct_chain_string(steps, UUID, job_priority):
         queue_name = str(step.task.backend.queue_type)
         if step.ordering != prev_step:
             current_step += 1
+        
+        condition = ''
+        if step.condition is not None:
+            condition = step.condition
 
         # tchain += "task_runner.si('%s',%i,%i,%i,'%s') | " \
         task_string = "task_runner.subtask(('%s', %i, %i, %i, %i, '%s', " \
-                      "%s, %s, '%s', %i, %s), " \
+                      "%s, %s, '%s', %i, %s, '%s'), " \
                       "immutable=True, queue='%s')" \
                       % (UUID,
                          step.ordering,
@@ -386,6 +410,7 @@ def __construct_chain_string(steps, UUID, job_priority):
                          value,
                          step.task.backend.queue_type.execution_behaviour,
                          environment,
+                         condition,
                          queue_name)
 
         if step.ordering in task_strings:
@@ -469,7 +494,7 @@ def task_job_runner(self, *args, **kwargs):
              max_retries=5)
 def task_runner(self, uuid, step_id, current_step, step_counter,
                 total_steps, task_name, params, param_values, value,
-                execution_behaviour, environment):
+                execution_behaviour, environment, condition):
     """
         Here is the action. Takes and task name and a job UUID. Gets the task
         config from the db and the job data and runs the job.
@@ -501,6 +526,50 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
     stdoglob = ".stdout"
     if t.stdout_glob is not None and len(t.stdout_glob) > 0:
         stdoglob = "."+t.stdout_glob.lstrip(".")
+    
+    # Handle "when" condition
+    logger.info("CONDITION:" + str(condition))
+    if condition != '':
+        exit_code = data_dict.get(str(uuid)+"_"+str(step_counter-1)+'_exit_code.txt', None)
+        if exit_code is not None:
+            if 'exit_code' in condition:
+                exit_code = int(exit_code)
+                continue_task = eval(condition)
+                if not continue_task:
+                    Submission.update_submission_state(s, True, Submission.RUNNING,
+                                               step_id,
+                                               self.request.id,
+                                               'Skipping step: ' +
+                                               str(current_step),
+                                               socket.gethostname())
+                    if step_counter == total_steps:
+                        state = Submission.COMPLETE
+                        Submission.update_submission_state(s, True, state,
+                                               step_id,
+                                               self.request.id,
+                                               'Completed job at step # ' +
+                                               str(current_step-1),
+                                               socket.gethostname())
+                        
+                        batch_subs = Submission.objects.filter(batch=s.batch)
+                        complete_count = 0
+                        for sub in batch_subs:
+                            if sub.status == Submission.COMPLETE:
+                                complete_count += 1
+                        if complete_count == len(batch_subs):
+                            if s.batch.status != Batch.ERROR and s.batch.status != Batch.CRASH:
+                                Batch.update_batch_state(s.batch, state)
+                    return
+        else:
+            state = Submission.ERROR
+            Submission.update_submission_state(s, True, state, step_id,
+                                                   self.request.id,
+                                                   "Failed with missing"
+                                                   " outputs: exit_code from previous step",
+                                                   socket.gethostname())
+            Batch.update_batch_state(s.batch, state)
+            logger.error("Failed with missing outputs: exit_code from previous step")
+            raise OSError("Failed with missing outputs: exit_code from previous step")
 
     # update submission tracking to note that this is running
     logger.info("SETTING RUN FLAG:" + str(step_id))
@@ -554,7 +623,7 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
         raise OSError(prep_message)
     # print(vars(run))
     # set the valid exit statuses in case their is a defined value alternative
-    valid_exit_status, custom_exit_statuses = prepare_exit_statuses(uuid, t,
+    valid_exit_status, custom_exit_map = prepare_exit_statuses(uuid, t,
                                                                     state,
                                                                     step_id,
                                                                     self,
@@ -590,6 +659,13 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
         # and make a decision later
         __handle_batch_email(s)
         raise OSError(run_message)
+    
+    # Collect this task exit code and save it to the result if exit code is the output in cwl
+    exit_code_file = {}
+    if 'exit_code.txt' in t.out_glob:
+        exit_code_file = {
+            str(uuid) + '_' + str(step_counter) + '_exit_code.txt': str(exit_status).encode('utf-8'),
+        }
 
     # if the command ran with success we'll send the file contents to the
     # database.
@@ -605,18 +681,18 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
     custom_exit_termination,\
         incomplete_outputs_termination = handle_task_exit(exit_status,
                                                           valid_exit_status,
-                                                          custom_exit_statuses,
+                                                          custom_exit_map,
                                                           run, out_globs, t, s,
                                                           current_step,
                                                           previous_step, self,
-                                                          state, step_id)
+                                                          state, step_id, exit_code_file)
 
     # decide if we should complete the job
     complete_job = False
     if custom_exit_termination:
         complete_job = True
         logger.debug(uuid+": completing job due to custom exit: " +
-                     str(custom_exit_statuses))
+                     str(custom_exit_map.get(Task.TERMINATE, [])))
     if incomplete_outputs_termination:
         complete_job = True
         logger.debug(uuid+": completing job due to incomplete outputs")
@@ -653,9 +729,8 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
 
     __handle_batch_email(s)
     # if we need to terminate the chain send that signal here
-    if t.custom_exit_status is not None:
-        if t.custom_exit_behaviour == Task.TERMINATE and \
-                         exit_status in custom_exit_statuses:
+    if len(custom_exit_map) > 0:
+        if exit_status in custom_exit_map.get(Task.TERMINATE, []):
             if self.request.chain:
                 # print("hi there")
                 self.request.chain = None

@@ -47,12 +47,6 @@ def read_cwl_file(cwl_path, filename, messages):
             logging.info(f"Parsing CommandLineTool: {filename_without_extension}")
             task_data = parse_cwl_clt(cwl_data, filename_without_extension)
             return save_task_to_db(task_data, messages)
-        else:
-            # Handle unknown CWL class
-            error_message = f"Unknown CWL class for file {cwl_path}"
-            logger.error(error_message)
-            messages.append(error_message)
-            return None
     except Exception as e:
         # Log any exception that occurs during the processing
         error_message = f"Error reading CWL file {cwl_path}: {e}"

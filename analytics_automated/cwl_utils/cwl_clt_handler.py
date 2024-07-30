@@ -36,7 +36,7 @@ def handle_env_variable_req(requirements: list) -> dict[str, str]:
     """
     Extract envVarRequirement as environment variable list
     """
-    logging.info(f"Handling environment variable requirements: {requirements}")
+    logging.info(f"- Handling environment variable requirements -")
     try:
         for requirement in requirements:
             if requirement['class'] == 'EnvVarRequirement':

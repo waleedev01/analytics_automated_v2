@@ -143,10 +143,12 @@ class Task(models.Model):
     incomplete_outputs_behaviour = models.IntegerField(null=False, blank=False,
                                                        choices=COMPLETION_CHOICES,
                                                        default=FAIL)
-    custom_exit_status = models.CharField(max_length=256, null=True,
+    custom_success_exit = models.CharField(max_length=256, null=True,
                                           blank=True)
-    custom_exit_behaviour = models.IntegerField(null=True, blank=True,
-                                                choices=COMPLETION_CHOICES,)
+    custom_terminate_exit = models.CharField(max_length=256, null=True,
+                                          blank=True)
+    custom_fail_exit = models.CharField(max_length=256, null=True,
+                                          blank=True)
     requirements = models.JSONField(null=True, blank=True)  # New field for requirements
     hints = models.JSONField(null=True, blank=True)  # New field for hints
     arguments = models.JSONField(null=True, blank=True)  # New field for arguments
@@ -199,6 +201,7 @@ class Step(models.Model):
     task = models.ForeignKey(Task, null=True,
                              on_delete=models.CASCADE)
     ordering = models.IntegerField(default=0, null=False, blank=False)
+    condition = models.CharField(max_length=256, null=True, blank=True)
 
     def __str__(self):
         return str(self.task)

@@ -47,8 +47,8 @@ class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
         fields = ('backend', 'name', 'description', 'in_glob', 'out_glob',
-                  'stdout_glob', 'executable', 'incomplete_outputs_behaviour',
-                  'custom_exit_status', 'custom_exit_behaviour', )
+                  'stdout_glob', 'executable', 'incomplete_outputs_behaviour', 
+                  'custom_success_exit', 'custom_terminate_exit', 'custom_fail_exit')
 
 
 class ValidatorForm(BaseInlineFormSet):
