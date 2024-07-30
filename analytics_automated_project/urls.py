@@ -13,17 +13,16 @@ Including another URLconf
     1. Add an import:  from blog import urls as blog_urls
     2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
 """
+from django.conf import settings
 from django.conf.urls import include, url
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.conf import settings
-from django.conf.urls.static import static
 
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from analytics_automated import api
-from analytics_automated.views import CWLUploadPageView  
-
+from analytics_automated.views import UploadCWLView, DownloadCWLView
 
 urlpatterns = [
      url(r'^admin/', include('smuggler.urls')),
@@ -49,21 +48,14 @@ urlpatterns = [
          api.JobTimes.as_view(), name="jobtimes"),
      url(r'^analytics_automated/uploadcwl/$',
          api.CWLUploadView.as_view(), name="uploadcwl"),  # Existing CWL upload pattern
-     url(r'^analytics_automated/uploadcwlpage/$',
-         CWLUploadPageView.as_view(), name="uploadcwlpage"),  # New view for the cwl upload page
-     url(r'^login/$', auth_views.LoginView),
-     url(r'^logout/$', auth_views.LogoutView),
-
+     url(r'^analytics_automated/admin_upload_cwl/$', UploadCWLView, name="admin_upload_cwl"),  # New view for the admin CWL upload
+     url(r'^analytics_automated/admin_download_cwl/$', DownloadCWLView, name="admin_download_cwl"),  # New view for the admin CWL download
+     url(r'^login/$', auth_views.LoginView.as_view(), name='login'),
+     url(r'^logout/$', auth_views.LogoutView.as_view(), name='logout'),
 ]
+
 urlpatterns = format_suffix_patterns(urlpatterns, allowed=['json', 'html'])
 
 # UNDERNEATH your urlpatterns definition, add the following two lines:
 if settings.DEBUG:
-    # urlpatterns += patterns('django.views.static',
-    #                         (
-    #                             r'^submissions/(?P<path>.*)', 'serve',
-    #                             {'document_root': settings.MEDIA_ROOT}
-    #                         ),
-    #                         )
-
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
