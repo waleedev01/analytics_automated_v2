@@ -1,0 +1,139 @@
+{% extends "admin/base_site.html" %}
+{% block extrastyle %}
+<style>
+    .upload-cwl-form {
+        max-width: 400px;
+        margin: 30px auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .upload-cwl-form input[type="file"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    .upload-cwl-form input[type="submit"] {
+        width: 100%;
+        padding: 10px;
+        background-color: #79aec8;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    .upload-cwl-form input[type="submit"]:hover {
+        background-color: #417690;
+    }
+    .upload-cwl-form label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: block;
+    }
+    .results {
+        max-width: 600px;
+        margin: 30px auto;
+        padding: 20px;
+        background-color: #f1f1f1;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .results h2 {
+        margin-top: 0;
+        font-size: 24px;
+        color: #333;
+    }
+    .results p {
+        margin: 10px 0;
+        font-size: 16px;
+        color: #555;
+    }
+    .results ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    .results ul li {
+        background-color: #79aec8;
+        color: white;
+        margin-bottom: 5px;
+        padding: 10px;
+        border-radius: 4px;
+    }
+    .results .details {
+        padding: 0;
+    }
+    .results .details ul li {
+        background-color: #79aec8;
+        color: white;
+        margin-bottom: 5px;
+        padding: 10px;
+        border-radius: 4px;
+        border: none;
+    }
+    .default-messages {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <form id="upload-cwl-form" method="post" action="{% url 'admin:analytics_automated_uploadcwl_upload' %}" enctype="multipart/form-data" class="upload-cwl-form">
+        {% csrf_token %}
+        <label for="files">Select CWL files:</label>
+        <input type="file" name="files" id="files" multiple required>
+        <input type="submit" value="Upload CWL" class="default">
+    </form>
+
+    <div id="results" class="results" style="display: none;">
+        <h3>Processed files:</h3>
+        <ul id="file-names"></ul>
+        <h3>Details:</h3>
+        <div class="details">
+            <ul id="messages"></ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('upload-cwl-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var formData = new FormData(this);
+
+        fetch("{% url 'admin:analytics_automated_uploadcwl_upload' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        }).then(response => response.json())
+        .then(data => {
+            if (data.file_names || data.messages) {
+                document.getElementById('results').style.display = 'block';
+
+                var fileNamesList = document.getElementById('file-names');
+                fileNamesList.innerHTML = '';
+                data.file_names.forEach(function(fileName) {
+                    var li = document.createElement('li');
+                    li.textContent = fileName;
+                    fileNamesList.appendChild(li);
+                });
+
+                var messagesList = document.getElementById('messages');
+                messagesList.innerHTML = '';
+                data.messages.forEach(function(message) {
+                    var li = document.createElement('li');
+                    li.textContent = message;
+                    messagesList.appendChild(li);
+                });
+            }
+        }).catch(error => console.error('Error:', error));
+    });
+</script>
+{% endblock %}
