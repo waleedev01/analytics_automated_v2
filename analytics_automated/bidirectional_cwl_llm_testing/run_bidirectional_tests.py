@@ -32,7 +32,7 @@ def run_pipeline():
         logging.info("Step 2 completed")
 
         logging.info("Step 3: Parsing and saving CWL files to database")
-        parsing_results = parse_and_save_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files')
+        parsing_results, _ = parse_and_save_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files')
         logging.info("Step 3 completed")
 
         logging.info("Step 4: Converting database entries to CWL files")

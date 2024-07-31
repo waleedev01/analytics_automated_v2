@@ -1,17 +1,35 @@
 import os
 import logging
 from analytics_automated.cwl_utils.cwl_parser import read_cwl_file
+import time
 
 # Setup logging
 logger = logging.getLogger(__name__)
 
-def parse_and_save_cwl_files(input_dir):
+def parse_and_save_cwl_files(input_dir, num_files = None, valid = None):
     results = []
+    file_list = os.listdir(input_dir)
     
-    logger.info(f"Starting parsing and saving CWL files in directory: {input_dir}")
+    logger.info(f"Starting parsing and saving CWL files in directory: {file_list}")
+
+    # Record the start time
+    start_time = time.time()
+    count = 0
+
+    if valid is not None:
+        if valid:
+            keyword = '_valid_'
+        else:
+            keyword = '_invalid_'
+    else:
+        keyword = None
     
-    for file_name in os.listdir(input_dir):
-        if file_name.endswith('.cwl'):
+    for file_name in file_list:
+        if num_files is not None and count == num_files:
+            break
+
+        if file_name.endswith('.cwl') and (keyword is None or keyword in file_name):
+            count += 1
             cwl_path = os.path.join(input_dir, file_name)
             logger.debug(f"Processing file: {file_name}")
             
@@ -45,8 +63,14 @@ def parse_and_save_cwl_files(input_dir):
                     'message': str(e)
                 })
     
+    # Record the end time
+    end_time = time.time()
+
+    # Calculate the execution time
+    execution_time = (end_time - start_time) * 1000
+    
     logger.info(f"Completed parsing and saving CWL files. Total files processed: {len(results)}")
-    return results
+    return results, execution_time
 
 if __name__ == "__main__":
     parse_and_save_cwl_files('generated_cwl_files')
