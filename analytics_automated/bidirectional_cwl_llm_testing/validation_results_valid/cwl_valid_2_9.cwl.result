@@ -1,0 +1,17 @@
+{
+    "file_name": "cwl_valid_2_9.cwl",
+    "step": "validation",
+    "result": "failure",
+    "expected": {
+        "is_valid": true,
+        "error": "CWL file is valid.",
+        "file_type": "valid",
+        "file_name": "cwl_valid_2_9.cwl"
+    },
+    "expected_str": "{\"is_valid\": true, \"error\": \"CWL file is valid.\", \"file_type\": \"valid\", \"file_name\": \"cwl_valid_2_9.cwl\"}",
+    "got": {
+        "is_valid": false,
+        "error": "Validation failed: Missing 'cwlVersion' in CWL file"
+    },
+    "got_str": "{\"is_valid\": false, \"error\": \"Validation failed: Missing 'cwlVersion' in CWL file\"}"
+}
