@@ -96,4 +96,3 @@ pytest-django
 cwltool
 matplotlib
 networkx
-os
