@@ -2,6 +2,7 @@ import requests
 import os
 import sys
 import django
+
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -10,7 +11,6 @@ sys.path.insert(0, project_root)
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'analytics_automated_project.settings.dev')
 django.setup()
-
 
 
 from analytics_automated.cwl_utils.cwl_parser import read_cwl_file

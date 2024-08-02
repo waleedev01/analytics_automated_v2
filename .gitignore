@@ -8,6 +8,7 @@ static/example*
 submissions/*
 !submissions/files/
 __pycache__/
+tasks/
 *.log
 logs/*
 .DS_Store
