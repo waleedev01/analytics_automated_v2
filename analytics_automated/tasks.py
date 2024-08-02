@@ -774,7 +774,7 @@ def chord_end(self, uuid, step_id, current_step):
     except Submission.DoesNotExist:
         logger.error(f'Submission with UUID {uuid} does not exist.')
     except Exception as e:
-        Catch other potential exceptions and log error messages
+        #Catch other potential exceptions and log error messages
         logger.error(f'Error in chord_end task: {e}')
         __handle_batch_email(s)  # Ensure that notifications are also sent when errors occur
 
@@ -904,7 +904,7 @@ def handle_slurm_requirements(options, root_path, script_path):
     # module load ...
 
     # Run the command or script
-    {script_path}
+    # ./temp-slurm.sh
     """
 
     # Save the SLURM job script to a file
@@ -963,7 +963,7 @@ def handle_pbs_requirements(options, root_path, script_path):
     cd $PBS_O_WORKDIR
 
     # Run the command or script
-    {script_path}
+    # ./temp-pdb.sh
     """
 
     # Save the PBS job script to a file
@@ -983,7 +983,7 @@ def handle_pbs_requirements(options, root_path, script_path):
         raise
 
 @shared_task
-def handle_sge_requirements(options, root_path, script_path):
+def handle_sge_requirements(options, root_path,script_path):
     """
     Handle SGE related batch processing requirements.
     ​:param options: job submission options
@@ -1019,7 +1019,7 @@ def handle_sge_requirements(options, root_path, script_path):
     cd $SGE_O_WORKDIR
 
     # Run the command or script
-    {script_path}
+    # ./temp-sge.sh
     """
 
     # Save the SGE job script to a file
