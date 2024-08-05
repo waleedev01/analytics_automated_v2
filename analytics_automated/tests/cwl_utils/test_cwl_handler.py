@@ -39,7 +39,7 @@ class TestCWLCLTParser(unittest.TestCase):
         self.assertIsNotNone(clt)
         self.assertEqual(clt.name, "some_tool")
         self.assertEqual(clt.in_glob, ".input")
-        self.assertEqual(clt.out_glob, ".txt")
+        self.assertEqual(clt.out_glob, "*.txt")
         self.assertEqual(clt.executable, "echo $I1")
     
     def test_parse_cwl_clt_with_parameters(self):
