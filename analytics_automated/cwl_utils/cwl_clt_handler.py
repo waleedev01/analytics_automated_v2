@@ -345,8 +345,13 @@ def save_task_to_db(task_data, messages):
                 stdout_glob=task_data['stdout_glob'],
                 executable=task_data['executable'],
                 requirements=task_data['requirements'],
+                stdout=task_data['stdout'],
+                stdin=task_data['stdin'],
+                arguments=task_data['arguments'],
+                stderr=task_data['stderr'],
                 custom_success_exit=task_data['success_codes'],
                 custom_terminate_exit=task_data['permanent_fail_codes'],
+                shell_quote=task_data['shell_quote']
             )
             message = f"Task saved successfully: {task_data['name']}"
             logging.info(message)

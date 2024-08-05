@@ -2,8 +2,7 @@ import os
 import json
 import logging
 from ruamel.yaml import YAML
-from django.core.exceptions import ObjectDoesNotExist
-from ..models import Job, Step, Task, Environment
+from ..models import Job, Step, Task
 
 logger = logging.getLogger(__name__)
 
@@ -23,23 +22,22 @@ def reconstruct_workflow_cwl(job, file_path):
         "cwlVersion": job.cwl_version if job.cwl_version else "v1.0",
         "class": "Workflow",
         "inputs": {
-            "input-file": {"type": "File"}  
+            "input_file": {"type": "File"}
         },
-        "outputs": {
-            "output-file": { 
-                "type": "File",
-                "outputSource": "psipass2/output"
-            }
-        },
+        "outputs": {},
         "steps": {},
-        "requirements": parse_json_field(job.requirements)
+        "requirements": parse_json_field(job.requirements) or []
     }
 
+    # Add steps to the workflow
     steps = job.steps.all().order_by('ordering')
     for step in steps:
         task = step.task
-        step_detail = _build_step_detail(step, task)
+        step_detail = _build_step_detail(step, task, steps)
         workflow_detail["steps"][task.name] = step_detail
+
+    # Define the workflow's final outputs
+    _define_workflow_outputs(job, steps, workflow_detail)
 
     # Save the CWL file
     try:
@@ -50,7 +48,7 @@ def reconstruct_workflow_cwl(job, file_path):
         logger.error(f"Failed to save workflow '{job.name}' as {file_path}: {str(e)}")
 
 
-def _build_step_detail(step, task):
+def _build_step_detail(step, task, steps):
     # Construct step input-output relationship
     step_detail = {
         "run": f"{task.name}.cwl",
@@ -58,22 +56,28 @@ def _build_step_detail(step, task):
         "out": [f"output_{i}" for i, _ in enumerate(task.out_glob.split(',')) if task.out_glob]
     }
 
-    # Handling input bindings based on step order and input sources
+    # Set the inputs for the current step based on previous step's outputs
     if step.ordering == 0:
-        step_detail["in"]["input"] = "input-file"
+        step_detail["in"]["input_0"] = "input_file"
     else:
-        prev_step = step.job.steps.get(ordering=step.ordering - 1)
+        prev_step = steps.get(ordering=step.ordering - 1)
         prev_task_name = prev_step.task.name
-        step_detail["in"]["input"] = f"{prev_task_name}/output"
+        prev_out_count = len(prev_step.task.out_glob.split(','))
+
+        # Map previous task's outputs to current task's inputs
+        for i in range(prev_out_count):
+            step_detail["in"][f"input_{i}"] = f"{prev_task_name}/output_{i}"
 
     return step_detail
 
 def _define_workflow_outputs(job, steps, workflow_detail):
-    # Assume the last step's output is the workflow output
+    # Use the last step's outputs as the workflow outputs
     last_step = steps.last()
     if last_step:
         last_task_name = last_step.task.name
-        workflow_detail["outputs"]["output-wf"] = {
-            "type": "File",
-            "outputSource": f"{last_task_name}/output"
-        }
+        last_out_count = len(last_step.task.out_glob.split(','))
+        for i in range(last_out_count):
+            workflow_detail["outputs"][f"output_file_{i}"] = {
+                "type": "File",
+                "outputSource": f"{last_task_name}/output_{i}"
+            }
