@@ -2,8 +2,8 @@ import os
 import logging
 import difflib
 from django.core.exceptions import ObjectDoesNotExist
-from analytics_automated.cwl_utils.reconstruct_task import reconstruct_task
-from analytics_automated.cwl_utils.reconstruct_workflow import reconstruct_workflow
+from analytics_automated.cwl_utils.reconstruct_task import reconstruct_task_cwl
+from analytics_automated.cwl_utils.reconstruct_workflow import reconstruct_workflow_cwl
 from ruamel.yaml import YAML
 import csv
 
@@ -98,10 +98,11 @@ def convert_to_cwl_files(output_dir):
                     job = Job.objects.get(name=job_name)
                     logger.info(f"Found job in database: {job_name}")
 
-                    # Reconstruct workflow from the database
-                    workflow_content = reconstruct_workflow(job.name)
+                    # Define the path to save the reconstructed workflow
                     workflow_file_path = os.path.join(output_dir, f"{job.name}.cwl")
-                    save_cwl_file(workflow_content, workflow_file_path)
+
+                    # Reconstruct workflow from the database
+                    reconstruct_workflow_cwl(job, workflow_file_path)
 
                     # Compare with the original CWL file
                     diff = compare_files(original_file_path, workflow_file_path)
@@ -133,9 +134,8 @@ def convert_to_cwl_files(output_dir):
 
                     # Reconstruct tasks for each step in the workflow
                     for step in job.steps.all():  # Correct reverse relation
-                        task_content = reconstruct_task(step.task.name)
                         task_file_path = os.path.join(output_dir, f"{step.task.name}.cwl")
-                        save_cwl_file(task_content, task_file_path)
+                        reconstruct_task_cwl(step.task, task_file_path)
 
                         # Compare with the original task file if it exists
                         original_task_file_path = os.path.join(generated_cwl_dir, f"{step.task.name}.cwl")
@@ -196,10 +196,11 @@ def convert_to_cwl_files(output_dir):
                     task = Task.objects.get(name=job_name)
                     logger.info(f"Found task in database: {job_name}")
 
-                    # Reconstruct task from the database
-                    task_content = reconstruct_task(task.name)
+                    # Define the path to save the reconstructed task
                     task_file_path = os.path.join(output_dir, f"{task.name}.cwl")
-                    save_cwl_file(task_content, task_file_path)
+
+                    # Reconstruct task from the database
+                    reconstruct_task_cwl(task, task_file_path)
 
                     # Compare with the original CWL file
                     diff = compare_files(original_file_path, task_file_path)

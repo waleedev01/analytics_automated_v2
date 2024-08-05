@@ -5,9 +5,15 @@ baseCommand:
   - $I1
   - Hello,
   - world!
-inputs: {}
+inputs:
+  input_0:
+    type: File
+    inputBinding:
+      position: 1
 outputs:
-  output_cwl_valid_1_17:
+  output_0:
     type: File
     outputBinding:
-      glob: '*.txt'
+      glob: output.txt
+requirements: []
+shellQuote: false

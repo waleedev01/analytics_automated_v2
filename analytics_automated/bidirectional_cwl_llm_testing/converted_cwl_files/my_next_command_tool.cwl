@@ -3,9 +3,15 @@ class: CommandLineTool
 baseCommand:
   - next_command_tool
   - $I1
-inputs: {}
+inputs:
+  input_0:
+    type: File
+    inputBinding:
+      position: 1
 outputs:
-  output_my_next_command_tool:
+  output_0:
     type: File
     outputBinding:
-      glob: '*.out'
+      glob: .out
+requirements: []
+shellQuote: false

@@ -3,9 +3,7 @@ class: CommandLineTool
 baseCommand:
   - echo
   - $P1
-inputs:
-  CommandLineTool4_input1:
-    type: File
-    inputBinding:
-      position: 1
+inputs: {}
 outputs: {}
+requirements: []
+shellQuote: false

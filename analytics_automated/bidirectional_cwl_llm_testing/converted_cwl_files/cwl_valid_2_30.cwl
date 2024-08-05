@@ -1,20 +1,21 @@
 cwlVersion: v1.2
 class: Workflow
 inputs:
-  input-file:
+  input_file:
     type: File
 outputs:
-  output-file:
+  output_file_0:
     type: File
-    outputSource: CommandLineTool/output
+    outputSource: CommandLineTool/output_0
 steps:
   CommandLineTool:
     run: CommandLineTool.cwl
     in:
-      input: input-file
+      input_0: input_file
     out: []
   another_tool:
     run: another_tool.cwl
     in:
-      input: CommandLineTool/output
+      input_0: input_file
     out: []
+requirements: []

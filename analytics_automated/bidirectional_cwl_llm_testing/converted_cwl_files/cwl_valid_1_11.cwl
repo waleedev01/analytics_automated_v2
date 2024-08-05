@@ -3,9 +3,15 @@ class: CommandLineTool
 baseCommand:
   - echo
   - $I1
-inputs: {}
+inputs:
+  input_0:
+    type: File
+    inputBinding:
+      position: 1
 outputs:
-  output_cwl_valid_1_11:
+  output_0:
     type: File
     outputBinding:
-      glob: '*.out'
+      glob: $(inputs.input_file.basename).out
+requirements: []
+shellQuote: false

@@ -3,13 +3,11 @@ class: CommandLineTool
 baseCommand:
   - echo
   - $P1
-inputs:
-  cwl_valid_1_1_input1:
-    type: File
-    inputBinding:
-      position: 1
+inputs: {}
 outputs:
-  output_cwl_valid_1_1:
+  output_0:
     type: File
     outputBinding:
-      glob: '*.txt'
+      glob: output.txt
+requirements: []
+shellQuote: false

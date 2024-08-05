@@ -3,9 +3,15 @@ class: CommandLineTool
 baseCommand:
   - step3.sh
   - $I1
-inputs: {}
+inputs:
+  input_0:
+    type: File
+    inputBinding:
+      position: 1
 outputs:
-  output_step3:
+  output_0:
     type: File
     outputBinding:
-      glob: '*.out'
+      glob: .out
+requirements: []
+shellQuote: false

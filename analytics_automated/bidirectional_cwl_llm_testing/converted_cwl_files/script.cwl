@@ -4,9 +4,15 @@ baseCommand:
   - script.sh
   - --input
   - $I1
-inputs: {}
+inputs:
+  input_0:
+    type: File
+    inputBinding:
+      position: 1
 outputs:
-  output_script:
+  output_0:
     type: File
     outputBinding:
-      glob: '*.txt'
+      glob: output.txt
+requirements: []
+shellQuote: false

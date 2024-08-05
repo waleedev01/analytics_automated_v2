@@ -3,9 +3,15 @@ class: CommandLineTool
 baseCommand:
   - myscript.py
   - $I1
-inputs: {}
+inputs:
+  input_0:
+    type: File
+    inputBinding:
+      position: 1
 outputs:
-  output_cwl_valid_1_38:
+  output_0:
     type: File
     outputBinding:
-      glob: '*.txt'
+      glob: output.txt
+requirements: []
+shellQuote: false

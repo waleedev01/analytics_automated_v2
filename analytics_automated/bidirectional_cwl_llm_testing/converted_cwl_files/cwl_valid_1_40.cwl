@@ -3,9 +3,7 @@ class: CommandLineTool
 baseCommand:
   - echo
   - $P1
-inputs:
-  cwl_valid_1_40_input_message:
-    type: File
-    inputBinding:
-      position: 1
+inputs: {}
 outputs: {}
+requirements: []
+shellQuote: false
