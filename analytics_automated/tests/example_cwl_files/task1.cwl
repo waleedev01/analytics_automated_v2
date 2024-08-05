@@ -24,7 +24,6 @@ requirements:
     packages:
       - package: echo
         version: ["1.0"]
-  - class: StepInputExpressionRequirement
 successCodes: [0]
 temporaryFailCodes: [1]
 permanentFailCodes: [2]

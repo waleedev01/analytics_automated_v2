@@ -111,7 +111,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
             logging.error(f"Error parsing CWL inputs: {e}")
         return parsed_inputs
 
-    def parse_cwl_outputs(outputs: dict):
+    def parse_cwl_outputs(outputs: dict, stdout=None):
         logging.info(f"Parsing CWL outputs: {outputs}")
         parsed_outputs = []
         try:
@@ -119,6 +119,12 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
                 output_type = output_data.get("type")
                 output_binding = output_data.get("outputBinding", {})
                 secondary_files = output_data.get("secondaryFiles", [])
+
+                # Special case for stdout
+                if output_type == "stdout":
+                    output_type = "stdout"
+                    output_binding = {"glob": stdout} if stdout else {}
+
                 parsed_output = {
                     "name": output_name,
                     "type": output_type,
@@ -164,7 +170,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         "name": name,
         "base_command": base_command,
         "inputs": parse_cwl_inputs(inputs),
-        "outputs": parse_cwl_outputs(outputs),
+        "outputs": parse_cwl_outputs(outputs, stdout),
         "requirements": requirements,
         "environments": handle_env_variable_req(requirements),
         "hints": hints,
@@ -281,7 +287,6 @@ def save_task_to_db(task_data, messages):
         backend = Backend.objects.get(id=1)  # Assuming a default backend ID
         logging.info(f"Saving task to database: {task_data['name']}")
 
-        # Check if the task already exists
         existing_task = Task.objects.filter(
             name=task_data['name'],
             backend=backend,
@@ -348,12 +353,10 @@ def save_task_to_db(task_data, messages):
 
         for input_data in task_data['inputs']:
             try:
-                # Skip inputs with File type
                 file_type = input_data['type']
                 if file_type == 'File':
                     continue
 
-                # Skip exit_code as input parameter
                 if file_type == 'int' and input_data['name'] == 'exit_code':
                     continue
 
@@ -373,10 +376,21 @@ def save_task_to_db(task_data, messages):
             except Exception as e:
                 logging.error(f"Error saving parameter for task {task_data['name']}: {e}")
 
+        for output_data in task_data['outputs']:
+            try:
+                if output_data['type'] == 'File':
+                    glob_pattern = output_data['output_binding'].get('glob', '')
+                    out_glob = f"{glob_pattern}"
+                    task.out_glob = out_glob
+                    task.save()
+                elif output_data['type'] == 'stdout':
+                    task.stdout = task_data['stdout']
+                    task.save()
+            except Exception as e:
+                logging.error(f"Error saving output for task {task_data['name']}: {e}")
+
         for env_var_name, env_var_value in environment_items:
             try:
-                # TODO: There are values that dynamic generated during CWL execution,
-                #  should be handled during Celery execution. (For example: $(inputs.message))
                 if '$' not in env_var_value:
                     Environment.objects.create(
                         task=task,
@@ -396,7 +410,7 @@ def save_task_to_db(task_data, messages):
                     parameters=package.get('parameter', None)
                 )
             except Exception as e:
-                logging.error(f"Error saving configration for task {task_data['name']}: {e}")
+                logging.error(f"Error saving configuration for task {task_data['name']}: {e}")
 
         message = f"Task saved successfully: {task_data['name']}"
         logging.info(message)

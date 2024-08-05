@@ -1,148 +1,93 @@
-import logging
-import json
 import os
+import json
+import logging
+from ruamel.yaml import YAML
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
-from django.conf import settings
 from ..models import Task, Parameter, Environment
 
 logger = logging.getLogger(__name__)
 
-def load_format_mapping():
-    """
-    Load format URI mappings from a JSON file.
-    """
-    format_map_path = os.path.join(settings.BASE_DIR, 'analytics_automated', 'cwl_utils', 'format_uri_mapping.json')
-    try:
-        with open(format_map_path, 'r') as file:
-            return json.load(file)
-    except FileNotFoundError:
-        logger.error(f"Format mapping file not found: {format_map_path}")
-        return {}
-    except json.JSONDecodeError:
-        logger.error(f"Failed to parse format mapping file: {format_map_path}")
-        return {}
+yaml = YAML()
+yaml.default_flow_style = False
+yaml.indent(mapping=2, sequence=4, offset=2)
 
-FORMAT_MAP = load_format_mapping()
+def parse_json_field(field):
+    if isinstance(field, str):
+        return json.loads(field)
+    return field
 
-def safe_json_loads(data):
-    """
-    Safely load JSON data from a string.
-    """
-    if isinstance(data, str):
-        try:
-            return json.loads(data)
-        except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON: {data}")
-            return data
-    return data
-
-def get_task_details(task):
-    """
-    Reconstructs the CWL CommandLineTool from the database task object.
-    """
-    logger.debug(f"Starting to process task: {task.name}")
+def reconstruct_task_cwl(task, file_path):
+    logger.info(f"Reconstructing task: {task.name}")
     
     task_detail = {
         "cwlVersion": "v1.0",
         "class": "CommandLineTool",
-        "baseCommand": task.executable.split()
+        "baseCommand": task.executable.split(),
+        "inputs": {},  # Populate inputs appropriately
+        "outputs": {},
+        "requirements": parse_json_field(task.requirements),
+        "hints": parse_json_field(task.hints),
+        "successCodes": parse_json_field(task.success_codes),
+        "temporaryFailCodes": parse_json_field(task.temporary_fail_codes),
+        "permanentFailCodes": parse_json_field(task.permanent_fail_codes),
+        "arguments": parse_json_field(task.arguments),
+        "stdin": task.stdin,
+        "stdout": task.stdout,
+        "stderr": task.stderr,
+        "doc": task.doc,
+        "label": task.label,
+        "shellQuote": task.shell_quote,
     }
 
-    # Process inputs
-    task_detail["inputs"] = reconstruct_inputs(task)
+    # Add input and output parameters
+    _add_inputs(task, task_detail)
+    _add_outputs(task, task_detail)
 
-    # Process outputs
-    task_detail["outputs"] = reconstruct_outputs(task)
+    # Add environment variables
+    _add_environment(task, task_detail)
 
-    # Process stdout
-    if task.stdout_glob:
-        input_name = next(iter(task_detail["inputs"]))
-        task_detail["stdout"] = f"$(inputs.{input_name}.basename){task.stdout_glob}"
-
-    # Process optional attributes and requirements
-    if task.requirements:
-        task_detail["requirements"] = safe_json_loads(task.requirements)
-    
-    if task.arguments:
-        task_detail["arguments"] = safe_json_loads(task.arguments)
-    
-    if task.hints:
-        task_detail["hints"] = safe_json_loads(task.hints)
-
-    if task.stdin:
-        task_detail["stdin"] = task.stdin
-
-    if task.stdout:
-        task_detail["stdout"] = task.stdout
-
-    if task.stderr:
-        task_detail["stderr"] = task.stderr
-
-    logger.debug(f"Final task detail: {task_detail}")
-    return task_detail
-
-def reconstruct_inputs(task):
-    """
-    Reconstruct inputs for a CommandLineTool.
-    """
-    inputs = {}
-    params = task.parameters.all()
-    
-    for param in params:
-        input_name = param.rest_alias
-        input_detail = {
-            "type": "File",
-            "inputBinding": {"position": 1}
-        }
-        
-        if task.in_glob:
-            format_uri = next((k for k, v in FORMAT_MAP.items() if v == f".{task.in_glob.strip('.')}" or v == task.in_glob), None)
-            if format_uri:
-                input_detail["format"] = format_uri
-        
-        inputs[input_name] = input_detail
-    
-    return inputs
-
-def reconstruct_outputs(task):
-    """
-    Reconstruct outputs for a CommandLineTool.
-    """
-    outputs = {}
-    if task.out_glob:
-        output_globs = task.out_glob.split(',')
-        for i, glob in enumerate(output_globs):
-            output_name = f"output_{task.name.lower()}" if i == 0 else f"output_{task.name.lower()}_{i+1}"
-            outputs[output_name] = {
-                "type": "File",
-                "outputBinding": {"glob": f"*.{glob.strip('.')}"}
-            }
-    return outputs
-
-@transaction.atomic
-def reconstruct_task(task_name):
-    """
-    Reconstruct a CommandLineTool task from its database entry.
-    """
-    logger.info(f"Starting task reconstruction for: {task_name}")
+    # Save the CWL file
     try:
-        task = Task.objects.get(name=task_name)
-    except ObjectDoesNotExist:
-        logger.error(f"Task '{task_name}' does not exist.")
-        return None
-
-    try:
-        task_detail = get_task_details(task)
-        return task_detail
+        with open(file_path, 'w') as file:
+            yaml.dump(task_detail, file)
+        logger.info(f"Task '{task.name}' saved as {file_path}")
     except Exception as e:
-        logger.error(f"Error reconstructing task: {str(e)}")
-        return None
+        logger.error(f"Failed to save task '{task.name}' as {file_path}: {str(e)}")
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    task = reconstruct_task("example_task_name")
-    if task:
-        print(json.dumps(task, indent=2))
-    else:
-        print("Failed to reconstruct task")
+
+def _add_inputs(task, task_detail):
+    parameters = task.parameters.all()
+    for param in parameters:
+        input_binding = {
+            "position": param.spacing,
+            "prefix": param.flag if not param.switchless else None
+        }
+        task_detail["inputs"][param.rest_alias] = {
+            "type": "boolean" if param.bool_valued else "string",
+            "inputBinding": input_binding
+        }
+
+def _add_outputs(task, task_detail):
+    outputs = task.out_glob.split(',')
+    if task.stdout:
+        task_detail["outputs"]["output_stdout"] = {
+            "type": "File",
+            "outputBinding": {"glob": task.stdout}
+        }
+    for i, output in enumerate(outputs):
+        if output.strip():
+            task_detail["outputs"][f"output_{i}"] = {
+                "type": "File",
+                "outputBinding": {"glob": output}
+            }
+
+
+
+
+def _add_environment(task, task_detail):
+    environments = task.environment.all()
+    if environments.exists():
+        task_detail["requirements"].append({
+            "class": "EnvVarRequirement",
+            "envDef": {env.env: env.value for env in environments}
+        })

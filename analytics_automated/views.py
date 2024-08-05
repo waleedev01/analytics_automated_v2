@@ -3,6 +3,7 @@ import os
 import shutil
 import yaml
 import zipfile
+import tempfile
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -12,7 +13,7 @@ from django.views import View
 
 from .cwl_utils.cwl_parser import read_cwl_file
 from .cwl_utils.cwl_schema_validator import CWLSchemaValidator
-from .cwl_utils.reconstruct_cwl import get_task_details
+from .cwl_utils.reconstruct_cwl import reconstruct_cwl_files
 from .models import Job
 
 logger = logging.getLogger(__name__)
@@ -21,37 +22,34 @@ def DownloadCWLView(request):
     if request.method == 'POST':
         job_name = request.POST.get('job_name')
         if not job_name:
-            return render(request, 'admin/download_cwl.html', {"messages": ["No job name provided"], "jobs": Job.objects.all()})
+            logger.error("No job name provided in request.")
+            return render(request, 'admin/download_cwl.html', {
+                "messages": ["No job name provided"],
+                "jobs": Job.objects.all()
+            })
 
         try:
             job = Job.objects.get(name=job_name)
         except Job.DoesNotExist:
-            return render(request, 'admin/download_cwl.html', {"messages": [f"Job '{job_name}' does not exist"], "jobs": Job.objects.all()})
+            logger.error(f"Job '{job_name}' does not exist.")
+            return render(request, 'admin/download_cwl.html', {
+                "messages": [f"Job '{job_name}' does not exist"],
+                "jobs": Job.objects.all()
+            })
 
-        temp_dir = default_storage.path('reconstructed_cwl_files')
-        os.makedirs(temp_dir, exist_ok=True)
-
-        try:
+        # Create temporary directory for CWL files
+        with tempfile.TemporaryDirectory() as temp_dir:
             reconstruct_cwl_files(job_name, temp_dir)
-
-            zip_filename = f"{job_name}_cwl_files.zip"
-            zip_filepath = os.path.join(temp_dir, zip_filename)
-            with zipfile.ZipFile(zip_filepath, 'w') as zipf:
+            zip_file_path = os.path.join(temp_dir, f"{job_name}_cwl.zip")
+            with zipfile.ZipFile(zip_file_path, 'w') as zipf:
                 for root, _, files in os.walk(temp_dir):
                     for file in files:
-                        if file == zip_filename:
-                            continue
-                        file_path = os.path.join(root, file)
-                        zipf.write(file_path, os.path.relpath(file_path, temp_dir))
+                        zipf.write(os.path.join(root, file), arcname=file)
 
-            with open(zip_filepath, 'rb') as fh:
-                response = HttpResponse(fh.read(), content_type="application/zip")
-                response['Content-Disposition'] = f'attachment; filename={zip_filename}'
+            with open(zip_file_path, 'rb') as file:
+                response = HttpResponse(file.read(), content_type='application/zip')
+                response['Content-Disposition'] = f'attachment; filename={job_name}_cwl.zip'
                 return response
-        except Exception as e:
-            return render(request, 'admin/download_cwl.html', {"messages": [f"An error occurred: {str(e)}"], "jobs": Job.objects.all()})
-        finally:
-            shutil.rmtree(temp_dir)
 
     return render(request, 'admin/download_cwl.html', {"jobs": Job.objects.all()})
 

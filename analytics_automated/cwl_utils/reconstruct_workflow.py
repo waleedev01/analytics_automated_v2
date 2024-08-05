@@ -1,132 +1,79 @@
-import logging
+import os
 import json
+import logging
+from ruamel.yaml import YAML
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
-from ..models import Job, Step, Task, Parameter
+from ..models import Job, Step, Task, Environment
 
 logger = logging.getLogger(__name__)
 
-VALID_CWL_VERSIONS = ['v1.0', 'v1.1', 'v1.2', 'v1.3']
+yaml = YAML()
+yaml.default_flow_style = False
+yaml.indent(mapping=2, sequence=4, offset=2)
 
-def safe_json_loads(data):
-    """
-    Safely load JSON data from a string.
-    """
-    if isinstance(data, str):
-        try:
-            return json.loads(data)
-        except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON: {data}")
-            return data
-    return data
+def parse_json_field(field):
+    if isinstance(field, str):
+        return json.loads(field)
+    return field
 
-def get_step_sources(job):
-    """
-    Extract step sources for a job from the database.
-    """
-    steps = job.steps.all().order_by('ordering')
-    step_source = {}
-    for step in steps:
-        sources = set()
-        for param in step.task.parameters.all():
-            if param.rest_alias and '_' in param.rest_alias:
-                source_step = param.rest_alias.split('_')[0]
-                if source_step.isdigit():
-                    sources.add(int(source_step))
-        step_source[step.task.name] = sources
-    return step_source
-
-def set_step_order(step_source):
-    """
-    Determine the order of steps in the workflow based on their dependencies.
-    """
-    order_mapping = {}
-    for step_name, source_list in step_source.items():
-        if len(source_list) == 0:
-            order_mapping[step_name] = 0
-        else:
-            order = max([order_mapping.get(source, 0) for source in source_list]) + 1
-            order_mapping[step_name] = order
-    return order_mapping
-
-def get_workflow_details(job):
-    """
-    Construct the details of a workflow from its database representation.
-    """
-    logger.debug(f"Starting to process workflow for job: {job.name}")
-    steps = job.steps.all().order_by('ordering')
-    workflow_steps = {}
-
-    workflow_input = {
-        "input-file": {"type": "File"}
-    }
-
-    for i, step in enumerate(steps):
-        task = step.task
-        step_name = task.name
-        step_detail = {
-            "run": f"{step_name}.cwl",
-            "in": {},
-            "out": []
-        }
-
-        # Process inputs
-        if i == 0:
-            step_detail["in"]["input"] = "input-file"
-        else:
-            step_detail["in"]["input"] = f"{steps[i-1].task.name}/output"
-
-        # Process outputs
-        if task.out_glob:
-            step_detail["out"] = [f"output"]
-
-        workflow_steps[step_name] = step_detail
-
-    last_step = steps.last()
-    workflow_output = {
-        "output-file": {
-            "type": "File",
-            "outputSource": f"{last_step.task.name}/output"
-        }
-    }
+def reconstruct_workflow_cwl(job, file_path):
+    logger.info(f"Reconstructing workflow: {job.name}")
 
     workflow_detail = {
-        "cwlVersion": job.cwl_version if job.cwl_version in VALID_CWL_VERSIONS else "v1.0",
+        "cwlVersion": job.cwl_version if job.cwl_version else "v1.0",
         "class": "Workflow",
-        "inputs": workflow_input,
-        "outputs": workflow_output,
-        "steps": workflow_steps,
+        "inputs": {
+            "input-file": {"type": "File"}  
+        },
+        "outputs": {
+            "output-file": { 
+                "type": "File",
+                "outputSource": "psipass2/output"
+            }
+        },
+        "steps": {},
+        "requirements": parse_json_field(job.requirements)
     }
 
-    if job.requirements:
-        workflow_detail["requirements"] = safe_json_loads(job.requirements)
+    steps = job.steps.all().order_by('ordering')
+    for step in steps:
+        task = step.task
+        step_detail = _build_step_detail(step, task)
+        workflow_detail["steps"][task.name] = step_detail
 
-    logger.debug(f"Final workflow detail: {workflow_detail}")
-    return workflow_detail
-
-@transaction.atomic
-def reconstruct_workflow(job_name):
-    """
-    Reconstruct a workflow from its database entry.
-    """
-    logger.info(f"Starting workflow reconstruction for job: {job_name}")
+    # Save the CWL file
     try:
-        job = Job.objects.get(name=job_name)
-    except ObjectDoesNotExist:
-        logger.error(f"Job '{job_name}' does not exist.")
-        return None
-
-    try:
-        workflow_detail = get_workflow_details(job)
-        return workflow_detail
+        with open(file_path, 'w') as file:
+            yaml.dump(workflow_detail, file)
+        logger.info(f"Workflow '{job.name}' saved as {file_path}")
     except Exception as e:
-        logger.error(f"Error reconstructing workflow: {str(e)}")
-        return None
+        logger.error(f"Failed to save workflow '{job.name}' as {file_path}: {str(e)}")
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    workflow = reconstruct_workflow("example_job_name")
-    if workflow:
-        print(json.dumps(workflow, indent=2))
+
+def _build_step_detail(step, task):
+    # Construct step input-output relationship
+    step_detail = {
+        "run": f"{task.name}.cwl",
+        "in": {},
+        "out": [f"output_{i}" for i, _ in enumerate(task.out_glob.split(',')) if task.out_glob]
+    }
+
+    # Handling input bindings based on step order and input sources
+    if step.ordering == 0:
+        step_detail["in"]["input"] = "input-file"
     else:
-        print("Failed to reconstruct workflow")
+        prev_step = step.job.steps.get(ordering=step.ordering - 1)
+        prev_task_name = prev_step.task.name
+        step_detail["in"]["input"] = f"{prev_task_name}/output"
+
+    return step_detail
+
+def _define_workflow_outputs(job, steps, workflow_detail):
+    # Assume the last step's output is the workflow output
+    last_step = steps.last()
+    if last_step:
+        last_task_name = last_step.task.name
+        workflow_detail["outputs"]["output-wf"] = {
+            "type": "File",
+            "outputSource": f"{last_task_name}/output"
+        }
