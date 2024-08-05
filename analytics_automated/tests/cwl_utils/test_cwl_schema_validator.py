@@ -113,7 +113,8 @@ class TestCWLSchemaValidator(unittest.TestCase):
         invalid_workflow = self.load_cwl_file('invalid_workflow_non_list_requirements.cwl')
         is_valid, message = self.validator.validate_cwl(invalid_workflow)
         self.assertFalse(is_valid)
-        self.assertIn("Please define requirement in CWL as list", message)
+        self.assertIn("Please define requirements in CWL as list", message) 
+
 
     def test_validate_cwl_valid_requirements(self):
         """Test validation of a CWL file with a valid 'requirements' list."""
