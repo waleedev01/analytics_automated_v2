@@ -1,5 +1,7 @@
 import logging
 import json
+import re
+import string
 from ..models import Backend, Task, Parameter, Environment, Configuration
 
 logger = logging.getLogger(__name__)
@@ -20,9 +22,14 @@ CONFIGURATION_CHOICES = {
 }
 
 def load_format_mapping(file_path):
-    with open(file_path, 'r') as file:
-        format_mapping = json.load(file)
-    return format_mapping
+    try:
+        with open(file_path, 'r') as file:
+            format_mapping = json.load(file)
+        logging.info(f"Format mapping loaded successfully from {file_path}")
+        return format_mapping
+    except Exception as e:
+        logging.error(f"Error loading format mapping from {file_path}: {e}")
+        return {}
 
 
 def handle_env_variable_req(requirements: list) -> dict[str, str]:
@@ -125,16 +132,16 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
 
     logging.info(f"Parsing CWL command line tool: {name}")
     base_command = cwl_data.get("baseCommand")
-    inputs = cwl_data.get("inputs", [])
-    outputs = cwl_data.get("outputs", [])
+    inputs = cwl_data.get("inputs", {})
+    outputs = cwl_data.get("outputs", {})
     requirements = cwl_data.get("requirements", [])
     hints = cwl_data.get("hints", [])
     arguments = cwl_data.get("arguments", [])
     stdin = cwl_data.get("stdin")
     stdout = cwl_data.get("stdout")
     stderr = cwl_data.get("stderr")
-    success_codes = cwl_data.get("successCodes", [])
-    permanent_fail_codes = cwl_data.get("permanentFailCodes", [])
+    success_codes = cwl_data.get("successCodes", None)
+    permanent_fail_codes = cwl_data.get("permanentFailCodes", None)
     label = cwl_data.get("label")
     doc = cwl_data.get("doc")
     shell_quote = cwl_data.get("shellQuote", False)
@@ -148,8 +155,10 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     except Exception as e:
         logging.error(f"Failed to parse custom configration fields for task {name}: {e}")
     
-    success_codes = ",".join(map(str, success_codes))
-    permanent_fail_codes = ",".join(map(str, permanent_fail_codes))
+    if success_codes is not None:
+        success_codes = ",".join(map(str, success_codes))
+    if permanent_fail_codes is not None:
+        permanent_fail_codes = ",".join(map(str, permanent_fail_codes))
 
     task = {
         "name": name,
@@ -215,6 +224,11 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
 
             file_type = input_data['type']
             if file_type != 'File':
+                # Skip exit_code as input parameter
+                if file_type == 'int' and input_data['name'] == 'exit_code':
+                    in_globs.append("exit_code.txt")
+                    continue
+        
                 executable_parts.insert(position, f"$P{position_parameter}")
                 position_parameter += 1
             else:
@@ -246,6 +260,10 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
             if output_data['type'] == 'File' and 'glob' in output_data['output_binding']:
                 suffix = f".{output_data['output_binding'].get('glob').split('.')[-1]}"
                 out_globs.append(suffix)
+            # Include exit_code in out_glob as exit_code.txt
+            elif output_data['type'] == 'int' and output_data['output_binding']['outputEval'] == "$(runtime.exitCode)":
+                suffix = 'exit_code.txt'
+                out_globs.append(suffix)
         out_glob = ",".join(out_globs)
 
         task['executable'] = executable
@@ -258,7 +276,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     return task
 
 
-def save_task_to_db(task_data, messages):
+def save_task_to_db(task_data, messages, cwl_content=None):
     try:
         backend = Backend.objects.get(id=1)  # Assuming a default backend ID
         logging.info(f"Saving task to database: {task_data['name']}")
@@ -299,6 +317,7 @@ def save_task_to_db(task_data, messages):
             existing_task.requirements = task_data['requirements']
             existing_task.custom_success_exit = task_data['success_codes']
             existing_task.custom_terminate_exit = task_data['permanent_fail_codes']
+            existing_task.cwl_content = cwl_content  # store the entire CLT CWL
             existing_task.save()
 
             existing_parameter = Parameter.objects.filter(task=existing_task)
@@ -324,6 +343,7 @@ def save_task_to_db(task_data, messages):
                 requirements=task_data['requirements'],
                 custom_success_exit=task_data['success_codes'],
                 custom_terminate_exit=task_data['permanent_fail_codes'],
+                cwl_content=cwl_content  # store the entire CLT CWL
             )
             message = f"Task saved successfully: {task_data['name']}"
             logging.info(message)
@@ -333,6 +353,10 @@ def save_task_to_db(task_data, messages):
                 # Skip inputs with File type
                 file_type = input_data['type']
                 if file_type == 'File':
+                    continue
+
+                # Skip exit_code as input parameter
+                if file_type == 'int' and input_data['name'] == 'exit_code':
                     continue
 
                 flag = input_data.get('input_binding').get('prefix')
@@ -374,7 +398,7 @@ def save_task_to_db(task_data, messages):
                     parameters=package.get('parameter', None)
                 )
             except Exception as e:
-                logging.error(f"Error saving configration for task {task_data['name']}: {e}")
+                logging.error(f"Error saving configuration for task {task_data['name']}: {e}")
 
         message = f"Task saved successfully: {task_data['name']}"
         logging.info(message)

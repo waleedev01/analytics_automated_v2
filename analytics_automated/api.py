@@ -237,10 +237,15 @@ class SubmissionDetails(mixins.RetrieveModelMixin,
 
             if step.ordering != prev_step:
                 current_step += 1
+            
+            logger.debug("Condition: "+str(step.condition))
+            condition = ''
+            if step.condition is not None:
+                condition = step.condition
 
             # tchain += "task_runner.si('%s',%i,%i,%i,'%s') | " \
             task_string = "task_runner.subtask(('%s', %i, %i, %i, %i, '%s', " \
-                          "%s, %s, '%s', %i, %s), " \
+                          "%s, %s, '%s', %i, %s, '%s'), " \
                           "immutable=True, queue='%s')" \
                           % (UUID,
                              step.ordering,
@@ -253,6 +258,7 @@ class SubmissionDetails(mixins.RetrieveModelMixin,
                              value,
                              step.task.backend.queue_type.execution_behaviour,
                              environment,
+                             condition,
                              queue_name)
 
             if step.ordering in task_strings:

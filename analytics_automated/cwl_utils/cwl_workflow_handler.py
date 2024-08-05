@@ -6,12 +6,13 @@ from .cwl_clt_handler import parse_cwl_clt, save_task_to_db, check_existing_task
 
 logger = logging.getLogger(__name__)
 
-def parse_cwl_workflow(cwl_data, filename, messages):
+def parse_cwl_workflow(cwl_data, filename, messages, cwl_content):
     logging.info(f"Parsing CWL workflow: {filename}")
     steps = cwl_data.get("steps")
     step_source = {}
     task_arr = []
     task_details = []
+    condition_arr = []
     workflow_req = cwl_data.get("requirements", [])
 
     for step_name, step_detail in steps.items():
@@ -31,12 +32,16 @@ def parse_cwl_workflow(cwl_data, filename, messages):
                 source_arr.append(input_detail.split('/')[0])
 
         task_run = step_detail.get("run")
+        task_when = step_detail.get("when", None)
+        if task_when is not None:
+            task_when = task_when[9:-1] #remove $(inputs.)
+        condition_arr.append(task_when)
 
         try:
             if isinstance(task_run, dict) and task_run.get("class") == "CommandLineTool":
                 logging.info(f"Parsing inline CommandLineTool for step: {step_name}")
                 task_data = parse_cwl_clt(task_run, step_name)
-                task = save_task_to_db(task_data, messages)
+                task = save_task_to_db(task_data, messages, cwl_content=yaml.dump(task_run))
                 if task:
                     task_details.append(task_data)
                     step_source[step_name] = set(source_arr)
@@ -108,6 +113,7 @@ def parse_cwl_workflow(cwl_data, filename, messages):
             existing_job.name = filename
             existing_job.cwl_version = cwl_version
             existing_job.requirements = requirements
+            existing_job.cwl_content = cwl_content  # store the entire workflow CWL
             existing_job.save()
 
             existing_step = Step.objects.filter(job=existing_job)
@@ -121,14 +127,16 @@ def parse_cwl_workflow(cwl_data, filename, messages):
                 name=filename, 
                 runnable=True,
                 cwl_version=cwl_version,
-                requirements=requirements)
+                requirements=requirements,
+                cwl_content=cwl_content  # store the entire workflow CWL
+            )
             keyword = "created"
 
-        for task_name in task_arr:
+        for idx, task_name in enumerate(task_arr):
             try:
                 # Create steps for the job
                 task = Task.objects.get(name=task_name)
-                Step.objects.create(job=job, task=task, ordering=order_mapping_final[task_name])
+                Step.objects.create(job=job, task=task, ordering=order_mapping_final[task_name], condition=condition_arr[idx])
 
                 # Create inherited workflow environment variables for the task
                 if workflow_req:

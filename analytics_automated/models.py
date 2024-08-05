@@ -79,6 +79,7 @@ class Job(models.Model):
     runnable = models.BooleanField(default=False, blank=False)
     requirements = models.JSONField(null=True, blank=True)  # New field for requirements
     cwl_version = models.CharField(max_length=32, null=True, blank=True)  # New field for CWL version
+    cwl_content = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -161,6 +162,7 @@ class Task(models.Model):
     label = models.CharField(max_length=256, null=True, blank=True)
     doc = models.TextField(null=True, blank=True)
     shell_quote = models.BooleanField(default=False)
+    cwl_content = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -201,6 +203,7 @@ class Step(models.Model):
     task = models.ForeignKey(Task, null=True,
                              on_delete=models.CASCADE)
     ordering = models.IntegerField(default=0, null=False, blank=False)
+    condition = models.CharField(max_length=256, null=True, blank=True)
 
     def __str__(self):
         return str(self.task)
