@@ -1,41 +1,35 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Advanced Uses &mdash; analytics_automated 1.0 documentation</title>
-    
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="analytics_automated 1.0 documentation" href="index.html" />
-    <link rel="next" title="Configurations Settings" href="configuration_settings.html" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advanced Uses &#8212; analytics_automated 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Periodic Tasks" href="periodic_tasks.html" />
     <link rel="prev" title="Recipes for more advanced use-cases" href="recipes.html" />
    
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">  
+  </head><body>
+  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="advanced-uses">
@@ -51,12 +45,12 @@ arrive at the <cite>post()</cite> method in the <cite>api.py</cite>. The post() 
 responsible for validating data and dispatching jobs to the workers.</p>
 <p>post() runs through the following sequence of events.</p>
 <ul class="simple">
-<li>The incoming POST data is checked to ensure that all the required elements are present</li>
-<li>We doublecheck how many jobs a user has submitted and assigns there submission to a queue</li>
-<li>Data is then run through the standard Django form validation process</li>
-<li>And... during form validation and custom data validation the job requires is executed</li>
-<li>If validation passes the function identifies the job that was requested and constructs a celery chain including all the job&#8217;s tasks</li>
-<li>finally the chain is submitted to the celery queue.</li>
+<li><p>The incoming POST data is checked to ensure that all the required elements are present</p></li>
+<li><p>We doublecheck how many jobs a user has submitted and assigns there submission to a queue</p></li>
+<li><p>Data is then run through the standard Django form validation process</p></li>
+<li><p>And… during form validation and custom data validation the job requires is executed</p></li>
+<li><p>If validation passes the function identifies the job that was requested and constructs a celery chain including all the job’s tasks</p></li>
+<li><p>finally the chain is submitted to the celery queue.</p></li>
 </ul>
 <p>Once a job is pushed to the queue it will be picked up by any workers listening to
 that queue. <cite>tasks.py</cite> defines celery functions which execute the job. The
@@ -73,30 +67,30 @@ enabled and configured correctly it will email the user when the job completes.<
 check incoming data submissions. A validator is a function that reads a file
 and returns True of False if the data is acceptable.</p>
 <p>A validator is a regular python function that returns True or False. Once
-written the system will pick up new functions and make them available in the &#8216;+ Add Job&#8217;
+written the system will pick up new functions and make them available in the ‘+ Add Job’
 dialogue. In Django development mode this process is automatic. For a production system
-you will need to restart the Django server. Functions beginning with &#8216;_&#8217; will be regarded
+you will need to restart the Django server. Functions beginning with ‘_’ will be regarded
 as private and will not be added to the validators</p>
 <p>The simplest possible validator would do nothing with the file</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">simple_validator</span><span class="p">(</span><span class="n">file_data</span><span class="p">):</span>
-    <span class="k">return</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">simple_validator</span><span class="p">(</span><span class="n">file_data</span><span class="p">):</span>
+    <span class="k">return</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>A more realistic validator needs to interogate the contents of the file.
 the data passsed in is always a byte stream from a file. So typically the first
 thing you wish to do would be to decode the byte stream. In the example below
-the validator would return False is every line does not start with a &#8216;#&#8217;</p>
-<div class="highlight-python"><div class="highlight"><pre>def better_validator(file_data):
-    data_string = file_data.decode(&quot;utf-8&quot;)
-    for line in  string_data.splitlines():
-      if not line.startswith(&#39;#&#39;)
-        return False
-    return True
+the validator would return False is every line does not start with a ‘#’</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">better_validator</span><span class="p">(</span><span class="n">file_data</span><span class="p">):</span>
+    <span class="n">data_string</span> <span class="o">=</span> <span class="n">file_data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span>  <span class="n">string_data</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
 </pre></div>
 </div>
 <p>When writing validators you can add tests to the test_validators.py file and
 use the typical Django test command to test them. If you remove a validator,
-don&#8217;t forget to remove its associated tests</p>
+don’t forget to remove its associated tests</p>
 </div>
 <div class="section" id="programmatic-admin">
 <h2>Programmatic Admin<a class="headerlink" href="#programmatic-admin" title="Permalink to this headline">¶</a></h2>
@@ -110,8 +104,8 @@ models.py explains the database schema and the the fields that users can set.</p
 job configurations to yaml or upload new configuration. You can write or edit
 valid yaml for the database to configure jobs and tasks. The following URIs
 provide this functionality</p>
-<div class="highlight-python"><div class="highlight"><pre>http://127.0.0.1:8000/admin/dump
-http://127.0.0.1:8000/admin/load
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">127.0.0.1</span><span class="p">:</span><span class="mi">8000</span><span class="o">/</span><span class="n">admin</span><span class="o">/</span><span class="n">dump</span>
+<span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">127.0.0.1</span><span class="p">:</span><span class="mi">8000</span><span class="o">/</span><span class="n">admin</span><span class="o">/</span><span class="n">load</span>
 </pre></div>
 </div>
 </div>
@@ -119,13 +113,13 @@ http://127.0.0.1:8000/admin/load
 <h2>Adding new celery queues<a class="headerlink" href="#adding-new-celery-queues" title="Permalink to this headline">¶</a></h2>
 <p>A_A uses Celery to execute tasks. By default we provide a number of queues
 that tasks can be assigned to. You can use the Queues admin pages to create
-new ones. By default you can find &#8216;localhost&#8217; and &#8216;gridengine&#8217; name queues.</p>
-<p>Internally these create 3 queues for each named, &#8216;low_localhost&#8217;, &#8216;localhost&#8217;
-and &#8216;high_localhost&#8217;. These allow you to have queues that run with tasks
-with different prioriies. By default jobs will be sent to the &#8216;localhost&#8217; queue,
-users who exceed the QUEUE_HOG_SIZE will have their jobs sent to the &#8216;low_&#8217; queue
-and users who are logged in can be assigned to the &#8216;high_&#8217; queue.</p>
-<p>Now if you deploy fewer workers listening to the &#8216;low_&#8217; queue those users
+new ones. By default you can find ‘localhost’ and ‘gridengine’ name queues.</p>
+<p>Internally these create 3 queues for each named, ‘low_localhost’, ‘localhost’
+and ‘high_localhost’. These allow you to have queues that run with tasks
+with different prioriies. By default jobs will be sent to the ‘localhost’ queue,
+users who exceed the QUEUE_HOG_SIZE will have their jobs sent to the ‘low_’ queue
+and users who are logged in can be assigned to the ‘high_’ queue.</p>
+<p>Now if you deploy fewer workers listening to the ‘low_’ queue those users
 will be able to have jobs executed but will not be able to monopolise the system
 at the expense of other users. If you do not wish the queues to run with different
 access to resources then have your celery workers listen to all queues.</p>
@@ -133,9 +127,9 @@ access to resources then have your celery workers listen to all queues.</p>
 <a class="reference external" href="http://127.0.0.1:8000/admin/analytics_automated/queuetype/">http://127.0.0.1:8000/admin/analytics_automated/queuetype/</a>. You set a new name
 which will name the celery queues (low_[name], [name] and high_[name]) and
 you set an execution behaviour. Currently 2 execution behaviours are supported.
-With &#8216;localhost&#8217; set the workers will run the configured task as though it is
+With ‘localhost’ set the workers will run the configured task as though it is
 a unix commandlines instruction and execute it on the machine the worker is
-running on. With &#8216;GridEngine&#8217; set the worker will send the task
+running on. With ‘GridEngine’ set the worker will send the task
 to a DRMAA compliant grid engine head node for execution. Not the RServe options
 is temporarily not supported</p>
 </div>
@@ -145,10 +139,10 @@ is temporarily not supported</p>
 and then distribute users names and passwords to thoses users. Using the
 authentication and queue settings the admin can control access to the system.</p>
 <ul class="simple">
-<li>DEFAULT_JOB_PRIORITY : Priority submissions will run at (default 1)</li>
-<li>LOGGED_IN_JOB_PRIORITY : Priority submissions will run at (default 2)</li>
-<li>QUEUE_HOG_SIZE : Soft limit for concurrent user jobs</li>
-<li>QUEUE_HARD_LIMIT : Hard limit for concurrent user jobs</li>
+<li><p>DEFAULT_JOB_PRIORITY : Priority submissions will run at (default 1)</p></li>
+<li><p>LOGGED_IN_JOB_PRIORITY : Priority submissions will run at (default 2)</p></li>
+<li><p>QUEUE_HOG_SIZE : Soft limit for concurrent user jobs</p></li>
+<li><p>QUEUE_HARD_LIMIT : Hard limit for concurrent user jobs</p></li>
 </ul>
 <p>Jobs priority takes 4 values; None, 0, 1 and 2.  None will cause jobs to be
 rejected. 0 will send jobs to the low_* queue, 1 will send jobs to the regular
@@ -174,7 +168,7 @@ shorter than 100 lines.</p>
 having to call pip</p>
 <p>R code calls will only work if r-base-dev has been installed as it is a
 requirement of rpy2</p>
-<p>Code is a dialect of R and Python as the &#8221; character is not valid. You must use
+<p>Code is a dialect of R and Python as the ” character is not valid. You must use
 single quotes to delineate strings. Further details are covered in they
 python library commandRunner <a class="reference external" href="https://pypi.org/project/commandRunner/">https://pypi.org/project/commandRunner/</a></p>
 </div>
@@ -182,52 +176,75 @@ python library commandRunner <a class="reference external" href="https://pypi.or
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Advanced Uses</a><ul>
-<li><a class="reference internal" href="#system-details">System details</a></li>
-<li><a class="reference internal" href="#new-validators">New validators</a></li>
-<li><a class="reference internal" href="#programmatic-admin">Programmatic Admin</a></li>
-<li><a class="reference internal" href="#yaml-upload-and-download">Yaml upload and download</a></li>
-<li><a class="reference internal" href="#adding-new-celery-queues">Adding new celery queues</a></li>
-<li><a class="reference internal" href="#authentication-and-queue-management">Authentication and queue management</a></li>
-<li><a class="reference internal" href="#code-tasks">Code tasks</a></li>
+<h1 class="logo"><a href="index.html">analytics_automated</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Basic Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_it_works.html">How The System Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="the_Job_UI.html">Building Jobs Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuring_a_basic_job.html">Configuring A Basic Job</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_a_basic_job.html">Using A Basic Job</a></li>
+<li class="toctree-l1"><a class="reference internal" href="job_admin.html">Administration Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes.html">Recipes for more advanced use-cases</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Advanced Uses</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#system-details">System details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#new-validators">New validators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#programmatic-admin">Programmatic Admin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#yaml-upload-and-download">Yaml upload and download</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-new-celery-queues">Adding new celery queues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#authentication-and-queue-management">Authentication and queue management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#code-tasks">Code tasks</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="periodic_tasks.html">Periodic Tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration_settings.html">Configurations Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_installation.html">Development Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="todo.html">TODO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supported_cwl_file.html">CWL File Requirements and Specifications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supported_cwl_file.html#simple-cwl-guidance">Simple CWL Guidance</a></li>
 </ul>
+
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="recipes.html" title="previous chapter">Recipes for more advanced use-cases</a></li>
-      <li>Next: <a href="configuration_settings.html" title="next chapter">Configurations Settings</a></li>
+      <li>Next: <a href="periodic_tasks.html" title="next chapter">Periodic Tasks</a></li>
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/advanced.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
+    </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -236,11 +253,11 @@ python library commandRunner <a class="reference external" href="https://pypi.or
       &copy;2015, Daniel Buchan.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
-      <a href="_sources/advanced.txt"
+      <a href="_sources/advanced.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

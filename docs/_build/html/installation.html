@@ -1,41 +1,35 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Basic Installation &mdash; analytics_automated 1.0 documentation</title>
-    
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="analytics_automated 1.0 documentation" href="index.html" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Basic Installation &#8212; analytics_automated 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="How The System Works" href="how_it_works.html" />
     <link rel="prev" title="Analytics Automated" href="index.html" />
    
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">  
+  </head><body>
+  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="basic-installation">
@@ -43,58 +37,58 @@
 <p>This guide will take you through setting up A_A in development mode. Analytics
 automated is a Django application and has a couple of required dependencies</p>
 <ul class="simple">
-<li>Python3</li>
-<li>postgreSQL</li>
-<li>Redis</li>
-<li>Celery 4.x</li>
-<li>Django &gt;1.10</li>
+<li><p>Python3</p></li>
+<li><p>postgreSQL</p></li>
+<li><p>Redis</p></li>
+<li><p>Celery 4.x</p></li>
+<li><p>Django &gt;1.10</p></li>
 </ul>
 <div class="section" id="code-dependancies">
 <h2>Code Dependancies<a class="headerlink" href="#code-dependancies" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="get-python-3">
 <h3>1. Get Python 3<a class="headerlink" href="#get-python-3" title="Permalink to this headline">¶</a></h3>
 <p>You may also wish to sort out virtualenv and run the application within that, however that is beyond the scope of this installation guide</p>
-<div class="highlight-python"><div class="highlight"><pre>https://www.python.org/downloads/
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">www</span><span class="o">.</span><span class="n">python</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">downloads</span><span class="o">/</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="install-postgresql">
 <h3>2. Install postgreSQL<a class="headerlink" href="#install-postgresql" title="Permalink to this headline">¶</a></h3>
-<p>If you&#8217;re on a mac we advise using brew</p>
-<div class="highlight-python"><div class="highlight"><pre>brew install postgres
+<p>If you’re on a mac we advise using brew</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">brew</span> <span class="n">install</span> <span class="n">postgres</span>
 </pre></div>
 </div>
-<p>If you&#8217;re in a linux env some manner of</p>
-<div class="highlight-python"><div class="highlight"><pre>yum install postgres
+<p>If you’re in a linux env some manner of</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">yum</span> <span class="n">install</span> <span class="n">postgres</span>
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-python"><div class="highlight"><pre>apt-get install postgres
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">postgres</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="install-redis">
 <h3>3. Install Redis<a class="headerlink" href="#install-redis" title="Permalink to this headline">¶</a></h3>
 <p>One of</p>
-<div class="highlight-python"><div class="highlight"><pre>brew install redis
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">brew</span> <span class="n">install</span> <span class="n">redis</span>
 
-yum install redis
+<span class="n">yum</span> <span class="n">install</span> <span class="n">redis</span>
 
-apt-get install redis
+<span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">redis</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="get-the-analytics-automated">
 <h3>4. Get the Analytics Automated<a class="headerlink" href="#get-the-analytics-automated" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-python"><div class="highlight"><pre>git clone https://github.com/AnalyticsAutomated/analytics_automated.git
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">AnalyticsAutomated</span><span class="o">/</span><span class="n">analytics_automated</span><span class="o">.</span><span class="n">git</span>
 </pre></div>
 </div>
 <p>This will place the code in a dir called <cite>analytics_automated/</cite></p>
 </div>
 <div class="section" id="install-the-python-packages-needed">
 <h3>5. Install the python packages needed<a class="headerlink" href="#install-the-python-packages-needed" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-python"><div class="highlight"><pre>cd analytics_automated/
-pip install -r requirements/dev.txt
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">analytics_automated</span><span class="o">/</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">/</span><span class="n">dev</span><span class="o">.</span><span class="n">txt</span>
 </pre></div>
 </div>
 </div>
@@ -105,23 +99,23 @@ pip install -r requirements/dev.txt
 <h3>1. Set Up Postgres<a class="headerlink" href="#set-up-postgres" title="Permalink to this headline">¶</a></h3>
 <p>You need to setup some bits and pieces in postgres before we start</p>
 <ul>
-<li><p class="first">You may need to initialise postgres:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">initdb</span> <span class="o">-</span><span class="n">D</span> <span class="p">[</span><span class="n">SOME_PATH</span><span class="p">]</span>
+<li><p>You may need to initialise postgres:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">initdb</span> <span class="o">-</span><span class="n">D</span> <span class="p">[</span><span class="n">SOME_PATH</span><span class="p">]</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Start the postgres daemon:</p>
-<div class="highlight-python"><div class="highlight"><pre>pg_ctl start -l /scratch0/NOT_BACKED_UP/dbuchan/postgres/logfile -D scratch0/NOT_BACKED_UP/dbuchan/postgres/
+<li><p>Start the postgres daemon:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pg_ctl</span> <span class="n">start</span> <span class="o">-</span><span class="n">l</span> <span class="o">/</span><span class="n">scratch0</span><span class="o">/</span><span class="n">NOT_BACKED_UP</span><span class="o">/</span><span class="n">dbuchan</span><span class="o">/</span><span class="n">postgres</span><span class="o">/</span><span class="n">logfile</span> <span class="o">-</span><span class="n">D</span> <span class="n">scratch0</span><span class="o">/</span><span class="n">NOT_BACKED_UP</span><span class="o">/</span><span class="n">dbuchan</span><span class="o">/</span><span class="n">postgres</span><span class="o">/</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Then login:</p>
-<div class="highlight-python"><div class="highlight"><pre>psql -h localhost -d postgres
+<li><p>Then login:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">psql</span> <span class="o">-</span><span class="n">h</span> <span class="n">localhost</span> <span class="o">-</span><span class="n">d</span> <span class="n">postgres</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Now create the django db user for A_A</p>
-<div class="highlight-sql"><div class="highlight"><pre><span class="k">CREATE</span> <span class="k">ROLE</span> <span class="n">a_a_user</span> <span class="k">WITH</span> <span class="n">LOGIN</span> <span class="n">PASSWORD</span> <span class="s1">&#39;thisisthedevelopmentpasswordguys&#39;</span><span class="p">;</span>
+<li><p>Now create the django db user for A_A</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">CREATE</span> <span class="k">ROLE</span> <span class="n">a_a_user</span> <span class="k">WITH</span> <span class="n">LOGIN</span> <span class="n">PASSWORD</span> <span class="s1">&#39;thisisthedevelopmentpasswordguys&#39;</span><span class="p">;</span>
 <span class="k">CREATE</span> <span class="k">DATABASE</span> <span class="n">analytics_automated_db</span><span class="p">;</span>
 <span class="k">GRANT</span> <span class="k">ALL</span> <span class="k">PRIVILEGES</span> <span class="k">ON</span> <span class="k">DATABASE</span> <span class="n">analytics_automated_db</span> <span class="k">TO</span> <span class="n">a_a_user</span><span class="p">;</span>
 <span class="k">ALTER</span> <span class="k">USER</span> <span class="n">a_a_user</span> <span class="k">CREATEDB</span><span class="p">;</span>
@@ -137,132 +131,141 @@ base_secrets.json are site wide settings which dev and production will use.
 dev_secrets.json are settings which only the dev installation will will access.
 A production system will need a production_secrets.json</p>
 <ul>
-<li><p class="first">Create the files we need:</p>
-<div class="highlight-python"><div class="highlight"><pre>cd analytics_automated_project/settings
+<li><p>Create the files we need:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>cd analytics_automated_project/settings
 touch base_secrets.json`
 touch dev_secrets.json`
 </pre></div>
 </div>
 </li>
-<li><p class="first">If you&#8217;re using bugsnag add your bugsnag key to base_secrets.json:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
-  <span class="s">&quot;BUGSNAG&quot;</span><span class="p">:</span> <span class="s">&quot;YOUR KEY HERE&quot;</span>
+<li><p>If you’re using bugsnag add your bugsnag key to base_secrets.json:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;BUGSNAG&quot;</span><span class="p">:</span> <span class="s2">&quot;YOUR KEY HERE&quot;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Add the dev_secrets.json settings needed to start in developments mode. The postgres login credentials and the secret key:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
-  <span class="s">&quot;USER&quot;</span><span class="p">:</span> <span class="s">&quot;a_a_user&quot;</span><span class="p">,</span>
-  <span class="s">&quot;PASSWORD&quot;</span><span class="p">:</span> <span class="s">&quot;thisisthedevelopmentpasswordguys&quot;</span><span class="p">,</span>
-  <span class="s">&quot;SECRET_KEY&quot;</span><span class="p">:</span> <span class="s">&quot;VERY LONG KEY HERE&quot;</span>
+<li><p>Add the dev_secrets.json settings needed to start in developments mode. The postgres login credentials and the secret key:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;USER&quot;</span><span class="p">:</span> <span class="s2">&quot;a_a_user&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;PASSWORD&quot;</span><span class="p">:</span> <span class="s2">&quot;thisisthedevelopmentpasswordguys&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;SECRET_KEY&quot;</span><span class="p">:</span> <span class="s2">&quot;VERY LONG KEY HERE&quot;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Next open the base settings files in <cite>analytics_automated_project/settings/base.py</cite>
-In here you&#8217;ll find a section at the top labelled &#8220;Required A_A user settings&#8221;.
+<li><p>Next open the base settings files in <cite>analytics_automated_project/settings/base.py</cite>
+In here you’ll find a section at the top labelled “Required A_A user settings”.
 These are all the things you need set for the app to run. We prefer to keep
 theses settings in dev.py and production.py files. Then we can start the server
 in different configs for different purposes.
 Either uncomment all these in base.py or move them to dev.py or production.py and
 set them there. You can leave the smtp settings commented if you do not wish to
-send alerts via email to your users.</p>
-</li>
+send alerts via email to your users.</p></li>
 </ul>
 </div>
 <div class="section" id="starting-a-a-in-development-localhost-mode">
 <h3>3. Starting A_A in development localhost mode<a class="headerlink" href="#starting-a-a-in-development-localhost-mode" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p class="first">Start Redis:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">redis</span><span class="o">-</span><span class="n">server</span>
+<li><p>Start Redis:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">redis</span><span class="o">-</span><span class="n">server</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Start the celery workers, from the root dir of A_A. Note that we have to specify
-the queues the workers read from (-Q), for the basic settings we&#8217;ll have
+<li><p>Start the celery workers, from the root dir of A_A. Note that we have to specify
+the queues the workers read from (-Q), for the basic settings we’ll have
 these workers just watch all the default queues, note that the
 workers are watching the low priority, normal priority and high priority.
 In a more complex set up you can have different worker pools on different
 machines watch specific queues.
 localhost queues:</p>
-<div class="highlight-python"><div class="highlight"><pre>cd analytics_automated/
-celery --app=analytics_automated_project.celery:app worker --loglevel=INFO -Q low_localhost,localhost,high_localhost,low_GridEngine,GridEngine,high_GridEngine,low_R,R,high_R,low_Python,Python,high_Python
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">analytics_automated</span><span class="o">/</span>
+<span class="n">celery</span> <span class="o">--</span><span class="n">app</span><span class="o">=</span><span class="n">analytics_automated_project</span><span class="o">.</span><span class="n">celery</span><span class="p">:</span><span class="n">app</span> <span class="n">worker</span> <span class="o">--</span><span class="n">loglevel</span><span class="o">=</span><span class="n">INFO</span> <span class="o">-</span><span class="n">Q</span> <span class="n">low_localhost</span><span class="p">,</span><span class="n">localhost</span><span class="p">,</span><span class="n">high_localhost</span><span class="p">,</span><span class="n">low_GridEngine</span><span class="p">,</span><span class="n">GridEngine</span><span class="p">,</span><span class="n">high_GridEngine</span><span class="p">,</span><span class="n">low_R</span><span class="p">,</span><span class="n">R</span><span class="p">,</span><span class="n">high_R</span><span class="p">,</span><span class="n">low_Python</span><span class="p">,</span><span class="n">Python</span><span class="p">,</span><span class="n">high_Python</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Run the Django migrations to configure the database:</p>
-<div class="highlight-python"><div class="highlight"><pre>cd analytics_automated/
-python manage.py migrate --settings=analytics_automated_project.settings.dev
+<li><p>Run the Django migrations to configure the database:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">analytics_automated</span><span class="o">/</span>
+<span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">migrate</span> <span class="o">--</span><span class="n">settings</span><span class="o">=</span><span class="n">analytics_automated_project</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">dev</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Add an admin user to the Django application:</p>
-<div class="highlight-python"><div class="highlight"><pre>cd analytics_automated/
-python manage.py createsuperuser
+<li><p>Add an admin user to the Django application:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">analytics_automated</span><span class="o">/</span>
+<span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">createsuperuser</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Now start A_A, again from the root dir of the app. Note we&#8217;ll start it assuming
+<li><p>Now start A_A, again from the root dir of the app. Note we’ll start it assuming
 you put the users settings in settings/dev.py:</p>
-<div class="highlight-python"><div class="highlight"><pre>cd analytics_automated/
-python manage.py runserver --settings=analytics_automated_project.settings.dev
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">analytics_automated</span><span class="o">/</span>
+<span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">runserver</span> <span class="o">--</span><span class="n">settings</span><span class="o">=</span><span class="n">analytics_automated_project</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">dev</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">ALTERNATIVELY
+<li><p>ALTERNATIVELY
 We also provide some scripts for bash and OSX in the utilities/ directory
-which will start all the components on one machine.</p>
-</li>
-<li><p class="first">Scheduled tasks. If you are going to user celery-beat then you may want to add a
-queue name for scheduled tasks to the workers and starting the beat service.</p>
-</li>
+which will start all the components on one machine.</p></li>
+<li><p>Scheduled tasks. If you are going to user celery-beat then you may want to add a
+queue name for scheduled tasks to the workers and starting the beat service.</p></li>
 </ul>
 </div>
 <div class="section" id="config-complete">
 <h3>4. Config complete<a class="headerlink" href="#config-complete" title="Permalink to this headline">¶</a></h3>
 <blockquote>
-<div>You should now be running all the components of A_A on a single machine with
+<div><p>You should now be running all the components of A_A on a single machine with
 a set of workers watching the localhost queue. This means we can now configure
 data analysis pipelines which run code on the machine which the workers are running on.
 This is the most basic setup we can run Redis, the web app, the database and the workers
 on completely separate machines and even run multiple instances of the workers watching
-the same queue. We&#8217;ll deal with this set in the <a class="reference internal" href="advanced.html#advanced-uses"><span>Advanced Uses</span></a> tutorial.</div></blockquote>
+the same queue. We’ll deal with this set in the <a class="reference internal" href="advanced.html#advanced-uses"><span class="std std-ref">Advanced Uses</span></a> tutorial.</p>
+</div></blockquote>
 </div>
 <div class="section" id="now-move-on-to-how-it-works">
-<h3>5. Now move on to <a class="reference internal" href="how_it_works.html#how-it-works"><span>How The System Works</span></a><a class="headerlink" href="#now-move-on-to-how-it-works" title="Permalink to this headline">¶</a></h3>
+<h3>5. Now move on to <a class="reference internal" href="how_it_works.html#how-it-works"><span class="std std-ref">How The System Works</span></a><a class="headerlink" href="#now-move-on-to-how-it-works" title="Permalink to this headline">¶</a></h3>
 </div>
 </div>
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Basic Installation</a><ul>
-<li><a class="reference internal" href="#code-dependancies">Code Dependancies</a><ul>
-<li><a class="reference internal" href="#get-python-3">1. Get Python 3</a></li>
-<li><a class="reference internal" href="#install-postgresql">2. Install postgreSQL</a></li>
-<li><a class="reference internal" href="#install-redis">3. Install Redis</a></li>
-<li><a class="reference internal" href="#get-the-analytics-automated">4. Get the Analytics Automated</a></li>
-<li><a class="reference internal" href="#install-the-python-packages-needed">5. Install the python packages needed</a></li>
+<h1 class="logo"><a href="index.html">analytics_automated</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Basic Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#code-dependancies">Code Dependancies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pre-launch-configuration">Pre-launch configuration</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#pre-launch-configuration">Pre-launch configuration</a><ul>
-<li><a class="reference internal" href="#set-up-postgres">1. Set Up Postgres</a></li>
-<li><a class="reference internal" href="#now-configure-django">2. Now configure Django</a></li>
-<li><a class="reference internal" href="#starting-a-a-in-development-localhost-mode">3. Starting A_A in development localhost mode</a></li>
-<li><a class="reference internal" href="#config-complete">4. Config complete</a></li>
-<li><a class="reference internal" href="#now-move-on-to-how-it-works">5. Now move on to <code class="docutils literal"><span class="pre">how_it_works</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_it_works.html">How The System Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="the_Job_UI.html">Building Jobs Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuring_a_basic_job.html">Configuring A Basic Job</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_a_basic_job.html">Using A Basic Job</a></li>
+<li class="toctree-l1"><a class="reference internal" href="job_admin.html">Administration Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes.html">Recipes for more advanced use-cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced Uses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="periodic_tasks.html">Periodic Tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration_settings.html">Configurations Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_installation.html">Development Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="todo.html">TODO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supported_cwl_file.html">CWL File Requirements and Specifications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supported_cwl_file.html#simple-cwl-guidance">Simple CWL Guidance</a></li>
 </ul>
-</li>
-</ul>
-</li>
-</ul>
+
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
@@ -272,26 +275,24 @@ the same queue. We&#8217;ll deal with this set in the <a class="reference intern
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/installation.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
+    </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -300,11 +301,11 @@ the same queue. We&#8217;ll deal with this set in the <a class="reference intern
       &copy;2015, Daniel Buchan.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
-      <a href="_sources/installation.txt"
+      <a href="_sources/installation.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 
