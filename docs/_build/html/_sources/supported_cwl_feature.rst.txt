@@ -3,131 +3,57 @@
 CWL File Requirements and Specifications
 ========================================
 
-
-
-The AAv2 platform allows users to upload specific CWL files. Besides all
-
-the required fields specified in the Common Workflow Language Standards,
-
-AAv2 covers a subset of them with additional constraints and
-
-requirements to ensure proper functionality within the system.
-
-
+The AAv2 platform allows users to upload specific CWL files. Besides all the required fields specified in the Common Workflow Language Standards, AAv2 covers a subset of them with additional constraints and requirements to ensure proper functionality within the system.
 
 Supported CWL Features
 ----------------------
 
-
-
 **Supported CWL Version**: `1.2 <https://www.commonwl.org/v1.2/>`__
-
-
 
 **Supported CWL Classes**:
 
+`Workflow <https://www.commonwl.org/v1.2/Workflow.html#Workflow>`__: Workflow class as defined in CWL v1.2
 
-
-`Workflow <https://www.commonwl.org/v1.2/Workflow.html#Workflow>`__:
-
-Workflow class as defined in CWL v1.2
-
-
-
-`CommandLineTool <https://www.commonwl.org/v1.2/CommandLineTool.html#CommandLineTool>`__:
-
-CommandLineTool class as defined in CWL v1.2
-
-
+`CommandLineTool <https://www.commonwl.org/v1.2/CommandLineTool.html#CommandLineTool>`__: CommandLineTool class as defined in CWL v1.2
 
 **Supported CWL Requirement List**:
 
-
-
-ShellCommandRequirement: Enables the use of shell commands within the
-
-CWL tool.
-
-
+ShellCommandRequirement: Enables the use of shell commands within the CWL tool.
 
 EnvVarRequirement: Allows the specification of environment variables.
 
+InitialWorkDirRequirement: Specifies files that must be staged into the initial working directory.
 
-
-InitialWorkDirRequirement: Specifies files that must be staged into the
-
-initial working directory.
-
-
-
-InlineJavascriptRequirement: Only for `conditional workflows <#conditional-workflow-type>`__,
-
-allows the use of inlineJavaScript expressions.
-
-
+InlineJavascriptRequirement: Only for `conditional workflows <#conditional-workflow-type>`__, allows the use of inline JavaScript expressions.
 
 **Supported Hint Field**:
 
-
-
 SoftwareRequirement: Specifies software packages that are required.
-
-
 
 Additional CWL Requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
 1. Requirements must be defined as a list/array:
 
-
-
-   -  Even if there is only one requirement, it must be defined as a
-
-      list.
-
-
+   -  Even if there is only one requirement, it must be defined as a list.
 
    -  Example:
 
-
-
       .. code:: yaml
-
-
 
          requirements:
 
            - class: ShellCommandRequirement
 
-
-
-2. Inputs of CommandLineTool must be defined as a
-
-   `dictionary/map <https://www.commonwl.org/v1.2/CommandLineTool.html#map>`__:
-
-
+2. Inputs of CommandLineTool must be defined as a `dictionary/map <https://www.commonwl.org/v1.2/CommandLineTool.html#map>`__:
 
    -  Inputs should be specified using a dictionary format.
 
-
-
-   -  For non-file input types, a **default value must be provided**
-
-      since the current submission system does not allow users to upload
-
-      an input.yaml file.
-
-
+   -  For non-file input types, a **default value must be provided** since the current submission system does not allow users to upload an input.yaml file.
 
    -  Example:
 
-
-
       .. code:: yaml
-
-
 
          inputs:
 
@@ -149,39 +75,15 @@ Additional CWL Requirements
 
              default: "Hello, World!"
 
-
-
-   -  We do not support any composite types of inputs and outputs
-
-      (`array or record <https://www.commonwl.org/v1.2/CommandLineTool.html#CommandInputParameter>`__).
-
-      Supported input types are: int, boolean, long, double, string,
-
-      File.
-
-
+   -  We do not support any composite types of inputs and outputs (`array or record <https://www.commonwl.org/v1.2/CommandLineTool.html#CommandInputParameter>`__). Supported input types are: int, boolean, long, double, string, File.
 
 3. Outputs should also be defined using a dictionary.
 
-
-
-   Currently, we only support output type ``File``, and the user must
-
-   specify the content of ``glob`` in the output. Other optional fields
-
-   like ``label``, ``secondaryFiles``, ``streamable``, ``doc``, ``id``,
-
-   ``format`` will not be used.
-
-
+   Currently, we only support output type ``File``, and the user must specify the content of ``glob`` in the output. Other optional fields like ``label``, ``secondaryFiles``, ``streamable``, ``doc``, ``id``, ``format`` will not be used.
 
    -  Example:
 
-
-
       .. code:: yaml
-
-
 
          outputs:
 
@@ -193,178 +95,82 @@ Additional CWL Requirements
 
                glob: output.txt
 
-
-
 4. baseCommand cannot be empty.
-
-
 
    -  baseCommand: The command to be executed.
 
-
-
    -  Example:
 
-
-
       .. code:: yaml
-
-
 
          baseCommand: echo
 
-
-
 5. doc and label
 
-
-
-   We only support using ``doc`` and ``label`` parameters at the root
-
-   level of ``CommandLineTool`` to describe task content.
-
-
+   We only support using ``doc`` and ``label`` parameters at the root level of ``CommandLineTool`` to describe task content.
 
    -  Example:
 
-
-
       .. code:: yaml
-
-
 
          doc: "This tool prints a message"
 
          label: "Echo Tool"
 
-
-
 Conditional Workflow
 ^^^^^^^^^^^^^^^^^^^^
 
-
-
-AAv2 supports conditional workflows using the
-
-``InlineJavascriptRequirement``. This feature allows the workflow to
-
-execute steps based on certain conditions, and the conditional execution
-
-is defined using the ``when`` field in a workflow step.
-
-
+AAv2 supports conditional workflows using the ``InlineJavascriptRequirement``. This feature allows the workflow to execute steps based on certain conditions, and the conditional execution is defined using the ``when`` field in a workflow step.
 
 **Key Points for Conditional Workflows**:
 
+-  InlineJavascriptRequirement: This requirement must be specified to enable conditional execution.
 
+-  ``when`` Field Format: The ``when`` field must follow the format ``$(inputs.<input_name> <condition>)``. Currently, the supported condition is based on the ``exit_code`` of previous steps.
 
--  InlineJavascriptRequirement: This requirement must be specified to
+-  CWL Version Compatibility: The ``when`` field is supported in CWL version 1.2 and above.
 
-   enable conditional execution.
-
--  ``when`` Field Format: The ``when`` field must follow the format
-
-   ``$(inputs.<input_name> <condition>)``. Currently, the supported
-
-   condition is based on the ``exit_code`` of previous steps.
-
--  CWL Version Compatibility: The ``when`` field is supported in CWL
-
-   version 1.2 and above.
-
--  Custom Codes: We support custom ``successCodes`` and
-
-   ``permanentFailCodes``.
-
-
+-  Custom Codes: We support custom ``successCodes`` and ``permanentFailCodes``.
 
 Simple CWL Guidance
 -------------------
 
-
-
-For users who are not familiar with CWL and want a quick overview, this
-
-section provides a simple and straightforward guide to creating CWL
-
-files compatible with the AAv2 platform. The following examples and
-
-explanations will help you understand the basic structure and required
-
-attributes of CWL files, making it easier to get started.
-
-
+For users who are not familiar with CWL and want a quick overview, this section provides a simple and straightforward guide to creating CWL files compatible with the AAv2 platform. The following examples and explanations will help you understand the basic structure and required attributes of CWL files, making it easier to get started.
 
 **General Structure**:
 
-
-
 cwlVersion: Indicates the version of the CWL used.
-
-
 
 -  Example:
 
-
-
    .. code:: yaml
-
-
 
       cwlVersion: v1.2
 
-
-
 class: Specifies whether the document is a Workflow or CommandLineTool.
-
-
 
 -  Example:
 
-
-
    .. code:: yaml
 
-
-
       class: CommandLineTool
-
-
 
 CommandLineTool Attributes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
 **baseCommand**: The command to be executed.
-
-
 
 -  Example:
 
-
-
    .. code:: yaml
-
-
 
       baseCommand: echo
 
-
-
-**inputs**: Defined as a dictionary, each input must specify the type
-
-and may include inputBinding.
-
-
+**inputs**: Defined as a dictionary, each input must specify the type and may include inputBinding.
 
 -  Example:
 
-
-
    .. code:: yaml
-
-
 
       inputs:
 
@@ -376,19 +182,11 @@ and may include inputBinding.
 
             position: 1
 
-
-
 **outputs**: Outputs should also be defined using a dictionary.
-
-
 
 -  Example:
 
-
-
    .. code:: yaml
-
-
 
       outputs:
 
@@ -400,19 +198,11 @@ and may include inputBinding.
 
             glob: output.txt
 
-
-
 **requirements**: Must be a list of supported requirements.
-
-
 
 -  Example:
 
-
-
    .. code:: yaml
-
-
 
       requirements:
 
@@ -426,19 +216,11 @@ and may include inputBinding.
 
               envValue: /home/user
 
-
-
 **hints**: Specifically for SoftwareRequirement, defined as a list.
-
-
 
 -  Example:
 
-
-
    .. code:: yaml
-
-
 
       hints:
 
@@ -450,58 +232,30 @@ and may include inputBinding.
 
               version: [2.7, 3.5+]
 
-
-
 **arguments**: Additional command-line arguments (optional).
-
-
 
 -  Example:
 
-
-
    .. code:: yaml
-
-
 
       arguments: ["--verbose"]
 
-
-
 **stdout**: Standard output specifications (optional).
-
-
 
 -  Example:
 
-
-
    .. code:: yaml
 
-
-
       stdout: output.txt
-
-
 
 Workflow Attributes
 ~~~~~~~~~~~~~~~~~~~
 
-
-
-**steps**: Define the steps in the workflow, each step may run a
-
-CommandLineTool or another Workflow.
-
-
+**steps**: Define the steps in the workflow, each step may run a CommandLineTool or another Workflow.
 
 -  Example:
 
-
-
    .. code:: yaml
-
-
 
       steps:
 
@@ -515,37 +269,21 @@ CommandLineTool or another Workflow.
 
           out: [output_file]
 
-
-
 **requirements**: Similar to CommandLineTool, must be defined as a list.
-
-
 
 -  Example:
 
-
-
    .. code:: yaml
-
-
 
       requirements:
 
         - class: InlineJavascriptRequirement
 
-
-
 **inputs**: Workflow inputs defined as a dictionary.
-
-
 
 -  Example:
 
-
-
    .. code:: yaml
-
-
 
       inputs:
 
@@ -553,19 +291,11 @@ CommandLineTool or another Workflow.
 
           type: string
 
-
-
 **outputs**: Workflow outputs defined as a dictionary.
-
-
 
 -  Example:
 
-
-
    .. code:: yaml
-
-
 
       outputs:
 

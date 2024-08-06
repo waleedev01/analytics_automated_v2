@@ -28,4 +28,4 @@ jobs in to web services
     dev_installation
     roadmap
     todo
-    supported_cwl_file
+    supported_cwl_feature
