@@ -228,6 +228,24 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
                 if file_type == 'int' and input_data['name'] == 'exit_code':
                     in_globs.append("exit_code.txt")
                     continue
+                if input_data['name'] == 'ID':
+                    # TODO: uuid
+                    executable_parts.insert(position, "$ID")
+                    continue
+                if file_type == 'Directory':
+                    dir_default_setting = input_data['default']
+                    executable_parts.insert(position, dir_default_setting['location'])
+                    if dir_default_setting:
+                        for input_file in dir_default_setting['listing']:
+                            if input_file['class'] == 'File':
+                                if 'format' in input_file:
+                                    file_format = map_format(input_file['format'], mapping=format_mapping)
+                                    in_globs.append(file_format)
+                                else:
+                                    in_globs.append('.input')
+                    else:
+                        raise ValueError("The default Value for Directory cannot be empty!")
+                    continue
         
                 executable_parts.insert(position, f"$P{position_parameter}")
                 position_parameter += 1
@@ -352,7 +370,7 @@ def save_task_to_db(task_data, messages, cwl_content=None):
             try:
                 # Skip inputs with File type
                 file_type = input_data['type']
-                if file_type == 'File':
+                if file_type == 'File' or file_type == 'Directory':
                     continue
 
                 # Skip exit_code as input parameter

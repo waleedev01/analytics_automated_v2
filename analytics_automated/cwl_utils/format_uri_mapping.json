@@ -46,5 +46,7 @@
   "https://github.com/psipred/metsite/DATA": ".DATA",
   "https://github.com/psipred/metsite/pro": ".pro",
   "https://github.com/psipred/DMPmetal/dmpmetal": ".dmpmetal",
-  ".txt": ".txt"
+  ".txt": ".txt",
+  ".hb2": ".hb2",
+  ".sing": ".sing"
 }
