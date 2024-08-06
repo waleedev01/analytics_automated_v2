@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Workflow Visualization</title>
+</head>
+<body>
+    <h1>Static Workflow Visualization</h1>
+    {% if img_data %}
+        <img src="data:image/png;base64,{{ img_data }}" alt="Workflow Visualization">
+    {% elif error %}
+        <p style="color:red;">{{ error }}</p>
+    {% else %}
+        <p>No data to display.</p>
+    {% endif %}
+</body>
+</html>

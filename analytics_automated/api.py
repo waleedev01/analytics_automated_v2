@@ -664,7 +664,7 @@ class CWLUploadView(APIView):
             return Response({"error": str(e), "messages": messages}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class TaskStateView(APIView):
+class TaskStatesView(APIView):
     def get(self, request, submission_id):
         try:
             task_states = get_current_task_states(submission_id)

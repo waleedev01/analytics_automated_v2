@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -30,4 +30,70 @@
         updateVisualization();  // Initial call to display the data
     </script>
 </body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Visualization Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Workflow Visualization Dashboard</h1>
+    <div id="workflow-plot" style="width:100%;height:600px;"></div>
+
+    <script>
+        async function fetchTaskStates(submissionId) {
+            const response = await fetch(`/api/task-states/${submissionId}/`);
+            const data = await response.json();
+            return data;
+        }
+
+        async function updateVisualization() {
+            const taskStates = await fetchTaskStates(1);  // Replace with actual submission ID
+
+            const nodes = [];
+            const links = [];
+            const stateColorMap = {
+                'completed': 'green',
+                'running': 'yellow',
+                'pending': 'red',
+                'failed': 'grey'
+            };
+
+            Object.keys(taskStates).forEach(taskId => {
+                const task = taskStates[taskId];
+                nodes.push({
+                    id: taskId,
+                    label: task.task_name,
+                    group: task.state,
+                    color: stateColorMap[task.state] || 'lightgreen'
+                });
+
+                task.dependencies.forEach(dep => {
+                    links.push({source: dep, target: taskId});
+                });
+            });
+
+            const data = {
+                nodes: nodes.map(node => ({...node, color: node.color})),
+                links: links
+            };
+
+            const layout = {
+                title: 'Dynamic Workflow Execution Visualization',
+                showlegend: false,
+                height: 600,
+                width: 1000
+            };
+
+            Plotly.react('workflow-plot', [data], layout);
+        }
+
+        setInterval(updateVisualization, 5000);  // Update every 5 seconds
+        updateVisualization();  // Initial call to display the data
+    </script>
+</body>
 </html>
+

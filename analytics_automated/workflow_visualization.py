@@ -1,6 +1,8 @@
 import networkx as nx
+import io
+import base64
 import matplotlib.pyplot as plt
-from models import Task, Submission  # Adjust if Task and Submission are in different files
+from .models import Task, Submission  # Adjust if Task and Submission are in different files
 
 def extract_workflow_data(cwl_data):
     tasks = {}
@@ -41,6 +43,32 @@ def plot_static_workflow(tasks):
     plt.title("Static Workflow Visualization")
     plt.show()
 
+
+def plot_static_workflow2(tasks):
+    G_static = nx.DiGraph()
+    for task, details in tasks.items():
+        G_static.add_node(task, type='task')
+        for inp in details['inputs']:
+            G_static.add_node(inp, type='file')
+            G_static.add_edge(inp, task)
+        for out in details['outputs']:
+            G_static.add_node(out, type='file')
+            G_static.add_edge(task, out)
+    
+    pos = nx.spring_layout(G_static)
+    plt.figure(figsize=(10, 7))
+    nx.draw(G_static, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=3000, font_size=10, font_weight='bold')
+    
+    # Save plot to a bytes buffer
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    
+    # Encode plot to base64 string
+    img_data = base64.b64encode(buf.read()).decode('utf-8')
+    buf.close()
+    
+    return img_data
 
 def plot_dynamic_workflow(tasks):
     G_dynamic = nx.DiGraph()
@@ -92,6 +120,7 @@ def get_current_task_states(submission_id):
                 'inputs': task.inputs,  # Update with actual field/method for inputs
                 'outputs': task.outputs,  # Update with actual field/method for outputs
                 'state': task.status,  # Assuming `status` is the field representing task state
+                'dependencies': [dep.id for dep in task.dependencies.all()]
             }
     except Submission.DoesNotExist:
         print(f"No submission found with ID {submission_id}")

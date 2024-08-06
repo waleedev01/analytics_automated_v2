@@ -1,9 +1,11 @@
 from django.shortcuts import render
 from django.views import View
+from django.http import JsonResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from .cwl_utils.cwl_parser import read_cwl_file
 from .cwl_utils.cwl_schema_validator import CWLSchemaValidator
+from .workflow_visualization import *
 import logging
 import yaml
 import os
@@ -74,6 +76,9 @@ class CWLUploadPageView(View):
             for file_name, full_path in file_paths.items():
                 os.remove(full_path)
 
+            tasks = extract_workflow_data(cwl_data)
+            request.session['tasks'] = tasks
+
             logging.info(f"Successfully processed CWL files: {', '.join(file_paths.keys())}")
             return render(request, 'cwl/upload_cwl.html', {"message": "Results Below:", "file_names": list(file_paths.keys()), "messages": messages})
         except Exception as e:
@@ -81,13 +86,37 @@ class CWLUploadPageView(View):
             return render(request, 'cwl/upload_cwl.html', {"message": str(e), "messages": messages})
 
 
-class VisualizationDashboardView(View):
-    """
-    View to handle the visualization dashboard.
-    """
+# class VisualizationDashboardView(View):
+#     """
+#     View to handle the visualization dashboard.
+#     """
 
+#     def get(self, request):
+#         """
+#         Handle GET requests to render the visualization dashboard.
+#         """
+#         return render(request, 'dashboard.html')
+    
+
+class StaticWorkflowGraphView(View):
     def get(self, request):
-        """
-        Handle GET requests to render the visualization dashboard.
-        """
-        return render(request, 'visualization/dashboard.html')
+        tasks = request.session.get('tasks')
+        if not tasks:
+            return render(request, 'workflow_visualization.html', {'error': 'No tasks available for visualization.'})
+        
+        img_data = plot_static_workflow2(tasks)
+        return render(request, 'workflow_visualization.html', {'img_data': img_data})
+    
+
+class DashboardView(View):
+    def get(self, request):
+        return render(request, 'dashboard.html')
+
+class TaskStatesView(View):
+    def get(self, request, submission_id):
+        task_states = get_current_task_states(submission_id)
+        return render(request, 'dashboard.html', {'task_states': task_states, 'submission_id': submission_id})
+
+
+
+
