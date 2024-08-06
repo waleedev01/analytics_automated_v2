@@ -34,11 +34,6 @@ def safe_json_loads(data):
 def get_task_details(task):
     logger.debug(f"Starting to process task: {task.name}")
     
-    if task.cwl_content:
-        logger.debug(f"Using stored CWL content for task: {task.name}")
-        return task.cwl_content
-
-    # If cwl_content doesn't exist, continue w reconstruction
     task_detail = {
         "cwlVersion": "v1.0",
         "class": "CommandLineTool",

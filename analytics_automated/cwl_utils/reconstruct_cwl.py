@@ -25,14 +25,25 @@ def save_cwl_file(cwl_content, file_path):
     yaml.indent(mapping=2, sequence=4, offset=2)
     yaml.width = 4096
 
+    yaml.representer.add_representer(str, represent_str)
+    yaml.representer.add_representer(list, represent_list)
+
     try:
         with open(file_path, 'w') as file:
-            if isinstance(cwl_content, str):
-                # remove the leading pipe character
-                cleaned_content = cwl_content.lstrip('|\n').lstrip()
-                file.write(cleaned_content)
-            else:
-                yaml.dump(cwl_content, file)
+            yaml.dump(cwl_content, file)
+
+        with open(file_path, 'r') as file:
+            content = file.readlines()
+        
+        new_content = []
+        for line in content:
+            new_content.append(line)
+            if line.strip() == "class: Workflow":
+                new_content.append("\n")
+        
+        with open(file_path, 'w') as file:
+            file.writelines(new_content)
+
         logger.debug(f"Successfully saved CWL file: {file_path}")
     except Exception as e:
         logger.error(f"Failed to save CWL file {file_path}: {str(e)}")
@@ -48,6 +59,9 @@ def reconstruct_cwl_files(job_name, output_directory):
     os.makedirs(output_directory, exist_ok=True)
     logger.debug(f"Created output directory: {output_directory}")
 
+<<<<<<< HEAD
+    workflow_detail = get_workflow_details(job)
+=======
     # check if workflow CWL content exists in DB
     if job.cwl_content:
         workflow_detail = job.cwl_content
@@ -55,6 +69,7 @@ def reconstruct_cwl_files(job_name, output_directory):
     else:
         workflow_detail = get_workflow_details(job)
     
+>>>>>>> main
     workflow_file_path = os.path.join(output_directory, f"{job_name}.cwl")
     save_cwl_file(workflow_detail, workflow_file_path)
 
@@ -62,12 +77,16 @@ def reconstruct_cwl_files(job_name, output_directory):
     for step in steps:
         logger.debug(f"Processing step {step.ordering} for task: {step.task.name}")
         task = step.task
+<<<<<<< HEAD
+        task_detail = get_task_details(task)
+=======
         # check if task CWL content exists 
         if task.cwl_content:
             task_detail = task.cwl_content
             logger.debug(f"Using stored CWL content for task: {task.name}")
         else:
             task_detail = get_task_details(task)
+>>>>>>> main
         task_file_path = os.path.join(output_directory, f"{task.name}.cwl")
         save_cwl_file(task_detail, task_file_path)
 

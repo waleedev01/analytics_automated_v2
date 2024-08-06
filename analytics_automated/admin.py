@@ -1,13 +1,16 @@
 import re
 from django.contrib import admin
-from django.urls import reverse
+from django.core.files.storage import default_storage
+from django.shortcuts import render
+from django.urls import path, reverse
 from django.utils.safestring import mark_safe
 
-from .models import Backend, Job, Task, Step, Parameter, Result, Validator
-from .models import Submission, BackendUser, Message, Environment, QueueType
-from .models import Batch, Configuration
-from .forms import *
-
+from .admin_models import DownloadCWLModel, UploadCWLModel
+from .forms import TaskForm, ValidatorForm
+from .models import (Backend, BackendUser, Batch, Configuration, Environment,
+                     Job, Message, Parameter, QueueType, Result, Step,
+                     Submission, Task, Validator)
+from .views import DownloadCWLView, UploadCWLView
 
 class ConfigurationInline(admin.TabularInline):
     model = Configuration
@@ -206,6 +209,67 @@ class ResultAdmin(admin.ModelAdmin):
 class BatchAdmin(admin.ModelAdmin):
     list_display = ('pk', 'UUID', 'status')
 
+class UploadCWLAdmin(admin.ModelAdmin):
+    model = UploadCWLModel
+    change_list_template = 'admin/upload_cwl.html'
+
+    def get_queryset(self, request):
+        return self.model.objects.none()
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('', self.admin_site.admin_view(self.changelist_view)),
+            path('upload/', self.admin_site.admin_view(UploadCWLView), name='analytics_automated_uploadcwl_upload'),
+        ]
+        return my_urls + urls
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['messages'] = []  # Ensure this is handled correctly
+        return super().changelist_view(request, extra_context=extra_context)
+
+class DownloadCWLAdmin(admin.ModelAdmin):
+    model = DownloadCWLModel
+    change_list_template = 'admin/download_cwl.html'
+
+    def get_queryset(self, request):
+        return self.model.objects.none()
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('', self.admin_site.admin_view(self.changelist_view)),
+            path('download/', self.admin_site.admin_view(DownloadCWLView), name='analytics_automated_downloadcwl_download'),
+        ]
+        return my_urls + urls
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['jobs'] = Job.objects.all()
+        extra_context['messages'] = []
+        return super().changelist_view(request, extra_context=extra_context)
+
+admin.site.register(UploadCWLModel, UploadCWLAdmin)
+admin.site.register(DownloadCWLModel, DownloadCWLAdmin)
 
 # Register your models here.
 admin.site.register(Batch, BatchAdmin)

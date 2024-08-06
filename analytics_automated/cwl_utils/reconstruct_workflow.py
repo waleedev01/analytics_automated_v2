@@ -42,12 +42,6 @@ def set_step_order(step_source):
 
 def get_workflow_details(job):
     logger.debug(f"Starting to process workflow for job: {job.name}")
-
-    if job.cwl_content:
-        logger.debug(f"Using stored CWL content for job: {job.name}")
-        return job.cwl_content
-
-    # If cwl_content doesn't exist, proceed with reconstruction
     steps = Step.objects.filter(job=job).order_by('ordering')
     workflow_steps = {}
 
