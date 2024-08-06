@@ -101,16 +101,15 @@ isn't the case then the system will stop future tasks and raise an error.
 Alternatively you can, stop running task and not raise an error, or silently
 continue on to the next task in the job.
 
-**Custom exit status**: Some tasks will output non zero exits statuses that
-are not failure states. You can provided a comma separated list of these
-"acceptable" exit status.
+**Custom success exit**: Exit codes that indicate the process completed successfully.
 
-**Custom exit behaviour**: If you provide a custom exit status, you must provide
-a behaviour. Either when the task detects these values is halts the job throwing an
-error, it halts job and doesn't throw and error or it silently continues to the
-next task. Note the default behaviour of exit status 0 is to move on to the next
-task, if you add 0 to the "Custom exit status" field you can change this default
-behaviour
+**Custom fail exit**: Exit codes that indicate the process failed due to a possibly
+temporary condition, where executing the process with the same runtime environment and
+inputs may produce different results.
+
+**Custom terminate exit**: Exit codes that indicate the process failed due to a permanent logic
+error, where executing the process with the same runtime environment and same inputs is
+expected to always fail.
 
 Parameters
 ^^^^^^^^^^
@@ -154,9 +153,24 @@ Users can set shell environment variables using this form.
 
 **Value**: A string for the contents of that environment variable
 
+Configurations
+^^^^^^^^^^^^^^
+
+Users can use the configration table to notify specific execution software
+information.
+
+**Type**: This field specifies the type of configuration. The available options
+are Software, Dataset and  Miscellaneous (Misc.)
+
+**Name**: The name of the configuration.
+
+**Parameters**: Parameter when the configration object is used.
+
+**Version**: The version of the configuration object.
+
 Executable Syntax
 ^^^^^^^^^^^^^^^^^
-It is worth noting that tasks use the Python package commandRunner to execute
+It is worth mention that tasks use the Python package commandRunner to execute
 (https://pypi.python.org/pypi/commandRunner/). So it is worth reading those
 docs for the API.
 
@@ -218,6 +232,17 @@ http://127.0.0.1:8000/admin/ and click on Jobs then select "Add Job"
 to the API
 
 **Runnable**: Whether the user can POST data and run this job
+
+If you define the Job by uploading cwl files at
+http://127.0.0.1:8000/analytics_automated/admin_upload_cwl/, these three
+items are autofilled. Please refer to
+:ref:`CWL File Requirements and Specifications <supported_cwl_feature>` for more details.
+
+**Requirements**: The requirement JSON payload of `CWL workflow <https://www.commonwl.org/user_guide/topics/workflows.html>`__.
+
+**Cwl version**: The version number of the uploaded CWL file.
+
+**Cwl content**: The content of the uploaded CWL file.
 
 Validators
 ^^^^^^^^^^

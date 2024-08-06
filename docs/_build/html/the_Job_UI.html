@@ -110,15 +110,13 @@ one output file with each of the file endings provided in “Out glob”. If thi
 isn’t the case then the system will stop future tasks and raise an error.
 Alternatively you can, stop running task and not raise an error, or silently
 continue on to the next task in the job.</p>
-<p><strong>Custom exit status</strong>: Some tasks will output non zero exits statuses that
-are not failure states. You can provided a comma separated list of these
-“acceptable” exit status.</p>
-<p><strong>Custom exit behaviour</strong>: If you provide a custom exit status, you must provide
-a behaviour. Either when the task detects these values is halts the job throwing an
-error, it halts job and doesn’t throw and error or it silently continues to the
-next task. Note the default behaviour of exit status 0 is to move on to the next
-task, if you add 0 to the “Custom exit status” field you can change this default
-behaviour</p>
+<p><strong>Custom success exit</strong>: Exit codes that indicate the process completed successfully.</p>
+<p><strong>Custom fail exit</strong>: Exit codes that indicate the process failed due to a possibly
+temporary condition, where executing the process with the same runtime environment and
+inputs may produce different results.</p>
+<p><strong>Custom terminate exit</strong>: Exit codes that indicate the process failed due to a permanent logic
+error, where executing the process with the same runtime environment and same inputs is
+expected to always fail.</p>
 </div>
 <div class="section" id="parameters">
 <h3>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h3>
@@ -151,9 +149,19 @@ value is 12, if true this will be rendered as ‘-t 12’, if false as ‘-t12�
 <p><strong>Env</strong>: A string for the name of the environment variable</p>
 <p><strong>Value</strong>: A string for the contents of that environment variable</p>
 </div>
+<div class="section" id="configurations">
+<h3>Configurations<a class="headerlink" href="#configurations" title="Permalink to this headline">¶</a></h3>
+<p>Users can use the configration table to notify specific execution software
+information.</p>
+<p><strong>Type</strong>: This field specifies the type of configuration. The available options
+are Software, Dataset and  Miscellaneous (Misc.)</p>
+<p><strong>Name</strong>: The name of the configuration.</p>
+<p><strong>Parameters</strong>: Parameter when the configration object is used.</p>
+<p><strong>Version</strong>: The version of the configuration object.</p>
+</div>
 <div class="section" id="executable-syntax">
 <h3>Executable Syntax<a class="headerlink" href="#executable-syntax" title="Permalink to this headline">¶</a></h3>
-<p>It is worth noting that tasks use the Python package commandRunner to execute
+<p>It is worth mention that tasks use the Python package commandRunner to execute
 (<a class="reference external" href="https://pypi.python.org/pypi/commandRunner/">https://pypi.python.org/pypi/commandRunner/</a>). So it is worth reading those
 docs for the API.</p>
 <p>The executable line can be any arbitrarily long command line statement even
@@ -203,6 +211,13 @@ made available as a file called [ID].input</p>
 <p><strong>Name</strong>: A useful name for the job. Users will use this when submitting data
 to the API</p>
 <p><strong>Runnable</strong>: Whether the user can POST data and run this job</p>
+<p>If you define the Job by uploading cwl files at
+<a class="reference external" href="http://127.0.0.1:8000/analytics_automated/admin_upload_cwl/">http://127.0.0.1:8000/analytics_automated/admin_upload_cwl/</a>, these three
+items are autofilled. Please refer to
+<a class="reference internal" href="supported_cwl_feature.html#supported-cwl-feature"><span class="std std-ref">CWL File Requirements and Specifications</span></a> for more details.</p>
+<p><strong>Requirements</strong>: The requirement JSON payload of <a class="reference external" href="https://www.commonwl.org/user_guide/topics/workflows.html">CWL workflow</a>.</p>
+<p><strong>Cwl version</strong>: The version number of the uploaded CWL file.</p>
+<p><strong>Cwl content</strong>: The content of the uploaded CWL file.</p>
 <div class="section" id="validators">
 <h3>Validators<a class="headerlink" href="#validators" title="Permalink to this headline">¶</a></h3>
 <p>You can set one or more data validators for the jobs. Validators are blocks
