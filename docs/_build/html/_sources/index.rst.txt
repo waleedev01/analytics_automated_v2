@@ -1,22 +1,22 @@
-Analytics Automated
-===================
+Analytics Automated Version 2
+=============================
 
-Analytics Automated is a lightweight framework for configuring pipelines
-of data processing tasks which users can call as webservices. It is targeted
-principally at running statistical and mathematical models for the purposes of
-Data Science. You can however use it to convert any code in to a web service.
+Analytics Automated Version 2 (AAv2) is an enhanced framework built
+on the original `Analytics Automated system <https://analytics-automated.readthedocs.io/en/latest/>`__.
+AAv2 now supports the `Common Workflow Language (CWL) <https://www.commonwl.org/v1.2/>`__,
+this upgrade introduces two key features:
 
-Another way to look at it is that it turns your data analysis pipelines in to
-RESTful web services for the purposes making your models part of your SOA.
+1. CWL File Upload: Users can upload CWL files to define and execute data analysis tasks.
 
-And yet another way to look at this is a method for converting Python-Celery
-jobs in to web services
+2. CWL File Download: Users can download data processing tasks in the system as CWL files.
 
 .. toctree::
     :maxdepth: 2
 
     installation
     how_it_works
+    supported_cwl_feature
+    CWL_upload_and_download
     the_Job_UI
     configuring_a_basic_job
     using_a_basic_job
@@ -28,4 +28,3 @@ jobs in to web services
     dev_installation
     roadmap
     todo
-    supported_cwl_feature

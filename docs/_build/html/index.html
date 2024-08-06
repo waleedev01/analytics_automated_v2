@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Analytics Automated &#8212; analytics_automated 1.0 documentation</title>
+    <title>Analytics Automated Version 2 &#8212; analytics_automated 1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -31,16 +31,16 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="analytics-automated">
-<h1>Analytics Automated<a class="headerlink" href="#analytics-automated" title="Permalink to this headline">¶</a></h1>
-<p>Analytics Automated is a lightweight framework for configuring pipelines
-of data processing tasks which users can call as webservices. It is targeted
-principally at running statistical and mathematical models for the purposes of
-Data Science. You can however use it to convert any code in to a web service.</p>
-<p>Another way to look at it is that it turns your data analysis pipelines in to
-RESTful web services for the purposes making your models part of your SOA.</p>
-<p>And yet another way to look at this is a method for converting Python-Celery
-jobs in to web services</p>
+  <div class="section" id="analytics-automated-version-2">
+<h1>Analytics Automated Version 2<a class="headerlink" href="#analytics-automated-version-2" title="Permalink to this headline">¶</a></h1>
+<p>Analytics Automated Version 2 (AAv2) is an enhanced framework built
+on the original <a class="reference external" href="https://analytics-automated.readthedocs.io/en/latest/">Analytics Automated system</a>.
+AAv2 now supports the <a class="reference external" href="https://www.commonwl.org/v1.2/">Common Workflow Language (CWL)</a>,
+this upgrade introduces two key features:</p>
+<ol class="arabic simple">
+<li><p>CWL File Upload: Users can upload CWL files to define and execute data analysis tasks.</p></li>
+<li><p>CWL File Download: Users can download data processing tasks in the system as CWL files.</p></li>
+</ol>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Basic Installation</a><ul>
@@ -52,6 +52,16 @@ jobs in to web services</p>
 <li class="toctree-l2"><a class="reference internal" href="how_it_works.html#workflows">Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="how_it_works.html#running-jobs">Running Jobs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="how_it_works.html#data-submission-overview">Data Submission Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="supported_cwl_feature.html">CWL File Requirements and Specifications</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="supported_cwl_feature.html#supported-cwl-features">Supported CWL Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="supported_cwl_feature.html#simple-cwl-guidance">Simple CWL Guidance</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="CWL_upload_and_download.html">CWL Upload and Download</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="CWL_upload_and_download.html#cwl-upload-page">CWL Upload Page</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CWL_upload_and_download.html#cwl-download-page">CWL Download Page</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="the_Job_UI.html">Building Jobs Overview</a><ul>
@@ -107,11 +117,6 @@ jobs in to web services</p>
 <li class="toctree-l2"><a class="reference internal" href="todo.html#production-things">Production things</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="supported_cwl_feature.html">CWL File Requirements and Specifications</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="supported_cwl_feature.html#supported-cwl-features">Supported CWL Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="supported_cwl_feature.html#simple-cwl-guidance">Simple CWL Guidance</a></li>
-</ul>
-</li>
 </ul>
 </div>
 </div>
@@ -136,6 +141,8 @@ jobs in to web services</p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Basic Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="how_it_works.html">How The System Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supported_cwl_feature.html">CWL File Requirements and Specifications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CWL_upload_and_download.html">CWL Upload and Download</a></li>
 <li class="toctree-l1"><a class="reference internal" href="the_Job_UI.html">Building Jobs Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuring_a_basic_job.html">Configuring A Basic Job</a></li>
 <li class="toctree-l1"><a class="reference internal" href="using_a_basic_job.html">Using A Basic Job</a></li>
@@ -147,7 +154,6 @@ jobs in to web services</p>
 <li class="toctree-l1"><a class="reference internal" href="dev_installation.html">Development Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="todo.html">TODO</a></li>
-<li class="toctree-l1"><a class="reference internal" href="supported_cwl_feature.html">CWL File Requirements and Specifications</a></li>
 </ul>
 
 <div class="relations">
