@@ -39,7 +39,7 @@ class TestCWLCLTParser(unittest.TestCase):
         self.assertIsNotNone(clt)
         self.assertEqual(clt.name, "some_tool")
         self.assertEqual(clt.in_glob, ".input")
-        self.assertEqual(clt.out_glob, "*.txt")
+        self.assertEqual(clt.out_glob, ".txt")
         self.assertEqual(clt.executable, "echo $I1")
     
     def test_parse_cwl_clt_with_parameters(self):
@@ -50,7 +50,7 @@ class TestCWLCLTParser(unittest.TestCase):
         self.assertIsNotNone(clt)
         self.assertEqual(clt.name, "valid_clt_with_parameters")
         self.assertEqual(clt.in_glob, ".ss")
-        self.assertEqual(clt.out_glob, "*.txt")  # Update the test to expect "*.txt"
+        self.assertEqual(clt.out_glob, ".txt")
         self.assertEqual(clt.executable, "echo $P1 $P2 $I1")
         params = Parameter.objects.filter(task=clt)
         self.assertEqual(len(params), 2)
