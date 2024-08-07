@@ -347,7 +347,7 @@ def save_task_to_db(task_data, messages, cwl_content=None):
                 stderr=task_data['stderr'],
                 custom_success_exit=task_data['success_codes'],
                 custom_terminate_exit=task_data['permanent_fail_codes'],
-                shell_quote=task_data['shell_quote']
+                shell_quote=task_data['shell_quote'],
                 cwl_content=cwl_content  # store the entire CLT CWL
             )
             message = f"Task saved successfully: {task_data['name']}"
