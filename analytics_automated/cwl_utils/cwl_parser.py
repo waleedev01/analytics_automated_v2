@@ -21,9 +21,12 @@ def read_cwl_file(cwl_path, filename, messages):
     """
     logging.info(f"Reading CWL file: {cwl_path}")
     try:
-        # Load the CWL file
+        # Load the CWL file as a string
         with open(cwl_path, 'r') as cwl_file:
-            cwl_data = yaml.safe_load(cwl_file)
+            cwl_content = cwl_file.read()
+
+        # Load the CWL content as YAML for validation and processing
+        cwl_data = yaml.safe_load(cwl_content)
 
         # Validate the CWL schema
         validator = CWLSchemaValidator()
@@ -41,12 +44,12 @@ def read_cwl_file(cwl_path, filename, messages):
         filename_without_extension = os.path.splitext(filename)[0]
 
         if cwl_class == "Workflow":
-            logging.info(f"Parsing workflow: {filename_without_extension}")
-            return parse_cwl_workflow(cwl_data, filename_without_extension, messages)
+            logging.info(f"Parsing workflow: {filename}")
+            return parse_cwl_workflow(cwl_data, filename, messages, cwl_content)
         elif cwl_class == "CommandLineTool":
-            logging.info(f"Parsing CommandLineTool: {filename_without_extension}")
-            task_data = parse_cwl_clt(cwl_data, filename_without_extension)
-            return save_task_to_db(task_data, messages)
+            logging.info(f"Parsing CommandLineTool: {filename}")
+            task_data = parse_cwl_clt(cwl_data, filename)
+            return save_task_to_db(task_data, messages, cwl_content=cwl_content)
     except Exception as e:
         # Log any exception that occurs during the processing
         error_message = f"Error reading CWL file {cwl_path}: {e}"
