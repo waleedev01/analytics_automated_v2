@@ -52,7 +52,7 @@
         }
 
         async function updateVisualization() {
-            const taskStates = await fetchTaskStates(your_submission_name);  // Replace with actual submission name
+            const taskStates = await fetchTaskStates('{{ submission_name }}');  // Replace with actual submission name
 
             const nodes = [];
             const links = [];
@@ -63,24 +63,42 @@
                 'failed': 'grey'
             };
 
-            Object.keys(taskStates).forEach(taskPk => {
-                const task = taskStates[taskPk];
+            Object.keys(taskStates).forEach(taskName => {
+                const task = taskStates[taskName];
                 nodes.push({
-                    id: taskPk,
+                    id: taskName,
                     label: task.task_name,
                     group: task.state,
                     color: stateColorMap[task.state] || 'lightgreen'
                 });
 
                 task.dependencies.forEach(dep => {
-                    links.push({source: dep, target: taskPk});
+                    links.push({source: dep, target: taskName});
                 });
             });
 
-            const data = {
-                nodes: nodes.map(node => ({...node, color: node.color})),
-                links: links
-            };
+            const nodeData = nodes.map(node => ({
+                x: [node.id],
+                y: [node.label],
+                text: node.label,
+                mode: 'markers+text',
+                marker: {
+                    color: node.color,
+                    size: 10,
+                    line: {width: 2}
+                }
+            }));
+
+            const edgeData = links.map(link => ({
+                type: 'scatter',
+                x: [link.source, link.target],
+                y: [link.source, link.target],
+                line: {width: 1, color: 'black'},
+                hoverinfo: 'none',
+                mode: 'lines'
+            }));
+
+            const data = [...nodeData, ...edgeData];
 
             const layout = {
                 title: 'Dynamic Workflow Execution Visualization',
@@ -88,6 +106,7 @@
                 height: 600,
                 width: 1000
             };
+
 
             Plotly.react('workflow-plot', [data], layout);
         }

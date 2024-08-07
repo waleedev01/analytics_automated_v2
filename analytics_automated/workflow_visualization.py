@@ -100,15 +100,7 @@ def plot_dynamic_workflow(tasks):
 
 
 def get_current_task_states(submission_id):
-    """
-    Retrieves the current state of tasks in a workflow submission.
 
-    Parameters:
-    - submission_id (int): The ID of the submission to retrieve task states for.
-
-    Returns:
-    - dict: A dictionary where keys are task IDs and values are details including the task state.
-    """
     task_states = {}
 
     try:
@@ -158,16 +150,16 @@ def get_current_task_states2(submission_name):
         for step in steps:
             task = step.task
             result = results.filter(task=task).first()  # Assuming one result per task
-            task_states[task.pk] = {
+            task_states[task.name] = {
                 'task_name': task.name,
                 'description': task.description,
                 'inputs': task.in_glob,
                 'outputs': task.out_glob,
                 'state': result.message if result else 'pending',  # Use result message as state
-                'dependencies': [s.task.pk for s in Step.objects.filter(job=submission.job, ordering__lt=step.ordering)]
+                'dependencies': [s.task.name for s in Step.objects.filter(job=submission.job, ordering__lt=step.ordering)]
             }
     except Submission.DoesNotExist:
-        logger.error(f"No submission found with ID {submission_name}")
+        logger.error(f"No submission found with name {submission_name}")
     except Exception as e:
         logger.error(f"An error occurred while fetching task states: {e}")
 
