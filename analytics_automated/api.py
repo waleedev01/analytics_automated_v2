@@ -665,9 +665,9 @@ class CWLUploadView(APIView):
 
 
 class TaskStatesView(APIView):
-    def get(self, request, submission_id):
+    def get(self, request, submission_name):
         try:
-            task_states = get_current_task_states(submission_id)
+            task_states = get_current_task_states2(submission_name)
             return Response(task_states, status=status.HTTP_200_OK)
         except Submission.DoesNotExist:
             return Response({"error": "Submission not found"}, status=status.HTTP_404_NOT_FOUND)

@@ -62,7 +62,7 @@ urlpatterns = [
          DashboardView.as_view(), name='dashboard'),
      url(r'^analytics_automated/static_visualize/$',
          StaticWorkflowGraphView.as_view(), name='static_visualize'),
-     url(r'^analytics_automated/api/task-states/<int:submission_id>/$',
+     url(r'^analytics_automated/api/task-states/<str:submission_name>/$',
          TaskStatesView.as_view(), name='task_states'),  
      url(r'^login/$', auth_views.LoginView),
      url(r'^logout/$', auth_views.LogoutView),

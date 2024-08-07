@@ -2,7 +2,10 @@ import networkx as nx
 import io
 import base64
 import matplotlib.pyplot as plt
-from .models import Task, Submission  # Adjust if Task and Submission are in different files
+import logging
+from .models import Submission, Task, Result, Step # Adjust if Task and Submission are in different files
+
+logger = logging.getLogger(__name__)
 
 def extract_workflow_data(cwl_data):
     tasks = {}
@@ -143,3 +146,29 @@ def get_current_task_states(submission_id):
 # submission_id = 1  Replace with the actual submission ID you want to visualize
 # task_states = get_current_task_states(submission_id)   Function to fetch current states of tasks
 # plot_dynamic_workflow(task_states)
+
+def get_current_task_states2(submission_name):
+    task_states = {}
+
+    try:
+        submission = Submission.objects.get(submission_name=submission_name)
+        steps = Step.objects.filter(job=submission.job).order_by('ordering')
+        results = Result.objects.filter(submission=submission)
+
+        for step in steps:
+            task = step.task
+            result = results.filter(task=task).first()  # Assuming one result per task
+            task_states[task.pk] = {
+                'task_name': task.name,
+                'description': task.description,
+                'inputs': task.in_glob,
+                'outputs': task.out_glob,
+                'state': result.message if result else 'pending',  # Use result message as state
+                'dependencies': [s.task.pk for s in Step.objects.filter(job=submission.job, ordering__lt=step.ordering)]
+            }
+    except Submission.DoesNotExist:
+        logger.error(f"No submission found with ID {submission_name}")
+    except Exception as e:
+        logger.error(f"An error occurred while fetching task states: {e}")
+
+    return task_states

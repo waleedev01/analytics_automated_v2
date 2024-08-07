@@ -113,9 +113,11 @@ class DashboardView(View):
         return render(request, 'dashboard.html')
 
 class TaskStatesView(View):
-    def get(self, request, submission_id):
-        task_states = get_current_task_states(submission_id)
-        return render(request, 'dashboard.html', {'task_states': task_states, 'submission_id': submission_id})
+    def get(self, request, submission_name):
+        task_states = get_current_task_states2(submission_name)
+        return render(request, 'dashboard.html', {'task_states': task_states, 'submission_name': submission_name})
+    
+
 
 
 

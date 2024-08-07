@@ -31,6 +31,7 @@
     </script>
 </body>
 </html> -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,14 +45,14 @@
     <div id="workflow-plot" style="width:100%;height:600px;"></div>
 
     <script>
-        async function fetchTaskStates(submissionId) {
-            const response = await fetch(`/api/task-states/${submissionId}/`);
+        async function fetchTaskStates(submissionName) {
+            const response = await fetch(`/api/task-states/${submissionName}/`);
             const data = await response.json();
             return data;
         }
 
         async function updateVisualization() {
-            const taskStates = await fetchTaskStates(1);  // Replace with actual submission ID
+            const taskStates = await fetchTaskStates(your_submission_name);  // Replace with actual submission name
 
             const nodes = [];
             const links = [];
@@ -62,17 +63,17 @@
                 'failed': 'grey'
             };
 
-            Object.keys(taskStates).forEach(taskId => {
-                const task = taskStates[taskId];
+            Object.keys(taskStates).forEach(taskPk => {
+                const task = taskStates[taskPk];
                 nodes.push({
-                    id: taskId,
+                    id: taskPk,
                     label: task.task_name,
                     group: task.state,
                     color: stateColorMap[task.state] || 'lightgreen'
                 });
 
                 task.dependencies.forEach(dep => {
-                    links.push({source: dep, target: taskId});
+                    links.push({source: dep, target: taskPk});
                 });
             });
 
