@@ -78,17 +78,17 @@ class CWLSchemaValidator:
 
             # Validate requirements if present
             requirements = cwl_data.get('requirements', [])
-            if requirements:
-                if not isinstance(requirements, list):
-                    errors.append("Please define requirements in CWL as list")
-                else:
-                    for item in requirements:
-                        if not isinstance(item, dict):
-                            errors.append(f"Unsupported requirement format: {item}")
-                        elif item.get('class') not in SUPPORTED_REQUIREMENTS:
-                            errors.append(f"Unsupported requirement: {item.get('class')}")
-                        elif cwl_class == "CommandLineTool" and item.get('class') == "InlineJavascriptRequirement":
-                            errors.append(f"Unsupported requirement: {item.get('class')} for CommandLineTool")
+            if not isinstance(requirements, list):
+                errors.append("Please define requirements in CWL as list")
+            else:
+                for item in requirements:
+                    if not isinstance(item, dict):
+                        errors.append(f"Unsupported requirement format: {item}")
+                    elif item.get('class') not in SUPPORTED_REQUIREMENTS:
+                        errors.append(f"Unsupported requirement: {item.get('class')}")
+                    elif cwl_class == "CommandLineTool" and item.get('class') == "InlineJavascriptRequirement":
+                        errors.append(f"Unsupported requirement: {item.get('class')} for CommandLineTool")
+
 
             # Validate hints if present
             hints = cwl_data.get('hints', [])
@@ -108,6 +108,10 @@ class CWLSchemaValidator:
                 errors.append("Missing 'inputs' in CWL file")
             elif not isinstance(inputs, dict):
                 errors.append("Please define inputs in CWL as dictionary")
+            else:
+                for input_name, input_data in inputs.items():
+                    if isinstance(input_data, dict) and 'type' not in input_data:
+                        errors.append(f"Missing 'type' for input '{input_name}'")
 
             # Check for the presence of 'outputs'
             outputs = cwl_data.get('outputs')
@@ -115,6 +119,10 @@ class CWLSchemaValidator:
                 errors.append("Missing 'outputs' in CWL file")
             elif not isinstance(outputs, dict):
                 errors.append("Please define outputs in CWL as dictionary")
+            else:
+                for output_name, output_data in outputs.items():
+                    if isinstance(output_data, dict) and 'type' not in output_data:
+                        errors.append(f"Missing 'type' for output '{output_name}'")
 
             # If class is 'Workflow', ensure 'steps' are present and valid
             if cwl_class == "Workflow":
