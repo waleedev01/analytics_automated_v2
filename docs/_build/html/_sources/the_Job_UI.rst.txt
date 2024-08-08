@@ -16,6 +16,8 @@ Assuming you correctly followed the dev installation instructions, you'll need
 to log in by pointing your browser at http://127.0.0.1:8000/admin/ and log in
 using the superuser details you set during installation.
 
+.. _define_backend:
+
 Define a Backend
 ----------------
 

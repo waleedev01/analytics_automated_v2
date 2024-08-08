@@ -34,19 +34,183 @@
             
   <div class="section" id="cwl-upload-and-download">
 <span id="id1"></span><h1>CWL Upload and Download<a class="headerlink" href="#cwl-upload-and-download" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="cwl-upload-page">
-<h2>CWL Upload Page<a class="headerlink" href="#cwl-upload-page" title="Permalink to this headline">¶</a></h2>
-<img alt="_images/upload.png" src="_images/upload.png" />
 <p>The CWL Upload Page allows users to upload multiple CWL files.
 The system processes these files in the background and creates
-new <a class="reference internal" href="the_Job_UI.html#the-job-ui"><span class="std std-ref">tasks or jobs</span></a> based on the CWL file types.</p>
-</div>
-<div class="section" id="cwl-download-page">
-<h2>CWL Download Page<a class="headerlink" href="#cwl-download-page" title="Permalink to this headline">¶</a></h2>
-<img alt="_images/download_1.png" src="_images/download_1.png" />
-<img alt="_images/download_2.png" src="_images/download_2.png" />
-<p>The CWL Download Page enables users to select existing jobs
+new <a class="reference internal" href="the_Job_UI.html#the-job-ui"><span class="std std-ref">tasks or jobs</span></a> based on the CWL file types.
+The CWL Download Page enables users to select existing jobs
 in the system and generate multiple executable CWL files.</p>
+<div class="section" id="create-job-via-cwl-example">
+<h2>Create Job Via CWL Example<a class="headerlink" href="#create-job-via-cwl-example" title="Permalink to this headline">¶</a></h2>
+<p>In this example, the user will create two Tasks, <code class="docutils literal notranslate"><span class="pre">create_file</span></code> and <code class="docutils literal notranslate"><span class="pre">write_message</span></code>, and a Job named <code class="docutils literal notranslate"><span class="pre">createHelloWorld</span></code>.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">create_file.cwl</span></code></p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Copy codecwlVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1.2</span>
+
+<span class="nt">class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CommandLineTool</span>
+
+<span class="nt">baseCommand</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">touch</span><span class="p p-Indicator">]</span>
+
+<span class="nt">inputs</span><span class="p">:</span>
+
+  <span class="nt">filename</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+
+    <span class="nt">inputBinding</span><span class="p">:</span>
+
+      <span class="nt">position</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+
+    <span class="nt">default</span><span class="p">:</span> <span class="s">&quot;test.txt&quot;</span>
+
+<span class="nt">outputs</span><span class="p">:</span>
+
+  <span class="nt">created_file</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">File</span>
+
+    <span class="nt">outputBinding</span><span class="p">:</span>
+
+      <span class="nt">glob</span><span class="p">:</span> <span class="s">&quot;*.txt&quot;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">write_message.cwl</span></code></p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">cwlVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1.2</span>
+
+<span class="nt">class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CommandLineTool</span>
+
+<span class="nt">baseCommand</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">bash</span><span class="p p-Indicator">,</span> <span class="nv">-c</span><span class="p p-Indicator">]</span>
+
+<span class="nt">inputs</span><span class="p">:</span>
+
+  <span class="nt">filename</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">File</span>
+
+    <span class="nt">inputBinding</span><span class="p">:</span>
+
+      <span class="nt">position</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
+
+  <span class="nt">message</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+
+    <span class="nt">inputBinding</span><span class="p">:</span>
+
+      <span class="nt">position</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+
+      <span class="nt">prefix</span><span class="p">:</span> <span class="s">&quot;echo&quot;</span>
+
+    <span class="nt">default</span><span class="p">:</span> <span class="s">&quot;Hello</span><span class="nv"> </span><span class="s">World&quot;</span>
+
+<span class="nt">outputs</span><span class="p">:</span>
+
+  <span class="nt">output_file</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">File</span>
+
+    <span class="nt">outputBinding</span><span class="p">:</span>
+
+      <span class="nt">glob</span><span class="p">:</span> <span class="s">&quot;*.txt&quot;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">createHelloWorld.cwl</span></code></p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">cwlVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1.2</span>
+
+<span class="nt">class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Workflow</span>
+
+<span class="nt">inputs</span><span class="p">:</span>
+
+  <span class="nt">message</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+
+    <span class="nt">default</span><span class="p">:</span> <span class="s">&quot;Hello</span><span class="nv"> </span><span class="s">World.&quot;</span>
+
+<span class="nt">outputs</span><span class="p">:</span>
+
+  <span class="nt">final_output</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">File</span>
+
+    <span class="nt">outputSource</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">write_message/output_file</span>
+
+<span class="nt">steps</span><span class="p">:</span>
+
+  <span class="nt">create_file</span><span class="p">:</span>
+
+    <span class="nt">run</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">create_file.cwl</span>
+
+    <span class="nt">in</span><span class="p">:</span>
+
+      <span class="nt">filename</span><span class="p">:</span>
+
+        <span class="nt">default</span><span class="p">:</span> <span class="s">&quot;test.txt&quot;</span>
+
+    <span class="nt">out</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">created_file</span><span class="p p-Indicator">]</span>
+
+  <span class="nt">write_message</span><span class="p">:</span>
+
+    <span class="nt">run</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">write_message.cwl</span>
+
+    <span class="nt">in</span><span class="p">:</span>
+
+      <span class="nt">filename</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">create_file/created_file</span>
+
+      <span class="nt">message</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">message</span>
+
+    <span class="nt">out</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">output_file</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<div class="section" id="step-to-upload-cwl-files">
+<h3>Step to Upload CWL Files<a class="headerlink" href="#step-to-upload-cwl-files" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic">
+<li><p>Before uploading any CWL files, please ensure that there is at least one available <a class="reference internal" href="the_Job_UI.html#define-backend"><span class="std std-ref">Backend</span></a> in the system.</p></li>
+<li><p>Access the CWL Upload Page: Navigate to</p>
+<blockquote>
+<div><p><a class="reference external" href="http://127.0.0.1:8000/admin/analytics_automated/uploadcwlmodel/">http://127.0.0.1:8000/admin/analytics_automated/uploadcwlmodel/</a></p>
+</div></blockquote>
+</li>
+<li><p>Upload CWL Files:</p>
+<ul class="simple">
+<li><p>Click the “Choose files” button.</p></li>
+<li><p>Select the three CWL files (<code class="docutils literal notranslate"><span class="pre">create_file.cwl</span></code>, <code class="docutils literal notranslate"><span class="pre">write_message.cwl</span></code>, <code class="docutils literal notranslate"><span class="pre">createHelloWorld.cwl</span></code>).</p></li>
+<li><p>Click “Upload CWL”. The order of the files does not matter; the system will automatically place the Workflow file last for parsing. If uploading files individually, ensure that Task files are uploaded before the Workflow file.</p></li>
+</ul>
+</li>
+</ol>
+<a class="reference internal image-reference" href="_images/upload_example_2.png"><img alt="_images/upload_example_2.png" class="align-center" src="_images/upload_example_2.png" style="width: 522.5px; height: 542.0px;" /></a>
+<p>If the files meet the <a class="reference external" href="supported_cwl_feature">our CWL specification</a>, the system will successfully create two Tasks and one Job that includes these Tasks.
+The tasks <code class="docutils literal notranslate"><span class="pre">create_file</span></code> and <code class="docutils literal notranslate"><span class="pre">write_message</span></code> will be created along with the <code class="docutils literal notranslate"><span class="pre">createHelloWorld</span></code> job that orchestrates these tasks.</p>
+<img alt="_images/upload_example_2.5.png" src="_images/upload_example_2.5.png" />
+</div>
+<div class="section" id="downloading-existing-data-analysis-tasks-as-cwl-files">
+<h3>Downloading Existing Data Analysis Tasks as CWL Files<a class="headerlink" href="#downloading-existing-data-analysis-tasks-as-cwl-files" title="Permalink to this headline">¶</a></h3>
+<p>When users want to download existing data analysis tasks from the database as CWL files, follow these steps:</p>
+<ol class="arabic">
+<li><p>Access the CWL Download Page: Navigate to</p>
+<p><a class="reference external" href="http://127.0.0.1:8000/admin/analytics_automated/downloadcwlmodel/">http://127.0.0.1:8000/admin/analytics_automated/downloadcwlmodel/</a></p>
+</li>
+<li><p>Select a Job:</p>
+<ul class="simple">
+<li><p>Click the <code class="docutils literal notranslate"><span class="pre">Select</span> <span class="pre">a</span> <span class="pre">job</span></code> dropdown menu.</p></li>
+<li><p>A list will appear, showing all executable jobs available in the system.</p></li>
+</ul>
+</li>
+<li><p>Download the CWL File:</p>
+<ul class="simple">
+<li><p>Select the desired job from the list.</p></li>
+<li><p>Click the <code class="docutils literal notranslate"><span class="pre">Download</span> <span class="pre">CWL</span></code> button to generate and download the CWL file.</p></li>
+</ul>
+</li>
+</ol>
+<img alt="_images/download_example_1.png" src="_images/download_example_1.png" />
+<p><strong>Note</strong>: Even if the tasks were initially created by uploading CWL files, the system does not guarantee that the downloaded CWL file will be identical to the originally uploaded file. The CWL file generated for download is independently created by the system.</p>
+</div>
 </div>
 </div>
 
@@ -72,8 +236,7 @@ in the system and generate multiple executable CWL files.</p>
 <li class="toctree-l1"><a class="reference internal" href="how_it_works.html">How The System Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="supported_cwl_feature.html">CWL File Requirements and Specifications</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">CWL Upload and Download</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#cwl-upload-page">CWL Upload Page</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#cwl-download-page">CWL Download Page</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#create-job-via-cwl-example">Create Job Via CWL Example</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="the_Job_UI.html">Building Jobs Overview</a></li>
