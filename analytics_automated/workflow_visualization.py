@@ -7,7 +7,7 @@ from .models import Submission, Task, Result, Step # Adjust if Task and Submissi
 
 logger = logging.getLogger(__name__)
 
-def extract_workflow_data(cwl_data):
+def extract_workflow_data(cwl_data): # not sure about implementation
     tasks = {}
     for step in cwl_data.get('steps', []):
         task_name = step.get('id')
@@ -125,20 +125,6 @@ def get_current_task_states(submission_id):   # OLD FUNCTION
     return task_states
 
 
-# EXAMPLE RUN
-
-# tasks = extract_workflow_data(cwl_data)
-
-# Static visualization (initial setup)
-
-# plot_static_workflow(tasks)
-
-# Dynamic visualization (during execution)
-
-# submission_id = 1  Replace with the actual submission ID you want to visualize
-# task_states = get_current_task_states(submission_id)   Function to fetch current states of tasks
-# plot_dynamic_workflow(task_states)
-
 def get_current_task_states2(submission_name):
     task_states = {}
 
@@ -164,3 +150,18 @@ def get_current_task_states2(submission_name):
         logger.error(f"An error occurred while fetching task states: {e}")
 
     return task_states
+
+
+# EXAMPLE RUN
+
+# tasks = extract_workflow_data(cwl_data)
+
+# Static visualization (initial setup)
+
+# plot_static_workflow(tasks)
+
+# Dynamic visualization (during execution)
+
+# submission_id = 1  Replace with the actual submission ID you want to visualize
+# task_states = get_current_task_states(submission_id)   Function to fetch current states of tasks
+# plot_dynamic_workflow(task_states)

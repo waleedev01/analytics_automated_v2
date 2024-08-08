@@ -1,36 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workflow Visualization Dashboard</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-</head>
-<body>
-    <h1>Workflow Visualization Dashboard</h1>
-    <div id="workflow-plot" style="width:100%;height:600px;"></div>
-
-    <script>
-        // JavaScript function to fetch task states and update visualization
-        async function fetchTaskStates(submissionId) {
-            const response = await fetch(`/api/task-states/${submissionId}/`);
-            return await response.json();
-        }
-
-        async function updateVisualization() {
-            const taskStates = await fetchTaskStates(1);  // Replace with actual submission ID
-
-            // Plotly or other visualization code to render data
-
-            // Example: Updating the graph (you need to adjust based on your data and Plotly usage)
-            Plotly.react('workflow-plot', data, layout);
-        }
-
-        setInterval(updateVisualization, 5000);  // Update every 5 seconds
-        updateVisualization();  // Initial call to display the data
-    </script>
-</body>
-</html> -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -117,3 +84,37 @@
 </body>
 </html>
 
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Visualization Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Workflow Visualization Dashboard</h1>
+    <div id="workflow-plot" style="width:100%;height:600px;"></div>
+
+    <script>
+        // JavaScript function to fetch task states and update visualization
+        async function fetchTaskStates(submissionId) {
+            const response = await fetch(`/api/task-states/${submissionId}/`);
+            return await response.json();
+        }
+
+        async function updateVisualization() {
+            const taskStates = await fetchTaskStates(1);  // Replace with actual submission ID
+
+            // Plotly or other visualization code to render data
+
+            // Example: Updating the graph (you need to adjust based on your data and Plotly usage)
+            Plotly.react('workflow-plot', data, layout);
+        }
+
+        setInterval(updateVisualization, 5000);  // Update every 5 seconds
+        updateVisualization();  // Initial call to display the data
+    </script>
+</body>
+</html> -->
