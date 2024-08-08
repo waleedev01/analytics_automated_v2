@@ -10,41 +10,17 @@ logger = logging.getLogger(__name__)
 def extract_workflow_data(cwl_data): # not sure about implementation
     tasks = {}
     for step in cwl_data.get('steps', []):
-        task_name = step.get('id')
+        task_name = step.get('id', step.get('name', 'Unnamed Step'))
         inputs = step.get('in', [])
         outputs = step.get('out', [])
-        requirements = [req['id'] for req in step.get('requirements', [])]
+        requirements = step.get('requirements', [])
+
         tasks[task_name] = {
-            'inputs': [inp['source'] for inp in inputs if 'source' in inp],
+            'inputs': [inp if isinstance(inp, str) else inp.get('source') for inp in inputs],
             'outputs': outputs,
-            'requires': requirements
+            'requires': [req.get('id') for req in requirements if 'id' in req]
         }
     return tasks
-
-def plot_static_workflow(tasks):  # OLD FUNCTION
-    G_static = nx.DiGraph()
-    for task, details in tasks.items():
-        G_static.add_node(task, type='task')
-        for inp in details['inputs']:
-            G_static.add_node(inp, type='file')
-            G_static.add_edge(inp, task)
-        for out in details['outputs']:
-            G_static.add_node(out, type='file')
-            G_static.add_edge(task, out)
-        for req in details['requires']:
-            G_static.add_edge(req, task)
-
-    color_map = {
-        'task': 'skyblue',
-        'file': 'lightgreen'
-    }
-    node_colors = [color_map[G_static.nodes[node]['type']] for node in G_static.nodes]
-    
-    plt.figure(figsize=(10, 8))
-    pos = nx.spring_layout(G_static, seed=42)
-    nx.draw(G_static, pos, with_labels=True, node_color=node_colors, node_size=2000, font_size=10, font_color='black')
-    plt.title("Static Workflow Visualization")
-    plt.show()
 
 
 def plot_static_workflow2(tasks):
@@ -73,7 +49,34 @@ def plot_static_workflow2(tasks):
     
     return img_data
 
-def plot_dynamic_workflow(tasks):
+
+def plot_static_workflow(tasks):  # OLD FUNCTION
+    G_static = nx.DiGraph()
+    for task, details in tasks.items():
+        G_static.add_node(task, type='task')
+        for inp in details['inputs']:
+            G_static.add_node(inp, type='file')
+            G_static.add_edge(inp, task)
+        for out in details['outputs']:
+            G_static.add_node(out, type='file')
+            G_static.add_edge(task, out)
+        for req in details['requires']:
+            G_static.add_edge(req, task)
+
+    color_map = {
+        'task': 'skyblue',
+        'file': 'lightgreen'
+    }
+    node_colors = [color_map[G_static.nodes[node]['type']] for node in G_static.nodes]
+    
+    plt.figure(figsize=(10, 8))
+    pos = nx.spring_layout(G_static, seed=42)
+    nx.draw(G_static, pos, with_labels=True, node_color=node_colors, node_size=2000, font_size=10, font_color='black')
+    plt.title("Static Workflow Visualization")
+    plt.show()
+
+
+def plot_dynamic_workflow(tasks):  # OLD FUNCTION
     G_dynamic = nx.DiGraph()
     for task, details in tasks.items():
         G_dynamic.add_node(task, type='task', state=details['state'])
