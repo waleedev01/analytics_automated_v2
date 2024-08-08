@@ -21,7 +21,7 @@ def extract_workflow_data(cwl_data):
         }
     return tasks
 
-def plot_static_workflow(tasks):
+def plot_static_workflow(tasks):  # OLD FUNCTION
     G_static = nx.DiGraph()
     for task, details in tasks.items():
         G_static.add_node(task, type='task')
@@ -99,7 +99,7 @@ def plot_dynamic_workflow(tasks):
     plt.show()
 
 
-def get_current_task_states(submission_id):
+def get_current_task_states(submission_id):   # OLD FUNCTION
 
     task_states = {}
 

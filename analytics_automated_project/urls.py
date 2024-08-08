@@ -58,8 +58,8 @@ urlpatterns = [
          api.CWLUploadView.as_view(), name="uploadcwl"),  # Existing CWL upload pattern
      url(r'^analytics_automated/uploadcwlpage/$',
          CWLUploadPageView.as_view(), name="uploadcwlpage"),
-     url(r'^analytics_automated/dashboard/$',
-         DashboardView.as_view(), name='dashboard'),
+     url(r'^analytics_automated/dynamic-visualize/$',
+         DashboardView.as_view(), name='dynamic_visualize'),
      url(r'^analytics_automated/static_visualize/$',
          StaticWorkflowGraphView.as_view(), name='static_visualize'),
      url(r'^analytics_automated/api/task-states/<str:submission_name>/$',
