@@ -24,6 +24,43 @@ def extract_workflow_data(cwl_data): # not sure about implementation
 
 
 def plot_static_workflow2(tasks):
+    try:
+        G_static = nx.DiGraph()
+        for task in tasks:
+            task_name = task.name
+            inputs = task.in_glob.split(',')  # Assuming `in_glob` is a comma-separated string of input filenames
+            outputs = task.out_glob.split(',')  # Assuming `out_glob` is a comma-separated string of output filenames
+            
+            G_static.add_node(task_name, type='task')
+            for inp in inputs:
+                G_static.add_node(inp, type='file')
+                G_static.add_edge(inp, task_name)
+            for out in outputs:
+                G_static.add_node(out, type='file')
+                G_static.add_edge(task_name, out)
+        
+        pos = nx.spring_layout(G_static)
+        plt.figure(figsize=(10, 7))
+        nx.draw(G_static, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=3000, font_size=10, font_weight='bold')
+        
+        # Save plot to a bytes buffer
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        
+        # Encode plot to base64 string
+        img_data = base64.b64encode(buf.read()).decode('utf-8')
+        buf.close()
+        
+        logger.info('Static workflow graph successfully generated.')
+        return img_data
+
+    except Exception as e:
+        logger.error(f'Error generating static workflow graph: {e}')
+        raise
+
+
+def plot_static_workflow_old(tasks):    # OLD FUNCTION
     G_static = nx.DiGraph()
     for task, details in tasks.items():
         G_static.add_node(task, type='task')
@@ -48,7 +85,6 @@ def plot_static_workflow2(tasks):
     buf.close()
     
     return img_data
-
 
 def plot_static_workflow(tasks):  # OLD FUNCTION
     G_static = nx.DiGraph()

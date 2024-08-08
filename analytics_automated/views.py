@@ -76,8 +76,8 @@ class CWLUploadPageView(View):
             for file_name, full_path in file_paths.items():
                 os.remove(full_path)
 
-            tasks = extract_workflow_data(cwl_data)
-            request.session['tasks'] = tasks
+            # tasks = extract_workflow_data(cwl_data)
+            # request.session['tasks'] = tasks
 
             logging.info(f"Successfully processed CWL files: {', '.join(file_paths.keys())}")
             return render(request, 'cwl/upload_cwl.html', {"message": "Results Below:", "file_names": list(file_paths.keys()), "messages": messages})
@@ -88,7 +88,9 @@ class CWLUploadPageView(View):
 
 class StaticWorkflowGraphView(View):
     def get(self, request):
-        tasks = request.session.get('tasks')
+        # tasks = request.session.get('tasks')
+        tasks = Task.objects.all()
+        
         if not tasks:
             logger.error('No tasks available for visualization.')
             return render(request, 'workflow_visualization.html', {'error': 'No tasks available for visualization.'})
