@@ -838,6 +838,9 @@ def handle_batch_requirements(task_requirements, backend_root_path):
     :param backend_root_path: indicates the root path of the batch system
     :return: None
     """
+    if task_requirements is None:
+        return f"No software_requirement in this step"
+        
     logger.info("Handling BatchRequirements...")
 
     batch_requirements = [req for req in task_requirements if req.get('class') == 'BatchRequirement']
@@ -904,7 +907,7 @@ def handle_slurm_requirements(options, root_path, script_path):
     # module load ...
 
     # Run the command or script
-    # ./temp-slurm.sh
+    {script_path}
     """
 
     # Save the SLURM job script to a file
@@ -963,7 +966,7 @@ def handle_pbs_requirements(options, root_path, script_path):
     cd $PBS_O_WORKDIR
 
     # Run the command or script
-    # ./temp-pdb.sh
+    {script_path}
     """
 
     # Save the PBS job script to a file
@@ -1019,7 +1022,7 @@ def handle_sge_requirements(options, root_path,script_path):
     cd $SGE_O_WORKDIR
 
     # Run the command or script
-    # ./temp-sge.sh
+    {script_path}
     """
 
     # Save the SGE job script to a file

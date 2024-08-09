@@ -27,7 +27,8 @@ def upload_file():
     start_time = time.time()
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
-    cwl_file_path = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/analytics_automated/tests/gen-cwl/'
+    #cwl_file_path = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/analytics_automated/tests/gen-cwl/'
+    cwl_file_path = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/analytics_automated/tests/example_cwl_files/'
     file = request.files['file']
     test = []
     cwl_file_path = cwl_file_path + str(file.filename) 
