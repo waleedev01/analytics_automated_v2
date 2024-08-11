@@ -72,7 +72,7 @@ def validate_cwl_files(input_dir, output_dir):
 if __name__ == "__main__":
     try:
         logger.info("Starting CWL file validation process.")
-        validate_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files', 'analytics_automated/bidirectional_cwl_llm_testing/validation_results')
+        validate_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files_valid', 'analytics_automated/bidirectional_cwl_llm_testing/validation_results')
         logger.info("CWL file validation process completed successfully.")
     except Exception as e:
         logger.error(f"Pipeline failed: {e}", exc_info=True)

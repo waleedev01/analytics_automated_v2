@@ -3,6 +3,7 @@ from django.db import IntegrityError
 from django.core.exceptions import ObjectDoesNotExist
 from ..models import Job, Step, Task, Environment
 from .cwl_clt_handler import parse_cwl_clt, save_task_to_db, check_existing_task_in_db, handle_env_variable_req
+import yaml
 
 logger = logging.getLogger(__name__)
 

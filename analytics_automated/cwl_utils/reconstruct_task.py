@@ -1,145 +1,110 @@
-import logging
-import json
 import os
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
-from django.conf import settings
+import json
+import logging
+from ruamel.yaml import YAML
 from ..models import Task, Parameter, Environment
 
 logger = logging.getLogger(__name__)
 
-def load_format_mapping():
-    format_map_path = os.path.join(settings.BASE_DIR, 'analytics_automated', 'cwl_utils', 'format_uri_mapping.json')
-    try:
-        with open(format_map_path, 'r') as file:
-            return json.load(file)
-    except FileNotFoundError:
-        logger.error(f"Format mapping file not found: {format_map_path}")
-        return {}
-    except json.JSONDecodeError:
-        logger.error(f"Failed to parse format mapping file: {format_map_path}")
-        return {}
+yaml = YAML()
+yaml.default_flow_style = False
+yaml.indent(mapping=2, sequence=4, offset=2)
 
-FORMAT_MAP = load_format_mapping()
+def parse_json_field(field):
+    if isinstance(field, str):
+        return json.loads(field)
+    return field
 
-def safe_json_loads(data):
-    if isinstance(data, str):
-        try:
-            return json.loads(data)
-        except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON: {data}")
-            return data
-    return data
-
-def get_task_details(task):
-    logger.debug(f"Starting to process task: {task.name}")
-    
+def reconstruct_task_cwl(task, file_path):
+    logger.info(f"Reconstructing task: {task.name}")
     task_detail = {
         "cwlVersion": "v1.0",
         "class": "CommandLineTool",
-        "baseCommand": task.executable.split()
+        "baseCommand": task.executable.split(),
+        "inputs": {},
+        "outputs": {},
+        "requirements": parse_json_field(task.requirements) or [],
     }
 
-    # Process inputs
-    task_detail["inputs"] = reconstruct_inputs(task)
+    # Conditionally add non-empty fields
+    if task.hints:
+        task_detail["hints"] = parse_json_field(task.hints)
 
-    # Process outputs
-    task_detail["outputs"] = reconstruct_outputs(task)
+    if task.success_codes:
+        task_detail["successCodes"] = parse_json_field(task.success_codes)
 
-    # Process stdout
-    if task.stdout_glob:
-        input_name = next(iter(task_detail["inputs"]))
-        task_detail["stdout"] = f"$(inputs.{input_name}.basename){task.stdout_glob}"
+    if task.temporary_fail_codes:
+        task_detail["temporaryFailCodes"] = parse_json_field(task.temporary_fail_codes)
 
-    # Process optional attributes plus requirements
-    # task_detail.update(reconstruct_additional_attributes(task))
+    if task.permanent_fail_codes:
+        task_detail["permanentFailCodes"] = parse_json_field(task.permanent_fail_codes)
 
-    logger.debug(f"Final task detail: {task_detail}")
-    return task_detail
+    if task.arguments:
+        task_detail["arguments"] = parse_json_field(task.arguments)
 
-def reconstruct_inputs(task):
-    inputs = {}
-    params = task.parameters.all()
-    
-    if params:
-        for param in params:
-            input_name = param.rest_alias or f"input_{task.name}_file"
-            input_detail = {
-                "type": "File",
-                "inputBinding": {"position": 1}
-            }
-            
-            if task.in_glob:
-                format_uri = next((k for k, v in FORMAT_MAP.items() if v == f".{task.in_glob.strip('.')}" or v == task.in_glob), None)
-                if format_uri:
-                    input_detail["format"] = format_uri
-            
-            inputs[input_name] = input_detail
-    else:
-        # If no parameters, create a default input
-        input_name = f"input_{task.name}_file"
-        inputs[input_name] = {
-            "type": "File",
-            "inputBinding": {"position": 1}
-        }
-        if task.in_glob:
-            format_uri = next((k for k, v in FORMAT_MAP.items() if v == f".{task.in_glob.strip('.')}" or v == task.in_glob), None)
-            if format_uri:
-                inputs[input_name]["format"] = format_uri
+    if task.stdin:
+        task_detail["stdin"] = task.stdin
 
-    return inputs
+    if task.stdout:
+        task_detail["stdout"] = task.stdout
 
-def reconstruct_outputs(task):
-    outputs = {}
-    if task.out_glob:
-        output_globs = task.out_glob.split(',')
-        for i, glob in enumerate(output_globs):
-            output_name = f"output_{task.name.lower()}" if i == 0 else f"output_{task.name.lower()}_{i+1}"
-            outputs[output_name] = {
-                "type": "File",
-                "outputBinding": {"glob": f"*.{glob.strip('.')}"}
-            }
-    return outputs
+    if task.stderr:
+        task_detail["stderr"] = task.stderr
 
-# def reconstruct_additional_attributes(task):
-#     attributes = {}
+    if task.doc:
+        task_detail["doc"] = task.doc
 
-#     # Process environments
-#     environments = task.environment_set.all()
-#     if environments:
-#         attributes["requirements"] = [{
-#             "class": "EnvVarRequirement",
-#             "envDef": {env.env: env.value for env in environments}
-#         }]
+    if task.label:
+        task_detail["label"] = task.label
 
-#     # Process stdin, stdout, stderr
-#     if task.stdin:
-#         attributes["stdin"] = task.stdin
-#     if task.stderr:
-#         attributes["stderr"] = task.stderr
+    task_detail["shellQuote"] = task.shell_quote
 
-    # return attributes
+    # Add input and output parameters
+    _add_inputs(task, task_detail)
+    _add_outputs(task, task_detail)
 
-@transaction.atomic
-def reconstruct_task(task_name):
-    logger.info(f"Starting task reconstruction for: {task_name}")
+    # Add environment variables
+    _add_environment(task, task_detail)
+
+    # Save the CWL file
     try:
-        task = Task.objects.get(name=task_name)
-    except ObjectDoesNotExist:
-        logger.error(f"Task '{task_name}' does not exist.")
-        return None
-
-    try:
-        task_detail = get_task_details(task)
-        return task_detail
+        with open(file_path, 'w') as file:
+            yaml.dump(task_detail, file)
+        logger.info(f"Task '{task.name}' saved as {file_path}")
     except Exception as e:
-        logger.error(f"Error reconstructing task: {str(e)}")
-        return None
+        logger.error(f"Failed to save task '{task.name}' as {file_path}: {str(e)}")
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    task = reconstruct_task("example_task_name")
-    if task:
-        print(json.dumps(task, indent=2))
-    else:
-        print("Failed to reconstruct task")
+
+def _add_inputs(task, task_detail):
+    # Define inputs based on task parameters
+    in_globs = task.in_glob.split(',')
+    for i, glob in enumerate(in_globs):
+        if glob.strip():  # Skip empty globs
+            task_detail["inputs"][f"input_{i}"] = {
+                "type": "File",
+                "inputBinding": {"position": i + 1}
+            }
+
+def _add_outputs(task, task_detail):
+    # Define outputs based on task outputs
+    out_globs = task.out_glob.split(',')
+    if task.stdout:
+        task_detail["outputs"]["stdout"] = {
+            "type": "File",
+            "outputBinding": {"glob": task.stdout}
+        }
+    for i, output in enumerate(out_globs):
+        if output.strip():  # Skip empty outputs
+            task_detail["outputs"][f"output_{i}"] = {
+                "type": "File",
+                "outputBinding": {"glob": output}
+            }
+
+def _add_environment(task, task_detail):
+    # Add environment variables
+    environments = task.environment.all()
+    if environments.exists():
+        task_detail["requirements"].append({
+            "class": "EnvVarRequirement",
+            "envDef": {env.env: env.value for env in environments}
+        })

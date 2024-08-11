@@ -15,6 +15,7 @@ django.setup()
 from analytics_automated.bidirectional_cwl_llm_testing.generate_cwl_files import generate_cwl_files
 from analytics_automated.bidirectional_cwl_llm_testing.validate_cwl_files import validate_cwl_files
 from analytics_automated.bidirectional_cwl_llm_testing.parse_and_save_cwl import parse_and_save_cwl_files
+from analytics_automated.bidirectional_cwl_llm_testing.convert_to_cwl import convert_to_cwl_files
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -24,24 +25,32 @@ def run_pipeline():
 
     try:
         logging.info("Step 1: Generating CWL files")
-        # generate_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files', 10)
+        # generate_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files_valid', 10)
         logging.info("Step 1 completed")
 
         logging.info("Step 2: Validating CWL files")
-        validation_results = validate_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files', 'analytics_automated/bidirectional_cwl_llm_testing/validation_results')
+        validation_results = validate_cwl_files(
+            'analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files_valid', 
+            'analytics_automated/bidirectional_cwl_llm_testing/validation_results'
+        )
         logging.info("Step 2 completed")
 
         logging.info("Step 3: Parsing and saving CWL files to database")
-        parsing_results = parse_and_save_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files')
+        parsing_results, _ = parse_and_save_cwl_files(
+            'analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files_valid'
+        )
         logging.info("Step 3 completed")
 
         logging.info("Step 4: Converting database entries to CWL files")
-        # conversion_results = convert_to_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/converted_cwl_files')
+        conversion_results = convert_to_cwl_files(
+            'analytics_automated/bidirectional_cwl_llm_testing/converted_cwl_files'
+        )
         logging.info("Step 4 completed")
 
+        # Combine all results
         results.extend(validation_results)
-        # results.extend(parsing_results)
-        # results.extend(conversion_results)
+        results.extend(parsing_results)
+        results.extend(conversion_results)
 
     except Exception as e:
         logging.error(f"Pipeline failed: {e}")
@@ -49,45 +58,45 @@ def run_pipeline():
     write_results_to_csv(results, 'analytics_automated/bidirectional_cwl_llm_testing/validation_results/validation_results.csv')
 
 def write_results_to_csv(results, csv_path):
+    """
+    Writes the results of each step of the pipeline to a CSV file.
+    """
     total_files_generated = len(results)
     total_validity_matches = 0
     total_exact_error_matches = 0
     total_partial_error_matches = 0
 
-    with open(csv_path, 'w', newline='') as csvfile:
-        fieldnames = [
-            'file_name', 'step', 'result',
-            'expected_is_valid', 'expected_error',
-            'got_is_valid', 'got_error',
-            'validity_matches', 'exact_error_matches', 'partial_error_matches',
-            'expected_str', 'got_str'
-        ]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    # Define CSV fieldnames
+    fieldnames = [
+        'file_name', 'step', 'result',
+        'expected_is_valid', 'expected_error',
+        'got_is_valid', 'got_error',
+        'validity_matches', 'exact_error_matches', 'partial_error_matches',
+        'expected_str', 'got_str', 'original_content', 'reconstructed_content',
+        'message', 'source_file', 'target_file'
+    ]
 
+    with open(csv_path, 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for result in results:
             logging.info(f"Processing result for file: {result.get('file_name')}")
             logging.debug(f"Result: {result}")
 
             try:
+                # Extract result details
                 expected = result.get('expected', {})
                 got = result.get('got', {})
 
-                expected_is_valid = expected.get('is_valid')
-                expected_error = expected.get('error')
+                expected_is_valid = expected.get('is_valid', 'N/A')
+                expected_error = expected.get('error', 'N/A')
 
-                got_is_valid = got.get('is_valid')
-                got_error = got.get('error')
+                got_is_valid = got.get('is_valid', 'N/A')
+                got_error = got.get('error', 'N/A')
 
-                logging.debug(f"Expected is_valid: {expected_is_valid}, Got is_valid: {got_is_valid}")
-                logging.debug(f"Expected error: {expected_error}")
-                logging.debug(f"Got error: {got_error}")
-
-                # Check for validity match
+                # Determine validity and error matches
                 validity_matches = expected_is_valid == got_is_valid
-                # Check for exact error match
                 exact_error_matches = expected_error == got_error
-                # Check for partial error match (if the expected error is a substring of the got error)
                 partial_error_matches = (expected_error in got_error) if expected_error and got_error else False
 
                 logging.debug(f"Validity match: {validity_matches}")
@@ -101,6 +110,7 @@ def write_results_to_csv(results, csv_path):
                 if partial_error_matches:
                     total_partial_error_matches += 1
 
+                # Write the result to the CSV file
                 writer.writerow({
                     'file_name': result.get('file_name'),
                     'step': result.get('step'),
@@ -112,8 +122,13 @@ def write_results_to_csv(results, csv_path):
                     'validity_matches': validity_matches,
                     'exact_error_matches': exact_error_matches,
                     'partial_error_matches': partial_error_matches,
-                    'expected_str': result.get('expected_str'),
-                    'got_str': result.get('got_str')
+                    'expected_str': result.get('expected_str', 'N/A'),
+                    'got_str': result.get('got_str', 'N/A'),
+                    'original_content': result.get('original_content', ''),
+                    'reconstructed_content': result.get('reconstructed_content', ''),
+                    'message': result.get('message', ''),
+                    'source_file': result.get('source_file', 'N/A'),
+                    'target_file': result.get('target_file', 'N/A')
                 })
 
             except Exception as e:
@@ -129,10 +144,16 @@ def write_results_to_csv(results, csv_path):
                     'validity_matches': False,
                     'exact_error_matches': False,
                     'partial_error_matches': False,
-                    'expected_str': result.get('expected_str'),
-                    'got_str': result.get('got_str')
+                    'expected_str': result.get('expected_str', 'N/A'),
+                    'got_str': result.get('got_str', 'N/A'),
+                    'original_content': '',
+                    'reconstructed_content': '',
+                    'message': result.get('message', ''),
+                    'source_file': result.get('source_file', 'N/A'),
+                    'target_file': result.get('target_file', 'N/A')
                 })
 
+    # Log summary stats
     logging.info(f"Total CWL files generated: {total_files_generated}")
     logging.info(f"Total validity matches: {total_validity_matches}")
     logging.info(f"Total exact error matches: {total_exact_error_matches}")

@@ -108,4 +108,4 @@ def generate_cwl_files(output_dir, num_files):
                 logging.error(f"Failed to generate CWL file {i+1}_{j+1}: {e}")
 
 if __name__ == "__main__":
-    generate_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files', 10)
+    generate_cwl_files('analytics_automated/bidirectional_cwl_llm_testing/generated_cwl_files_valid', 10)
