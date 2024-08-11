@@ -8,17 +8,13 @@ arguments:
     position: 4
 
 inputs:
-  ID:
-    type: string
-    inputBinding:
-      position: 1
   input_dir:
     type: Directory
     inputBinding:
       position: 5
     default:
       class: Directory
-      location: $(runtime.tmpdir)/$(inputs.ID)
+      location: $(runtime.tmpdir)
       listing:
         - class: File
           glob: "*.hb2"
@@ -41,4 +37,4 @@ outputs:
     outputBinding:
       glob: "*.out"
 
-stdout: output.stdout
+stdout: "*.stdout"

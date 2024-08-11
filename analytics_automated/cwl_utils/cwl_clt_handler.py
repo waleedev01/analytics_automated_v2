@@ -228,17 +228,16 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
                 if file_type == 'int' and input_data['name'] == 'exit_code':
                     in_globs.append("exit_code.txt")
                     continue
-                if input_data['name'] == 'ID':
-                    # TODO: uuid
-                    executable_parts.insert(position, "$ID")
-                    continue
                 if file_type == 'Directory':
                     dir_default_setting = input_data['default']
                     executable_parts.insert(position, dir_default_setting['location'])
                     if dir_default_setting:
                         for input_file in dir_default_setting['listing']:
                             if input_file['class'] == 'File':
-                                if 'format' in input_file:
+                                if 'glob' in input_file:
+                                    file_glob = '.' + str(input_file['glob']).split('.')[-1]
+                                    in_globs.append(file_glob)
+                                elif 'format' in input_file:
                                     file_format = map_format(input_file['format'], mapping=format_mapping)
                                     in_globs.append(file_format)
                                 else:
