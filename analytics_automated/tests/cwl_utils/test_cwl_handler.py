@@ -10,12 +10,23 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def add_fake_backend(name, root_path):
-    q = QueueType.objects.all().first()
-    b = Backend.objects.create(name=name, queue_type=q)
+    # check if a Backend with ID 1 exists
+    try:
+        b = Backend.objects.get(id=1)
+    except Backend.DoesNotExist:
+        # get or create a QueueType
+        q = QueueType.objects.all().first()
+        if q is None:
+            q = QueueType.objects.create(name="localhost", execution_behaviour=QueueType.LOCALHOST)
+        
+        # create a new Backend and set its ID to 1
+        b = Backend.objects.create(name=name, queue_type=q, root_path=root_path)
+        Backend.objects.filter(id=b.id).update(id=1)
+        b = Backend.objects.get(id=1)
+    
     b.root_path = root_path
     b.save()
-    Backend.objects.filter(id=b.id).update(id=1)
-    b = Backend.objects.get(id=1)
+    
     return b
 
 class TestCWLCLTParser(unittest.TestCase):
