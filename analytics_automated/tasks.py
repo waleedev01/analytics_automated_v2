@@ -537,7 +537,7 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
     # Handle "when" condition
     logger.info("CONDITION:" + str(condition))
     if condition != '':
-        exit_code = data_dict.get(str(uuid)+"_"+str(step_counter-1)+'_exit_code.txt', None)
+        exit_code = data_dict.get(str(uuid)+"_"+str(current_step-1)+'_exit_code.txt', None)
         if exit_code is not None:
             if 'exit_code' in condition:
                 exit_code = int(exit_code)
