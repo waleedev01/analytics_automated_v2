@@ -278,7 +278,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
 
 def save_task_to_db(task_data, messages, cwl_content=None):
     try:
-        backend = Backend.objects.get(id=1)  # Assuming a default backend ID
+        backend = Backend.objects.get(id=2)  # Assuming a default backend ID
         logging.info(f"Saving task to database: {task_data['name']}")
 
         # Check if the task already exists
@@ -419,7 +419,7 @@ def save_task_to_db(task_data, messages, cwl_content=None):
 def check_existing_task_in_db(task_name, messages):
     logging.info(f"Checking existing task in DB: {task_name}")
     try:
-        backend = Backend.objects.get(id=1)  # Assuming a default backend ID
+        backend = Backend.objects.get(id=2)  # Assuming a default backend ID
 
         # Check if the task already exists
         existing_task = Task.objects.filter(
