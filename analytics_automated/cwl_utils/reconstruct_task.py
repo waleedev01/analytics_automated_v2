@@ -134,9 +134,10 @@ def _add_input_parameters(task, task_detail, positions_P):
             p_input_binding["prefix"] = p.flag
 
         p_attr_dict = {
-            "default": p.default,
             "inputBinding": p_input_binding,
         }
+        if p.default:
+            p_attr_dict["default"] = p.default
         if p.bool_valued:
             p_attr_dict["type"] = "boolean"
             p_attr_dict["default"] = True if p.default == "True" else False
@@ -150,7 +151,7 @@ def _add_inputs(task, task_detail, positions_I: dict[str, int]):
     # Define inputs based on in_globs and executable
     def map_format(format_uri, mapping):
         logging.info(f"Mapping format URI: {format_uri}")
-        return mapping.get(format_uri, "unknown")
+        return mapping.get(format_uri, "Any")
 
     # Detect file format
     format_mapping = load_format_mapping(FORMAT_MAP)
