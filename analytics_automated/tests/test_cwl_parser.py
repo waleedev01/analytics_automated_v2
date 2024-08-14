@@ -49,7 +49,7 @@ class CWLValidatorTest(TestCase):
         Test the CWL schema validator with an invalid CWL file.
         """
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        file_path = os.path.join(base_dir, 'tests', 'gen-cwl', 'cwl_invalid_9_1.cwl')
+        file_path = os.path.join(base_dir, 'tests', 'gen_cwl', 'cwl_invalid_9_1.cwl')
         with open(file_path, 'r') as cwl_file:
             cwl_data = yaml.safe_load(cwl_file)
         validator = CWLSchemaValidator()
