@@ -4,7 +4,6 @@ import factory
 import uuid
 import os
 import json
-import jsondiff
 from unipath import Path
 
 from django.test import TestCase

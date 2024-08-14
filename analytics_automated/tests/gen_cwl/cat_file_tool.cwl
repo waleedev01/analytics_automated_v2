@@ -1,17 +1,16 @@
 cwlVersion: v1.2
 class: CommandLineTool
-
-baseCommand: echo
+baseCommand: [sh, -c]
 arguments:
-  - valueFrom: "$(inputs.message)"
+  - |
+    cat $(inputs.input_file.path) > output.txt
 inputs:
-  message:
-    type: string
+  input_file:
+    type: File
     inputBinding:
       position: 1
 outputs:
   output_file:
     type: File
     outputBinding:
-      glob: "*.txt"
-stdout: "$(inputs.message)_stdout.log"
+      glob: "output.txt"
