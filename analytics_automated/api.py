@@ -13,31 +13,34 @@ import scipy.stats as stats
 import yaml
 from celery import chain
 
-from django import forms
 from django.utils.datastructures import MultiValueDictKeyError
 from django.conf import settings
 from django.db.models import F, Func
+from django.core.files.uploadedfile import TemporaryUploadedFile
+from django.http import FileResponse
 
-from rest_framework import viewsets
 from rest_framework import mixins
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework import request
 from rest_framework.parsers import MultiPartParser
 from rest_framework.parsers import FormParser
 from rest_framework.views import APIView  # new import
 
-
 from .serializers import SubmissionInputSerializer, SubmissionOutputSerializer
 from .serializers import JobSerializer, BatchSerializer, JobDetailSerializer
-from .models import Job, Submission, Backend, Batch
+from .serializers import CWLUploadSerializer, CWLDownloadSerializer
+from .models import Job, Submission, Batch
 from .forms import SubmissionForm
 from .tasks import *
 from .validators import *
 from .r_keywords import *
 from .cmdline import *
-from .cwl_utils import cwl_parser
+from .cwl_utils.cwl_parser import read_cwl_file
+from .cwl_utils.reconstruct_cwl import reconstruct_cwl_files
+import tempfile
+import os
+import zipfile
 
 
 
@@ -624,46 +627,151 @@ class JobDetail(mixins.RetrieveModelMixin,
 
 
 class CWLUploadView(APIView):
-    def post(self, request, format=None):
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Upload and process CWL files.
+
+        This endpoint allows users to upload CWL files for processing.
+        It validates the files, processes them, and returns the results.
+        Accepts both Workflow and CommandLineTool CWL files.
+
+        Request body:
+        - files: List of CWL files to upload and process
+
+        Returns:
+        - 201 Created: If files are successfully processed
+        - 400 Bad Request: If no files are provided or if files are invalid
+        - 500 Internal Server Error: If there's an error during processing
+        """
+        serializer = CWLUploadSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         files = request.FILES.getlist('files')
         if not files:
             return Response({"error": "No files provided"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        file_paths = {}
+
         messages = []
-        for file in files:
-            if not file.name.endswith('.cwl'):
-                logging.error(f"Uploaded file is not a CWL file: {file.name}")
-                messages.append(f"Uploaded file is not a CWL file: {file.name}")
-                continue
-            
-            path = default_storage.save('cwl_workflows/' + file.name, ContentFile(file.read()))
-            full_path = default_storage.path(path)
-            file_paths[file.name] = full_path
-        
-        # Parse each CWL file
+        temp_files = []
+
         try:
-            workflow_files = {}
-            for file_name, full_path in file_paths.items():
-                with open(full_path, 'r') as cwl_file:
-                    cwl_data = yaml.safe_load(cwl_file)
-                cwl_class = cwl_data.get("class")
+            valid_cwl_files = {}
+            for file in files:
+                logger.info(f"Processing file: {file.name}")
+                if not file.name.endswith('.cwl'):
+                    messages.append(f"Skipped non-CWL file: {file.name}")
+                    continue
 
-                if cwl_class == "Workflow":
-                    workflow_files[file_name] = cwl_data
+                if isinstance(file, TemporaryUploadedFile):
+                    file_path = file.temporary_file_path()
+                else:
+                    temp_file = tempfile.NamedTemporaryFile(delete=False)
+                    for chunk in file.chunks():
+                        temp_file.write(chunk)
+                    temp_file.close()
+                    file_path = temp_file.name
+                    temp_files.append(file_path)
 
-            if not workflow_files:
-                messages.append("No workflow files found in the uploaded files.")
-            else:
-                for workflow_name, workflow_data in workflow_files.items():
-                    read_cwl_file(file_paths[workflow_name], file_paths, messages)
-            
-            # Clean up uploaded files
-            for file_name, full_path in file_paths.items():
-                os.remove(full_path)
+                try:
+                    with open(file_path, 'r') as cwl_file:
+                        cwl_data = yaml.safe_load(cwl_file)
+                    
+                    logger.info(f"CWL data for {file.name}: {cwl_data}")
+                    
+                    if not isinstance(cwl_data, dict):
+                        messages.append(f"Invalid CWL format in file: {file.name}")
+                        continue
+                    
+                    cwl_class = cwl_data.get("class")
+                    if cwl_class not in ["Workflow", "CommandLineTool"]:
+                        messages.append(f"File {file.name} is not a Workflow or CommandLineTool (class: {cwl_class})")
+                        continue
+                    
+                    valid_cwl_files[file.name] = cwl_data
+                except yaml.YAMLError as e:
+                    messages.append(f"Error parsing YAML in file {file.name}: {str(e)}")
+                except Exception as e:
+                    messages.append(f"Error processing file {file.name}: {str(e)}")
 
-            logging.info(f"Successfully processed CWL files: {', '.join(file_paths.keys())}")
-            return Response({"message": "CWL files processed successfully", "file_names": list(file_paths.keys()), "messages": messages}, status=status.HTTP_201_CREATED)
+            if not valid_cwl_files:
+                return Response({
+                    "error": "No valid CWL files found", 
+                    "messages": messages
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            for cwl_name, cwl_data in valid_cwl_files.items():
+                filename = os.path.splitext(cwl_name)[0]
+                read_cwl_file(file_path, filename, messages)
+
+            return Response({
+                "message": "CWL files processed successfully",
+                "file_names": list(valid_cwl_files.keys()),
+                "messages": messages
+            }, status=status.HTTP_201_CREATED)
+
         except Exception as e:
-            logging.error(f"Failed to process CWL files: {str(e)}")
-            return Response({"error": str(e), "messages": messages}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception(f"Error processing CWL files: {str(e)}")
+            return Response({"error": "Internal server error", "detail": str(e)}, 
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        finally:
+            # Clean up temporary files
+            for file_path in temp_files:
+                try:
+                    os.unlink(file_path)
+                except Exception as e:
+                    logger.error(f"Error deleting temporary file {file_path}: {str(e)}")
+
+class CWLDownloadView(APIView):
+    def get(self, request, *args, **kwargs):
+        """
+        Download CWL files for a specified job.
+
+        This endpoint allows users to download CWL files for a given job.
+        It reconstructs the CWL files and returns them as a zip archive.
+
+        Query parameters:
+        - job_name: Name of the job to download CWL files for
+
+        Returns:
+        - ZIP file containing CWL files if successful
+        - 400 Bad Request: If no job name is provided
+        - 404 Not Found: If the specified job doesn't exist
+        - 500 Internal Server Error: If there's an error during file generation
+        """
+        serializer = CWLDownloadSerializer(data=request.query_params)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        job_name = serializer.validated_data['job_name']
+
+        try:
+            job = Job.objects.get(name=job_name)
+        except Job.DoesNotExist:
+            logger.warning(f"Attempted to download non-existent job: {job_name}")
+            return Response({"error": f"Job '{job_name}' does not exist"}, 
+                            status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                reconstruct_cwl_files(job_name, temp_dir)
+                zip_file_path = os.path.join(temp_dir, f"{job_name}_cwl.zip")
+
+                with zipfile.ZipFile(zip_file_path, 'w') as zipf:
+                    for root, _, files in os.walk(temp_dir):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            arcname = os.path.relpath(file_path, temp_dir)
+                            zipf.write(file_path, arcname=arcname)
+
+                response = FileResponse(open(zip_file_path, 'rb'), 
+                                        content_type='application/zip')
+                response['Content-Disposition'] = f'attachment; filename="{job_name}_cwl.zip"'
+                return response
+
+        except Exception as e:
+            logger.exception(f"Error generating CWL files for job '{job_name}': {str(e)}")
+            return Response({"error": "Failed to generate CWL files", "detail": str(e)}, 
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
