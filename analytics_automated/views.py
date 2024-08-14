@@ -15,6 +15,7 @@ from .cwl_utils.cwl_parser import read_cwl_file
 from .cwl_utils.cwl_schema_validator import CWLSchemaValidator
 from .cwl_utils.reconstruct_cwl import reconstruct_cwl_files
 from .models import Job
+from .workflow_visualization import *
 
 logger = logging.getLogger(__name__)
 
@@ -113,3 +114,60 @@ def UploadCWLView(request):
             return JsonResponse({"messages": [str(e)]})
 
     return render(request, 'admin/upload_cwl.html')
+
+class StaticWorkflowGraphView(View):
+    def get(self, request):
+        # tasks = request.session.get('tasks')
+        tasks = Task.objects.all()
+        
+        if not tasks:
+            logger.error('No tasks available for visualization.')
+            return render(request, 'workflow_visualization.html', {'error': 'No tasks available for visualization.'})
+
+        try:
+            img_data = plot_static_workflow2(tasks)
+            logger.info('Static workflow graph successfully generated.')
+            return render(request, 'workflow_visualization.html', {'img_data': img_data})
+        except Exception as e:
+            logger.error(f'Error generating static workflow graph: {e}')
+            return render(request, 'workflow_visualization.html', {'error': 'An error occurred while generating the visualization.'})
+        
+    
+
+class DashboardView(View):
+    def get(self, request, submission_name):
+        logger.info('Fetching data for dashboard.')
+
+        # Fetch task states for a specific submission, e.g., the first one
+        task_states = {}
+        
+        try:
+            task_states = get_current_task_states2(submission_name)
+        except Submission.DoesNotExist:
+            task_states = {'error': 'Submission not found'}
+        except Exception as e:
+            task_states = {'error': 'An error occurred while retrieving task states'}
+
+        context = {
+            'task_states': task_states,
+            'submission_name': submission_name,
+        }
+
+        logger.info('Dashboard data successfully retrieved.')
+        return render(request, 'dashboard.html', context)
+
+
+class TaskStatesView(View):
+    def get(self, request, submission_name):
+        logger.info(f'Retrieving task states for submission: {submission_name}')
+        try:
+            task_states = get_current_task_states2(submission_name)
+            logger.info('Task states successfully retrieved.')
+            return render(request, 'dashboard.html', {'task_states': task_states, 'submission_name': submission_name})
+        except Submission.DoesNotExist:
+            logger.error(f'Submission not found: {submission_name}')
+            return render(request, 'dashboard.html', {'error': 'Submission not found', 'submission_name': submission_name})
+        except Exception as e:
+            logger.error(f'Error retrieving task states for submission {submission_name}: {e}')
+            return render(request, 'dashboard.html', {'error': 'An error occurred while retrieving task states', 'submission_name': submission_name})
+    

@@ -1,7 +1,5 @@
 import logging
 import json
-import re
-import string
 from ..models import Backend, Task, Parameter, Environment, Configuration
 
 logger = logging.getLogger(__name__)
@@ -131,7 +129,17 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         return parsed_outputs
 
     logging.info(f"Parsing CWL command line tool: {name}")
-    base_command = cwl_data.get("baseCommand")
+
+    try:
+        base_command_ini = cwl_data.get("baseCommand")
+        if isinstance(base_command_ini, list):
+            base_command = ' '.join(base_command_ini)
+        else:
+            base_command = base_command_ini
+        del base_command_ini
+    except Exception as e:
+        logging.error(f"Error parsing CWL baseCommand: {e}")
+
     inputs = cwl_data.get("inputs", {})
     outputs = cwl_data.get("outputs", {})
     requirements = cwl_data.get("requirements", [])
@@ -185,10 +193,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     else:
         task['stdout_glob'] = ""
 
-    if isinstance(base_command, list):
-        executable_parts = base_command
-    else:
-        executable_parts = [base_command]
+    executable_parts = [base_command]
 
     try:
         for argument_item in arguments:
