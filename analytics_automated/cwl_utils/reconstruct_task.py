@@ -130,7 +130,7 @@ def _add_input_parameters(task, task_detail, positions_P):
             "position": positions_P[idx],
         }
         idx += 1
-        if p.switchless:
+        if not p.switchless:
             p_input_binding["prefix"] = p.flag
 
         p_attr_dict = {
