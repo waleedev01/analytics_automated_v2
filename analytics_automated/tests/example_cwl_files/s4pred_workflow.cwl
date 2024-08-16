@@ -4,8 +4,7 @@ class: Workflow
 cwlVersion: v1.2
 
 inputs:
-  input_file: 
-    type: File
+  input_file: File
 
 outputs:
   output_ss2:

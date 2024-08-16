@@ -46,7 +46,7 @@ class JobListTests(APITestCase):
         j1 = JobFactory.create(name="job1",pk=4)
         j2 = JobFactory.create(name="job2",pk=5)
         response = self.client.get(reverse('job',)+"?format=json")
-        response.render()
+        #response.render()
         self.assertEqual(response.status_code, 200)
         test_data = '{"count":2,"next":null,"previous":null,' \
                     '"results":[{"pk":4,"name":"job1"},{"pk":5'\
@@ -74,7 +74,7 @@ class JobDetailTests(APITestCase):
                                   version="")
 
         response = self.client.get(reverse('job',)+"job1?format=json")
-        response.render()
+        #response.render()
         self.assertEqual(response.status_code, 200)
         test_data = '{"name":"job1","steps":[{"task":{"configuration":' \
             '[{"type":"Software","name":"ls","parameters":"","version":"1"},' \
@@ -96,7 +96,7 @@ class JobDetailTests(APITestCase):
         c3 = ConfigurationFactory(task=t2, name="grep", type=2, parameters='',
                                   version="")
         response = self.client.get(reverse('job',)+"job2?format=json")
-        response.render()
+        #response.render()
         self.assertEqual(response.status_code, 404)
         test_data = '{"detail":"Not found."}'
         self.assertEqual(response.content.decode("utf-8"), test_data)
@@ -199,7 +199,7 @@ class EndpointListTests(APITestCase):
         s2 = StepFactory(job=j1, task=t2, ordering=1)
 
         response = self.client.get(reverse('endpoints',)+"?format=json")
-        response.render()
+        #response.render()
         self.assertEqual(response.status_code, 200)
         test_data = '{"jobs":["/submission/&job=job1&' + \
                     'submission_name=[STRING]&email=[EMAIL_STRING]&' + \
