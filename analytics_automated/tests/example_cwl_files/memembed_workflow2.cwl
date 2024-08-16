@@ -13,7 +13,7 @@ outputs:
 
 steps:
   memembed2:
-    run: memembed.cwl
+    run: memembed2.cwl
     in:
       input_file: input_file
     out: 

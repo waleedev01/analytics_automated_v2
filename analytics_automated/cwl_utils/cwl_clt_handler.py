@@ -1,7 +1,5 @@
 import logging
 import json
-import re
-import string
 from ..models import Backend, Task, Parameter, Environment, Configuration
 
 logger = logging.getLogger(__name__)
@@ -22,9 +20,14 @@ CONFIGURATION_CHOICES = {
 }
 
 def load_format_mapping(file_path):
-    with open(file_path, 'r') as file:
-        format_mapping = json.load(file)
-    return format_mapping
+    try:
+        with open(file_path, 'r') as file:
+            format_mapping = json.load(file)
+        logging.info(f"Format mapping loaded successfully from {file_path}")
+        return format_mapping
+    except Exception as e:
+        logging.error(f"Error loading format mapping from {file_path}: {e}")
+        return {}
 
 
 def handle_env_variable_req(requirements: list) -> dict[str, str]:
@@ -126,9 +129,19 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         return parsed_outputs
 
     logging.info(f"Parsing CWL command line tool: {name}")
-    base_command = cwl_data.get("baseCommand")
-    inputs = cwl_data.get("inputs", [])
-    outputs = cwl_data.get("outputs", [])
+
+    try:
+        base_command_ini = cwl_data.get("baseCommand")
+        if isinstance(base_command_ini, list):
+            base_command = ' '.join(base_command_ini)
+        else:
+            base_command = base_command_ini
+        del base_command_ini
+    except Exception as e:
+        logging.error(f"Error parsing CWL baseCommand: {e}")
+
+    inputs = cwl_data.get("inputs", {})
+    outputs = cwl_data.get("outputs", {})
     requirements = cwl_data.get("requirements", [])
     hints = cwl_data.get("hints", [])
     arguments = cwl_data.get("arguments", [])
@@ -180,10 +193,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     else:
         task['stdout_glob'] = ""
 
-    if isinstance(base_command, list):
-        executable_parts = base_command
-    else:
-        executable_parts = [base_command]
+    executable_parts = [base_command]
 
     try:
         for argument_item in arguments:
@@ -271,7 +281,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     return task
 
 
-def save_task_to_db(task_data, messages):
+def save_task_to_db(task_data, messages, cwl_content=None):
     try:
         backend = Backend.objects.get(id=1)  # Assuming a default backend ID
         logging.info(f"Saving task to database: {task_data['name']}")
@@ -312,6 +322,7 @@ def save_task_to_db(task_data, messages):
             existing_task.requirements = task_data['requirements']
             existing_task.custom_success_exit = task_data['success_codes']
             existing_task.custom_terminate_exit = task_data['permanent_fail_codes']
+            existing_task.cwl_content = cwl_content  # store the entire CLT CWL
             existing_task.save()
 
             existing_parameter = Parameter.objects.filter(task=existing_task)
@@ -335,8 +346,14 @@ def save_task_to_db(task_data, messages):
                 stdout_glob=task_data['stdout_glob'],
                 executable=task_data['executable'],
                 requirements=task_data['requirements'],
+                stdout=task_data['stdout'],
+                stdin=task_data['stdin'],
+                arguments=task_data['arguments'],
+                stderr=task_data['stderr'],
                 custom_success_exit=task_data['success_codes'],
                 custom_terminate_exit=task_data['permanent_fail_codes'],
+                shell_quote=task_data['shell_quote'],
+                cwl_content=cwl_content  # store the entire CLT CWL
             )
             message = f"Task saved successfully: {task_data['name']}"
             logging.info(message)
@@ -391,7 +408,7 @@ def save_task_to_db(task_data, messages):
                     parameters=package.get('parameter', None)
                 )
             except Exception as e:
-                logging.error(f"Error saving configration for task {task_data['name']}: {e}")
+                logging.error(f"Error saving configuration for task {task_data['name']}: {e}")
 
         message = f"Task saved successfully: {task_data['name']}"
         logging.info(message)

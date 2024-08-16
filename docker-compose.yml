@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: >
+      sh -c "
+      until pg_isready -h db -p 5432 -U test_user; do
+        echo 'Waiting for postgres...';
+        sleep 5;
+      done;
+      python manage.py migrate --settings=analytics_automated_project.settings.dev &&
+      python analytics_automated/bidirectional_cwl_llm_testing/run_performance_tests.py
+      "
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: analytics_automated_project.settings.dev
+      USER: test_user
+      PASSWORD: test_pass
+      SECRET_KEY: ANDKSNKJDNSJKFNJKDFJKBFDJKFDBJKDBFJKFBJKFDBJKFBDJKBFJKDBFJKDFBJKFD
+      DB_NAME: analytics_automated_db
+      DB_USER: test_user
+      DB_PASSWORD: test_pass
+      DB_HOST: db
+      DB_PORT: 5432
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:12
+    environment:
+      POSTGRES_DB: analytics_automated_db
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_pass
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U test_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

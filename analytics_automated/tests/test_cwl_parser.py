@@ -2,7 +2,8 @@ import os
 import yaml
 from django.test import TestCase
 from analytics_automated.cwl_utils.cwl_parser import read_cwl_file
-from analytics_automated.models import Backend
+from analytics_automated.models import Backend, Parameter, Task
+from analytics_automated.cwl_utils.reconstruct_task import reconstruct_task_cwl
 from analytics_automated.cwl_utils.cwl_schema_validator import CWLSchemaValidator
 
 def add_fake_backend(name, root_path):
@@ -14,19 +15,37 @@ def add_fake_backend(name, root_path):
 class CWLParserTest(TestCase):
     def test_read_cwl_file(self):
         """
-        Test if the CWL file is read correctly.
+        Test if the CWL file is read correctly. For development purpose
         """
         this_backend = add_fake_backend(name="local1", root_path="/tmp/")
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         # filenames = ['task1', 'task2', 'task3', 'task4', 'workflow']
-        filenames = ['create_fasta_S01', 'run_legacy_psiblast_S1']
+        filenames = ['hs_pred']
         message = []
         for filename in filenames:
             file_path = os.path.join(base_dir, 'tests', 'example_cwl_files', f'{filename}.cwl')
-            read_cwl_file(file_path, filename, message)
+            task = read_cwl_file(file_path, filename, message)
+            print(task.executable)
             print(f"[{filename} Message]", message[-1])
         # result = read_cwl_file(file_path, filename, message)
         # self.assertIsNotNone(result)
+
+    def test_generate_ctl_file(self):
+        """
+        Test if the CWL file is generated correctly. For development purpose
+        """
+        add_fake_backend(name="local1", root_path="/tmp/")
+
+        task_name = 'memembed'
+        message = []
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        file_path = os.path.join(base_dir, 'tests', 'example_cwl_files', f'{task_name}.cwl')
+        task = read_cwl_file(file_path, task_name, message)
+        print(f"[{task_name} Message]", message[-1])
+
+        task_output_path = 'specific task test'
+
+        reconstruct_task_cwl(task, task_output_path)
 
     def tearDown(self):
         pass
