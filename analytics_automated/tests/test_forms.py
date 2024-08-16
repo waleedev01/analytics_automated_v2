@@ -41,7 +41,7 @@ class TaskForms(TestCase):
         v = ValidatorFactory.create(job=self.j1, validation_type=vt)
         validators = self.j1.validators.all()
         sf = SubmissionForm()
-        f = open("submissions/files/test.png", "rb").read()
+        f = open("/home/gty/vv-project/celery-requirement/analytics_automated_v2/submissions/files/test.png", "rb").read()
         pngFile = SimpleUploadedFile('test.png', f)
         s = SubmissionFactory.create(input_data=File(pngFile))
         self.assertTrue(sf._SubmissionForm__validate_input(validators,
@@ -52,7 +52,7 @@ class TaskForms(TestCase):
         v = ValidatorFactory.create(job=self.j1, validation_type=vt)
         validators = self.j1.validators.all()
         sf = SubmissionForm()
-        f = open("submissions/files/test.gif", "rb").read()
+        f = open("/home/gty/vv-project/celery-requirement/analytics_automated_v2/submissions/files/test.gif", "rb").read()
         pngFile = SimpleUploadedFile('test.gif', f)
         s = SubmissionFactory.create(input_data=File(pngFile))
         self.assertFalse(sf._SubmissionForm__validate_input(validators,

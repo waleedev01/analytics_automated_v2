@@ -1,10 +1,14 @@
 import unittest
 import logging
 import yaml
+import django
 import os
+os.environ['DJANGO_SETTINGS_MODULE'] = 'analytics_automated_project.settings.dev'
+django.setup()
 from analytics_automated.cwl_utils.cwl_parser import read_cwl_file
 from analytics_automated.models import Backend, Parameter, QueueType, Step, Task
 from analytics_automated.tests.helper_functions import clearDatabase
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -37,6 +41,7 @@ class TestCWLCLTParser(unittest.TestCase):
         """
         self.test_files_dir = os.path.join(os.path.dirname(__file__), 'fixtures')
         self.backend = add_fake_backend(name="local1", root_path="/tmp/")
+
 
     def load_cwl_file(self, filename):
         """Load a CWL file from the fixtures directory."""

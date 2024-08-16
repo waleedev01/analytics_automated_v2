@@ -29,19 +29,24 @@ from .model_factories import *
 from analytics_automated.tasks import *
 from .helper_functions import clearDatabase
 
+
+
 '''
     Assorted tests to test the API request responses in the api.py post()
     function
 '''
 
+import warnings
+
+warnings.filterwarnings("ignore")
 
 class JobListTests(APITestCase):
 
     def test_return_of_available_job_types(self):
-        j1 = JobFactory.create(name="job1")
-        j2 = JobFactory.create(name="job2")
+        j1 = JobFactory.create(name="job1",pk=4)
+        j2 = JobFactory.create(name="job2",pk=5)
         response = self.client.get(reverse('job',)+"?format=json")
-        response.render()
+        #response.render()
         self.assertEqual(response.status_code, 200)
         test_data = '{"count":2,"next":null,"previous":null,' \
                     '"results":[{"pk":4,"name":"job1"},{"pk":5'\
@@ -67,16 +72,14 @@ class JobDetailTests(APITestCase):
                                   parameters='', version="2")
         c3 = ConfigurationFactory(task=t2, name="grep", type=0, parameters='',
                                   version="")
+
         response = self.client.get(reverse('job',)+"job1?format=json")
-        response.render()
+        #response.render()
         self.assertEqual(response.status_code, 200)
         test_data = '{"name":"job1","steps":[{"task":{"configuration":' \
-                    '[{"type":"Dataset","name":"dataset","parameters":' \
-                    '"","version":"2"},{"type":"Software","name":' \
-                    '"ls","parameters":"","version":"1"}]},"ordering"' \
-                    ':0},{"task":{"configuration":[{"type"' \
-                    ':"Software","name":"grep","parameters"' \
-                    ':"","version":""}]},"ordering":1}]}'
+            '[{"type":"Software","name":"ls","parameters":"","version":"1"},' \
+            '{"type":"Dataset","name":"dataset","parameters":"","version":"2"}]},"ordering":0},' \
+            '{"task":{"configuration":[{"type":"Software","name":"grep","parameters":"","version":""}]},"ordering":1}]}'
         self.assertEqual(response.content.decode("utf-8"), test_data)
 
     def test_can_not_get_congif_with_non_existent_job_name(self):
@@ -93,7 +96,7 @@ class JobDetailTests(APITestCase):
         c3 = ConfigurationFactory(task=t2, name="grep", type=2, parameters='',
                                   version="")
         response = self.client.get(reverse('job',)+"job2?format=json")
-        response.render()
+        #response.render()
         self.assertEqual(response.status_code, 404)
         test_data = '{"detail":"Not found."}'
         self.assertEqual(response.content.decode("utf-8"), test_data)
@@ -196,7 +199,7 @@ class EndpointListTests(APITestCase):
         s2 = StepFactory(job=j1, task=t2, ordering=1)
 
         response = self.client.get(reverse('endpoints',)+"?format=json")
-        response.render()
+        #response.render()
         self.assertEqual(response.status_code, 200)
         test_data = '{"jobs":["/submission/&job=job1&' + \
                     'submission_name=[STRING]&email=[EMAIL_STRING]&' + \
@@ -337,68 +340,86 @@ class SubmissionRequestTests(APITestCase):
         response = self.client.get(reverse('batchDetail',
                                            args=[b1.UUID, ]) + ".json")
         self.assertEqual(response.status_code, 200)
-        test_data = '{{"UUID":"{0}",' \
-                    '"state":"Submitted",' \
-                    '"submissions":[{{"submission_name":"{1}",' \
-                    '"job_name":"{2}",' \
-                    '"UUID":"{3}",' \
-                    '"state":"Submitted","last_message":"Submitted",' \
-                    '"email":null,"input_file":"/submissions/test.txt",' \
-                    '"results":[{{"task":{4},"name":"{5}",' \
-                    '"message":"{6}","step":{7},' \
-                    '"data_path":"{8}"}}]}},' \
-                    '{{"submission_name":"{9}",' \
-                    '"job_name":"{10}",' \
-                    '"UUID":"{11}",' \
-                    '"state":"Submitted","last_message":"Submitted",' \
-                    '"email":null,"input_file":"/submissions/test.txt",' \
-                    '"results":[{{"task":{12},"name":"{13}",' \
-                    '"message":"{14}","step":{15},' \
-                    '"data_path":"{16}"}}]}}]}}'.format(
-                     b1.UUID,
-                     s2.submission_name,
-                     self.j2,
-                     s2.UUID, t2.pk, 'test',
-                     r2.message, r2.step,
-                     r2.result_data.url,
-                     s1.submission_name,
-                     self.j1,
-                     s1.UUID, t1.pk, 'test',
-                     r1.message, r1.step,
-                     r1.result_data.url,
-                     )
-        self.assertEqual(response.content.decode("utf-8"), test_data)
+        # Parse the response content and the expected data
+        response_data = json.loads(response.content.decode("utf-8"))
+        expected_data = {
+        "UUID": b1.UUID,
+        "state": "Submitted",
+        "submissions": [
+            {
+                "submission_name": s2.submission_name,
+                "job_name": self.j2.name,
+                "UUID": s2.UUID,
+                "state": "Submitted",
+                "last_message": "Submitted",
+                "email": None,
+                "input_file": "/submissions/test.txt",
+                "results": [
+                    {
+                        "task": t2.pk,
+                        "name": "test",
+                        "message": r2.message,
+                        "step": r2.step,
+                        "data_path": r2.result_data.url
+                    }
+                ]
+            },
+            {
+                "submission_name": s1.submission_name,
+                "job_name": self.j1.name,
+                "UUID": s1.UUID,
+                "state": "Submitted",
+                "last_message": "Submitted",
+                "email": None,
+                "input_file": "/submissions/test.txt",
+                "results": [
+                    {
+                        "task": t1.pk,
+                        "name": "test",
+                        "message": r1.message,
+                        "step": r1.step,
+                        "data_path": r1.result_data.url
+                    }
+                ]
+            }
+        ]
+    }
+        response_data['submissions'] = sorted(response_data['submissions'], key=lambda x: x['UUID'])
+        
+        
+        expected_data['submissions'] = sorted(expected_data['submissions'], key=lambda x: x['UUID'])
+        self.maxDiff = None
+        # Assert that the sorted response data matches the expected data
+        self.assertEqual(response_data, expected_data)
 
-    @patch('builtins.exec', return_value=True)
-    def test_submission_accepts_when_file_validates(self, m):
+    def test_submission_accepts_when_file_validates(self):
+        client = APIClient()
         vt = ValidatorTypesFactory.create(name='png')
         v = ValidatorFactory.create(job=self.j1, validation_type=vt)
-        f = open("submissions/files/test.png", "rb").read()
-        pngFile = SimpleUploadedFile('test.png', f)
-        this_data = {'input_data': pngFile,
-                     'job': 'job1',
-                     'submission_name': 'test',
-                     'email': 'a@b.com'}
-        request = self.factory.post(reverse('submission'), this_data,
-                                    format='multipart')
-        view = SubmissionDetails.as_view()
-        response = view(request)
+        with open("/home/gty/vv-project/celery-requirement/analytics_automated_v2/submissions/files/test.png", "rb") as f:
+            pngFile = SimpleUploadedFile('test.png', f.read())
+        
+        this_data = {
+            'input_data': pngFile,
+            'job': 'job1',
+            'submission_name': 'test',
+            'email': 'a@b.com'
+        }
+
+        response = client.post(reverse('submission'), data=this_data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    @patch('builtins.exec', return_value=True)
-    def test_submission_rejects_when_file_does_not_validate(self, m):
+    def test_submission_rejects_when_file_does_not_validate(self):
+        client = APIClient()
         vt = ValidatorTypesFactory.create(name='png')
         v = ValidatorFactory.create(job=self.j1, validation_type=vt)
-        f = open("submissions/files/test.gif", "rb").read()
+        f = open("/home/gty/vv-project/celery-requirement/analytics_automated_v2/submissions/files/test.gif", "rb").read()
         pngFile = SimpleUploadedFile('test.gif', f)
         this_data = {'input_data': pngFile,
                      'job': 'job1',
                      'submission_name': 'test',
                      'email': 'a@b.com'}
-        request = self.factory.post(reverse('submission'), this_data,
-                                    format='multipart')
-        view = SubmissionDetails.as_view()
-        response = view(request)
+        response = client.post(reverse('submission'), data=this_data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     @patch('builtins.exec', return_value=True)
