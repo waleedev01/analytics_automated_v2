@@ -116,23 +116,29 @@ def UploadCWLView(request):
     return render(request, 'admin/upload_cwl.html')
 
 class StaticWorkflowGraphView(View):
-    def get(self, request):
-        # tasks = request.session.get('tasks')
-        tasks = Task.objects.all()
-        
-        if not tasks:
-            logger.error('No tasks available for visualization.')
-            return render(request, 'workflow_visualization.html', {'error': 'No tasks available for visualization.'})
-
+    def get(self, request, job_name=None):
         try:
+            # Find the job with the given job_name
+            job = Job.objects.get(name=job_name)
+            
+            # Get tasks related to this job via the Step model
+            steps = Step.objects.filter(job=job)
+            tasks = Task.objects.filter(id__in=steps.values_list('task_id', flat=True))
+
+            if not tasks:
+                logger.error(f'No tasks available for visualization for job: {job_name}.')
+                return render(request, 'workflow_visualization.html', {'error': f'No tasks available for visualization for job: {job_name}.'})
+
             img_data = plot_static_workflow2(tasks)
-            logger.info('Static workflow graph successfully generated.')
-            return render(request, 'workflow_visualization.html', {'img_data': img_data})
+            logger.info(f'Static workflow graph successfully generated for job: {job_name}.')
+            return render(request, 'workflow_visualization.html', {'img_data': img_data, 'job_name': job_name})
+        except Job.DoesNotExist:
+            logger.error(f'Job not found: {job_name}')
+            return render(request, 'workflow_visualization.html', {'error': f'Job not found: {job_name}'})
         except Exception as e:
-            logger.error(f'Error generating static workflow graph: {e}')
+            logger.error(f'Error generating static workflow graph for job {job_name}: {e}')
             return render(request, 'workflow_visualization.html', {'error': 'An error occurred while generating the visualization.'})
-        
-    
+
 
 class DashboardView(View):
     def get(self, request, submission_name):

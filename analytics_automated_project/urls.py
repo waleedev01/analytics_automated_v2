@@ -53,10 +53,10 @@ urlpatterns = [
      url(r'^analytics_automated/admin_download_cwl/$', DownloadCWLView, name="admin_download_cwl"),  # New view for the admin CWL download
      url(r'^analytics_automated/dynamic-visualize/(?P<submission_name>.+)$',
          DashboardView.as_view(), name='dynamic_visualize'),
-     url(r'^analytics_automated/static-visualize/$',
-         StaticWorkflowGraphView.as_view(), name='static_visualize'),
      url(r'^analytics_automated/api/task-states/(?P<submission_name>.+)',
          api.TaskStatesView.as_view(), name='task_states'),   
+     url(r'^analytics_automated/static-visualize/(?P<job_name>.+)/$',
+     StaticWorkflowGraphView.as_view(), name='static_visualize'),
      url(r'^login/$', auth_views.LoginView.as_view(), name='login'),
      url(r'^logout/$', auth_views.LogoutView.as_view(), name='logout'),
 ]

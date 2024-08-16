@@ -1,6 +1,8 @@
 import networkx as nx
 import io
 import base64
+import matplotlib
+matplotlib.use('Agg')  
 import matplotlib.pyplot as plt
 import logging
 from .models import Submission, Task, Result, Step # Adjust if Task and Submission are in different files
