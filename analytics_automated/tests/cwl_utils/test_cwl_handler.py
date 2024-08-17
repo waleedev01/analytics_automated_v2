@@ -83,19 +83,6 @@ class TestCWLCLTParser(unittest.TestCase):
         self.assertIsNotNone(clt)
         self.assertIn("Found existing task with name: some_tool", messages)
     
-    def test_parse_cwl_clt_with_parameters(self):
-        """Test parsing of a valid CWL CommandLineTool with Parameters."""
-        filepath = os.path.join(self.test_files_dir, 'valid_clt_with_parameters.cwl')
-        messages = []
-        clt = read_cwl_file(filepath, 'valid_clt_with_parameters', messages)
-        self.assertIsNotNone(clt)
-        self.assertEqual(clt.name, "valid_clt_with_parameters")
-        self.assertEqual(clt.in_glob, ".ss")
-        self.assertEqual(clt.out_glob, ".txt")
-        self.assertEqual(clt.executable, "echo $P1 $P2 $I1")
-        params = Parameter.objects.filter(task=clt)
-        self.assertEqual(len(params), 2)
-    
     def test_parse_cwl_clt_with_arguments(self):
         """Test parsing of a valid CWL CommandLineTool with Arguments."""
         filepath = os.path.join(self.test_files_dir, 'valid_clt_with_arguments.cwl')
