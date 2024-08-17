@@ -83,6 +83,20 @@ class TestCWLCLTParser(unittest.TestCase):
         self.assertIsNotNone(clt)
         self.assertIn("Found existing task with name: some_tool", messages)
     
+    def test_parse_cwl_clt_with_arguments(self):
+        """Test parsing of a valid CWL CommandLineTool with Arguments."""
+        filepath = os.path.join(self.test_files_dir, 'valid_clt_with_arguments.cwl')
+        messages = []
+        clt = read_cwl_file(filepath, 'valid_clt_with_arguments', messages)
+        self.assertIsNotNone(clt)
+        self.assertEqual(clt.name, "valid_clt_with_arguments")
+        argument1 = '-graph' in clt.executable
+        argument2 = '-window' in clt.executable
+        argument3 = '-order' in clt.executable
+        self.assertTrue(argument1)
+        self.assertTrue(argument2)
+        self.assertTrue(argument3)
+    
     def test_parse_cwl_clt_invalid_validation(self):
         """Test parsing of an invalid CWL CommandLineTool."""
         filepath = os.path.join(self.test_files_dir, 'invalid_workflow_invalid_arguments.cwl')
@@ -154,12 +168,12 @@ class TestCWLWorkflowParser(unittest.TestCase):
     
     def test_parse_cwl_workflow_without_existing_task(self):
         """Test parsing of a CWL workflow without existing task."""
-        filepath = os.path.join(self.test_files_dir, 'valid_workflow.cwl')
+        filepath = os.path.join(self.test_files_dir, 'not_found_task_workflow.cwl')
         messages = []
-        workflow = read_cwl_file(filepath, 'valid_workflow', messages)
+        workflow = read_cwl_file(filepath, 'not_found_task_workflow', messages)
         self.assertIsNone(workflow)
-        self.assertIn("Task file not found: some_tool", messages)
-        self.assertIn("Cancel job creation with name 'valid_workflow' due to missing task file: some_tool", messages)
+        self.assertIn("Task file not found: some_tools", messages)
+        self.assertIn("Cancel job creation with name 'not_found_task_workflow' due to missing task file: some_tools", messages)
         self.assertEqual(len(messages), 2)
     
     def test_parse_cwl_workflow_circular(self):

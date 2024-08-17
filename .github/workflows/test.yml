@@ -76,18 +76,13 @@ jobs:
       - name: Run migrations
         run: |
           python manage.py migrate --settings=analytics_automated_project.settings.dev
-
-      - name: Run tests
-        run: |
-          pytest analytics_automated/tests/test_cwl.py --disable-warnings
-        env:
-          DJANGO_SETTINGS_MODULE: analytics_automated_project.settings.dev
       
       - name: Run unit tests
         run: |
-          coverage run manage.py test analytics_automated.tests.cwl_utils --settings=analytics_automated_project.settings.dev
+          export CI_PIPELINE=1
+          coverage run manage.py test analytics_automated.tests --settings=analytics_automated_project.settings.dev
       
       - name: Generate unit tests report
         run: |
-          coverage report --include="analytics_automated/cwl_utils/cwl_clt_handler.py,analytics_automated/cwl_utils/cwl_parser.py,analytics_automated/cwl_utils/cwl_schema_validator.py,analytics_automated/cwl_utils/cwl_workflow_handler.py"
+          coverage report --include="analytics_automated/cwl_utils/cwl_clt_handler.py,analytics_automated/cwl_utils/cwl_parser.py,analytics_automated/cwl_utils/cwl_schema_validator.py,analytics_automated/cwl_utils/cwl_workflow_handler.py,analytics_automated/cwl_utils/cwl_reconstructor.py,analytics_automated/cwl_utils/reconstruct_cwl.py,analytics_automated/cwl_utils/reconstruct_task.py,analytics_automated/cwl_utils/reconstruct_workflow.py"
     

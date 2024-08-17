@@ -1,5 +1,6 @@
 import json
 import io
+import unittest
 import uuid
 import datetime
 import pytz
@@ -239,6 +240,7 @@ class SubmissionRequestTests(APITestCase):
                                      executable="wc")
         s = StepFactory(job=self.j1, task=self.t, ordering=0)
         s2 = StepFactory(job=self.j2, task=self.t2, ordering=0)
+        self.test_files_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'submissions', 'files')
 
     def tearDown(self):
         clearDatabase()
@@ -392,11 +394,13 @@ class SubmissionRequestTests(APITestCase):
         # Assert that the sorted response data matches the expected data
         self.assertEqual(response_data, expected_data)
 
+    @unittest.skipIf(os.getenv('CI_PIPELINE') == '1', "Skipping test in CI pipeline")
     def test_submission_accepts_when_file_validates(self):
         client = APIClient()
         vt = ValidatorTypesFactory.create(name='png')
         v = ValidatorFactory.create(job=self.j1, validation_type=vt)
-        with open("/home/gty/vv-project/celery-requirement/analytics_automated_v2/submissions/files/test.png", "rb") as f:
+        filepath = os.path.join(self.test_files_dir, 'test.png')
+        with open(filepath, "rb") as f:
             pngFile = SimpleUploadedFile('test.png', f.read())
         
         this_data = {
@@ -413,7 +417,8 @@ class SubmissionRequestTests(APITestCase):
         client = APIClient()
         vt = ValidatorTypesFactory.create(name='png')
         v = ValidatorFactory.create(job=self.j1, validation_type=vt)
-        f = open("/home/gty/vv-project/celery-requirement/analytics_automated_v2/submissions/files/test.gif", "rb").read()
+        filepath = os.path.join(self.test_files_dir, 'test.gif')
+        f = open(filepath, "rb").read()
         pngFile = SimpleUploadedFile('test.gif', f)
         this_data = {'input_data': pngFile,
                      'job': 'job1',

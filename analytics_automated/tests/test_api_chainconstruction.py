@@ -62,12 +62,13 @@ class CeleryChainConstructionTests(APITransactionTestCase):
                                 'temporary')
 
     def tearDown(self):
-        User.objects.all().delete()
-        Job.objects.all().delete()
-        Backend.objects.all().delete()
-        Task.objects.all().delete()
-        Step.objects.all().delete()
-        clearDatabase()  # Ensure this function properly cleans up all necessary data
+        if os.getenv('CI_PIPELINE'):
+            User.objects.all().delete()
+            Job.objects.all().delete()
+            Backend.objects.all().delete()
+            Task.objects.all().delete()
+            Step.objects.all().delete()
+            clearDatabase()  # Ensure this function properly cleans up all necessary data
 
     def test__construct_chain_string(self):
         p1 = ParameterFactory.create(task=self.t, flag="-t", bool_valued=True,
