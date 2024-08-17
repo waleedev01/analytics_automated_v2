@@ -230,7 +230,7 @@ SMUGGLER_FORMAT = 'yaml'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
-STATICFILES_DIRS = [BASE_DIR.child("static"), BASE_DIR.child("submission", "files"), ]
+STATICFILES_DIRS = [BASE_DIR.child("static"), BASE_DIR.child("submissions", "files"), ]
 
 
 # Add bits for bootstrap 3 and message bits
