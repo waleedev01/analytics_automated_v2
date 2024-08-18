@@ -260,7 +260,7 @@ def _add_outputs(task, task_detail):
         if output.strip():  # Skip empty outputs
             task_detail["outputs"][f"output_{i}"] = {
                 "type": "File",
-                "outputBinding": {"glob": output}
+                "outputBinding": {"glob": "*" + output}
             }
 
 
