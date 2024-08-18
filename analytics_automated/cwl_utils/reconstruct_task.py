@@ -150,9 +150,6 @@ def reconstruct_task_cwl(task, file_path):
 
     _add_outputs(task, task_detail)
 
-    # Add environment variables
-    _add_environment(task, task_detail)
-
     # Save the CWL file
     try:
         with open(file_path, 'w') as file:
@@ -265,6 +262,7 @@ def _add_outputs(task, task_detail):
                 "type": "File",
                 "outputBinding": {"glob": output}
             }
+
 
 def _add_environment(task, task_detail):
     """
