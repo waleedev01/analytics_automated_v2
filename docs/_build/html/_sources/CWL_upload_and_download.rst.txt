@@ -153,7 +153,7 @@ Step to Upload CWL Files
 
    -  Select the three CWL files (``create_file.cwl``, ``write_message.cwl``, ``createHelloWorld.cwl``).
 
-   -  Click "Upload CWL". The order of the files does not matter; the system will automatically place the Workflow file last for parsing. If uploading files individually, ensure that Task files are uploaded before the Workflow file.
+   -  Click "Upload CWL". Please ensure that Task files are always uploaded before the Workflow file.
 
 .. image:: upload_example_2.png
    :scale: 50%
