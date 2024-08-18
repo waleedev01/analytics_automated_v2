@@ -1,8 +1,6 @@
-import ast
 import uuid
 from ipware.ip import get_client_ip
 from collections import defaultdict
-from django.core.files.storage import default_storage
 import pprint
 import logging
 import string
@@ -10,40 +8,28 @@ import keyword
 import numpy as np
 import math
 import scipy.stats as stats
-import yaml
-from celery import chain
 
-from django import forms
 from django.utils.datastructures import MultiValueDictKeyError
 from django.conf import settings
 from django.db.models import F, Func
 
-from rest_framework import viewsets
 from rest_framework import mixins
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework import request
 from rest_framework.parsers import MultiPartParser
 from rest_framework.parsers import FormParser
-from rest_framework.views import APIView  # new import
-
 
 from .serializers import SubmissionInputSerializer, SubmissionOutputSerializer
 from .serializers import JobSerializer, BatchSerializer, JobDetailSerializer
-from .models import Job, Submission, Backend, Batch
+from .models import Job, Submission, Batch
 from .forms import SubmissionForm
 from .tasks import *
 from .validators import *
 from .r_keywords import *
 from .cmdline import *
-from .cwl_utils import cwl_parser
-from .workflow_visualization import *
-
-
 
 logger = logging.getLogger(__name__)
-
 
 class BatchDetails(mixins.RetrieveModelMixin,
                    generics.GenericAPIView):
@@ -622,64 +608,3 @@ class JobDetail(mixins.RetrieveModelMixin,
             Returns the details of a job
         """
         return self.retrieve(request, *args, **kwargs)
-
-
-class CWLUploadView(APIView):
-    def post(self, request, format=None):
-        files = request.FILES.getlist('files')
-        if not files:
-            return Response({"error": "No files provided"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        file_paths = {}
-        messages = []
-        for file in files:
-            if not file.name.endswith('.cwl'):
-                logging.error(f"Uploaded file is not a CWL file: {file.name}")
-                messages.append(f"Uploaded file is not a CWL file: {file.name}")
-                continue
-            
-            path = default_storage.save('cwl_workflows/' + file.name, ContentFile(file.read()))
-            full_path = default_storage.path(path)
-            file_paths[file.name] = full_path
-        
-        # Parse each CWL file
-        try:
-            workflow_files = {}
-            for file_name, full_path in file_paths.items():
-                with open(full_path, 'r') as cwl_file:
-                    cwl_data = yaml.safe_load(cwl_file)
-                cwl_class = cwl_data.get("class")
-
-                if cwl_class == "Workflow":
-                    workflow_files[file_name] = cwl_data
-
-            if not workflow_files:
-                messages.append("No workflow files found in the uploaded files.")
-            else:
-                for workflow_name, workflow_data in workflow_files.items():
-                    read_cwl_file(file_paths[workflow_name], file_paths, messages)
-            
-            # Clean up uploaded files
-            for file_name, full_path in file_paths.items():
-                os.remove(full_path)
-
-            logging.info(f"Successfully processed CWL files: {', '.join(file_paths.keys())}")
-            return Response({"message": "CWL files processed successfully", "file_names": list(file_paths.keys()), "messages": messages}, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            logging.error(f"Failed to process CWL files: {str(e)}")
-            return Response({"error": str(e), "messages": messages}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-
-class TaskStatesView(APIView):
-    def get(self, request, submission_name):
-        logger.info(f'Retrieving task states for submission: {submission_name}')
-        try:
-            task_states = get_current_task_states2(submission_name)
-            logger.info('Task states successfully retrieved.')
-            return Response(task_states, status=200)
-        except Submission.DoesNotExist:
-            logger.error(f'Submission not found: {submission_name}')
-            return Response({'error': 'Submission not found'}, status=404)
-        except Exception as e:
-            logger.error(f'Error retrieving task states for submission {submission_name}: {e}')
-            return Response({'error': 'An error occurred while retrieving task states'}, status=500)
