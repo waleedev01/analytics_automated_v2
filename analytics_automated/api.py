@@ -128,7 +128,7 @@ class SubmissionDetails(mixins.RetrieveModelMixin,
         for field in request_data:
             # print(field)
             if any(char in invalid for char in str(request_data[field])):
-                return([False, "Incoming data can not contain punctuation: "+kw])  # don't allow punctuation chars
+                return([False, "Incoming data can not contain punctuation: "])  # don't allow punctuation chars
             for kw in pythkw:
                 if kw == str(request_data[field]):
                     return([False, "Incoming data can not contain python keyords: "+kw])  # don't allow python keywords

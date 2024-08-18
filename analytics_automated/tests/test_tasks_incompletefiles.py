@@ -83,7 +83,7 @@ class TaskIncompleteFilesBehaviours(TestCase):
             lr().run_cmd.return_value = 0
             lr().output_data = {"huh.py": b"this"}
             task_runner.delay(self.uuid1, 0, 1, 1, 1, "test_custom_continue",
-                              [], {}, None, 1, {})
+                              [], {}, None, 1, {},'')
             self.sub = Submission.objects.get(UUID=self.uuid1)
             self.assertEqual(self.sub.last_message, "Completed job at step #1")
             # this test ends up being the same as the Terminates one and
@@ -109,7 +109,7 @@ class TaskIncompleteFilesBehaviours(TestCase):
             lr().output_data = {"huh.py": b"this"}
             with transaction.atomic():
                 self.assertRaises(OSError, task_runner, self.uuid1, 0, 1, 1, 1,
-                                  "test_custom_continue", [], {}, None, 1, {})
+                                  "test_custom_continue", [], {}, None, 1, {},'')
 
     @override_settings(
         task_eager_propagates=True,
@@ -130,6 +130,6 @@ class TaskIncompleteFilesBehaviours(TestCase):
             lr().run_cmd.return_value = 0
             lr().output_data = {"huh.py": b"this"}
             task_runner.delay(self.uuid1, 0, 1, 1, 1, "test_custom_continue",
-                              [], {}, None, 1, {})
+                              [], {}, None, 1, {},'')
             self.sub = Submission.objects.get(UUID=self.uuid1)
             self.assertEqual(self.sub.last_message, "Completed job at step #1")

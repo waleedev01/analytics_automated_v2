@@ -32,6 +32,7 @@ class TaskForms(TestCase):
         self.t = TaskFactory.create(backend=self.b, name="task1",
                                     executable="ls")
         s = StepFactory(job=self.j1, task=self.t, ordering=0)
+        self.test_files_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'submissions', 'files')
 
     def tearDown(self):
         clearDatabase()
@@ -41,7 +42,8 @@ class TaskForms(TestCase):
         v = ValidatorFactory.create(job=self.j1, validation_type=vt)
         validators = self.j1.validators.all()
         sf = SubmissionForm()
-        f = open("submissions/files/test.png", "rb").read()
+        filepath = os.path.join(self.test_files_dir, 'test.png')
+        f = open(filepath, "rb").read()
         pngFile = SimpleUploadedFile('test.png', f)
         s = SubmissionFactory.create(input_data=File(pngFile))
         self.assertTrue(sf._SubmissionForm__validate_input(validators,
@@ -52,7 +54,8 @@ class TaskForms(TestCase):
         v = ValidatorFactory.create(job=self.j1, validation_type=vt)
         validators = self.j1.validators.all()
         sf = SubmissionForm()
-        f = open("submissions/files/test.gif", "rb").read()
+        filepath = os.path.join(self.test_files_dir, 'test.gif')
+        f = open(filepath, "rb").read()
         pngFile = SimpleUploadedFile('test.gif', f)
         s = SubmissionFactory.create(input_data=File(pngFile))
         self.assertFalse(sf._SubmissionForm__validate_input(validators,

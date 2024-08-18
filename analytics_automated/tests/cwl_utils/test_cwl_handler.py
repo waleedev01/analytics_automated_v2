@@ -1,10 +1,14 @@
 import unittest
 import logging
 import yaml
+import django
 import os
+os.environ['DJANGO_SETTINGS_MODULE'] = 'analytics_automated_project.settings.dev'
+django.setup()
 from analytics_automated.cwl_utils.cwl_parser import read_cwl_file
 from analytics_automated.models import Backend, Parameter, QueueType, Step, Task
 from analytics_automated.tests.helper_functions import clearDatabase
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -37,6 +41,7 @@ class TestCWLCLTParser(unittest.TestCase):
         """
         self.test_files_dir = os.path.join(os.path.dirname(__file__), 'fixtures')
         self.backend = add_fake_backend(name="local1", root_path="/tmp/")
+
 
     def load_cwl_file(self, filename):
         """Load a CWL file from the fixtures directory."""
@@ -77,6 +82,20 @@ class TestCWLCLTParser(unittest.TestCase):
         clt = read_cwl_file(filepath, 'some_tool', messages)
         self.assertIsNotNone(clt)
         self.assertIn("Found existing task with name: some_tool", messages)
+    
+    def test_parse_cwl_clt_with_arguments(self):
+        """Test parsing of a valid CWL CommandLineTool with Arguments."""
+        filepath = os.path.join(self.test_files_dir, 'valid_clt_with_arguments.cwl')
+        messages = []
+        clt = read_cwl_file(filepath, 'valid_clt_with_arguments', messages)
+        self.assertIsNotNone(clt)
+        self.assertEqual(clt.name, "valid_clt_with_arguments")
+        argument1 = '-graph' in clt.executable
+        argument2 = '-window' in clt.executable
+        argument3 = '-order' in clt.executable
+        self.assertTrue(argument1)
+        self.assertTrue(argument2)
+        self.assertTrue(argument3)
     
     def test_parse_cwl_clt_invalid_validation(self):
         """Test parsing of an invalid CWL CommandLineTool."""
@@ -149,12 +168,12 @@ class TestCWLWorkflowParser(unittest.TestCase):
     
     def test_parse_cwl_workflow_without_existing_task(self):
         """Test parsing of a CWL workflow without existing task."""
-        filepath = os.path.join(self.test_files_dir, 'valid_workflow.cwl')
+        filepath = os.path.join(self.test_files_dir, 'not_found_task_workflow.cwl')
         messages = []
-        workflow = read_cwl_file(filepath, 'valid_workflow', messages)
+        workflow = read_cwl_file(filepath, 'not_found_task_workflow', messages)
         self.assertIsNone(workflow)
-        self.assertIn("Task file not found: some_tool", messages)
-        self.assertIn("Cancel job creation with name 'valid_workflow' due to missing task file: some_tool", messages)
+        self.assertIn("Task file not found: some_tools", messages)
+        self.assertIn("Cancel job creation with name 'not_found_task_workflow' due to missing task file: some_tools", messages)
         self.assertEqual(len(messages), 2)
     
     def test_parse_cwl_workflow_circular(self):

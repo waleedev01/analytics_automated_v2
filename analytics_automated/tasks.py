@@ -527,6 +527,9 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
     if t.stdout_glob is not None and len(t.stdout_glob) > 0:
         stdoglob = "."+t.stdout_glob.lstrip(".")
     
+    # Handle BatchRequirements
+    handle_batch_requirements(t.requirements, t.backend.root_path)
+
     #handle the task initial_workdir_requirement
     handle_initial_workdir_requirement(t.requirements,str(step_id),t.backend.root_path)
     
@@ -537,7 +540,7 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
     # Handle "when" condition
     logger.info("CONDITION:" + str(condition))
     if condition != '':
-        exit_code = data_dict.get(str(uuid)+"_"+str(step_counter-1)+'_exit_code.txt', None)
+        exit_code = data_dict.get(str(uuid)+"_"+str(current_step-1)+'_exit_code.txt', None)
         if exit_code is not None:
             if 'exit_code' in condition:
                 exit_code = int(exit_code)
@@ -745,17 +748,36 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
 
 @shared_task(bind=True, default_retry_delay=5 * 60, rate_limit=40)
 def chord_end(self, uuid, step_id, current_step):
-    s = Submission.objects.get(UUID=uuid)
-    state = Submission.COMPLETE
-    message = 'Completed job at step #' + str(current_step)
-    # TODO: This needs a try-catch
-    s.refresh_from_db()
-    if s.status != Submission.ERROR and s.status != Submission.CRASH:
-        Submission.update_submission_state(s, True, state, step_id,
-                                           self.request.id, message,
-                                           socket.gethostname())
-    Batch.update_batch_state(s.batch, state)
-    __handle_batch_email(s)
+    try:
+        # Get the Submission from the database
+        s = Submission.objects.get(UUID=uuid)
+        state = Submission.COMPLETE
+        message = f'Completed job at step #{current_step}'
+
+        s.refresh_from_db()
+
+        # Refresh the object to ensure you get the latest state
+        if s.status not in [Submission.ERROR, Submission.CRASH]:
+            Submission.update_submission_state(s, True, state, step_id,
+                                               self.request.id, message,
+                                               socket.gethostname())
+        
+        # Update Batch status
+        Batch.update_batch_state(s.batch, state)
+        
+        # Process batch email notifications
+        __handle_batch_email(s)
+
+        # Record successful completion information
+        logger.info(f'Chord end for UUID: {uuid}, Step ID: {step_id}, Current Step: {current_step}')
+    
+    except Submission.DoesNotExist:
+        logger.error(f'Submission with UUID {uuid} does not exist.')
+    except Exception as e:
+        #Catch other potential exceptions and log error messages
+        logger.error(f'Error in chord_end task: {e}')
+        __handle_batch_email(s)  # Ensure that notifications are also sent when errors occur
+
 
 @shared_task
 def handle_initial_workdir_requirement(requirements,step_id,src):
@@ -807,3 +829,215 @@ def check_software_requirement(requirements):
                 raise RuntimeError(f"Package {package_name} is required but not installed.")
     
     logger.info("Software requirements are satisfied.")
+
+
+@shared_task
+def handle_batch_requirements(task_requirements, backend_root_path):
+    """
+    Handle the BatchRequirement configuration and apply it to the task.
+    ​:param task_requirements: task requirements, including BatchRequirement
+    :param backend_root_path: indicates the root path of the batch system
+    :return: None
+    """
+    if task_requirements is None:
+        return f"No software_requirement in this step"
+        
+    logger.info("Handling BatchRequirements...")
+
+    batch_requirements = [req for req in task_requirements if req.get('class') == 'BatchRequirement']
+    
+    if not batch_requirements:
+        logger.info("No BatchRequirement found.")
+        return
+    
+    for req in batch_requirements:
+        logger.info(f"BatchRequirement found: {req}")
+        batch_system = req.get('batchSystem')
+        job_submission_options = req.get('jobSubmission', {})
+        script_name = req.get('script', 'default_script.sh')
+        
+        if batch_system:
+            logger.info(f"Batch system: {batch_system}")
+            logger.info(f"Job submission options: {job_submission_options}")
+            # Generate the path to the script
+            script_path = os.path.join(backend_root_path, script_name)
+            logger.info(f"Script path: {script_path}")
+
+            # handle different batch systems
+            if batch_system == 'slurm':
+                handle_slurm_requirements(job_submission_options, backend_root_path, script_path)
+            elif batch_system == 'pbs':
+                handle_pbs_requirements(job_submission_options, backend_root_path, script_path)
+            elif batch_system == 'sge':
+                handle_sge_requirements(job_submission_options, backend_root_path, script_path)
+            else:
+                logger.warning(f"Unsupported batch system: {batch_system}")
+        else:
+            logger.warning("Batch system not specified in BatchRequirement.")
+
+@shared_task
+def handle_slurm_requirements(options, root_path, script_path):
+    """
+    Handle SLURM-related batch processing requirements.
+​    :param options: job submission options
+    :param root_path: root path of the batch system
+    """
+    logger.info(f"Configuring SLURM with options: {options} and root path: {root_path}")
+    # Add specific SLURM configuration code here
+    job_name = options.get('jobName', 'default_job_name')
+    output_file = options.get('outputFile', 'slurm_output.txt')
+    error_file = options.get('errorFile', 'slurm_error.txt')
+    partition = options.get('partition', 'default')
+    nodes = options.get('nodes', 1)
+    ntasks = options.get('ntasks', 1)
+    time_limit = options.get('time', '01:00:00')
+    memory = options.get('memory', '1G')
+
+    # Create the SLURM job script
+    slurm_script = f"""#!/bin/bash
+    #SBATCH --job-name={job_name}
+    #SBATCH --output={output_file}
+    #SBATCH --error={error_file}
+    #SBATCH --partition={partition}
+    #SBATCH --nodes={nodes}
+    #SBATCH --ntasks={ntasks}
+    #SBATCH --time={time_limit}
+    #SBATCH --mem={memory}
+
+    # Load any necessary modules
+    # module load ...
+
+    # Run the command or script
+    {script_path}
+    """
+
+    # Save the SLURM job script to a file
+    script_path = f"{root_path}/slurm_job_script.sh"
+    with open(script_path, 'w') as script_file:
+        script_file.write(slurm_script)
+    
+    logger.info(f"SLURM job script created at: {script_path}")
+    
+    # Submit the job to SLURM
+    try:
+        submission_command = f"sbatch {script_path}"
+        submission_result = subprocess.run(submission_command, shell=True, check=True, capture_output=True, text=True)
+        logger.info(f"SLURM job submitted successfully. Output: {submission_result.stdout}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error submitting SLURM job: {e.stderr}")
+        raise
+
+@shared_task
+def handle_pbs_requirements(options, root_path, script_path):
+    """
+    Handle PBS-related batch processing requirements.
+    :param options: job submission options
+    :param root_path: root path of the batch system
+    """
+    logger.info(f"Configuring PBS with options: {options} and root path: {root_path}")
+    # Add specific PBS configuration code here
+    
+    job_name = options.get('jobName', 'default_job_name')
+    output_file = options.get('outputFile', 'pbs_output.txt')
+    error_file = options.get('errorFile', 'pbs_error.txt')
+    queue = options.get('queue', 'default')
+    nodes = options.get('nodes', 1)
+    ppn = options.get('ppn', 1)  # Number of processors per node
+    time_limit = options.get('time', '01:00:00')
+    memory = options.get('memory', '1gb')
+
+    # Define the name of the pbs job script
+    script_name = 'pbs_job_script.sh'
+    script_path = f"{root_path}/{script_name}"
+
+    # Create the PBS job script
+    pbs_script = f"""#!/bin/bash
+    #PBS -N {job_name}
+    #PBS -o {output_file}
+    #PBS -e {error_file}
+    #PBS -q {queue}
+    #PBS -l nodes={nodes}:ppn={ppn}
+    #PBS -l walltime={time_limit}
+    #PBS -l mem={memory}
+
+    # Load any necessary modules
+    # module load ...
+
+    # Move to the directory where the job was submitted
+    cd $PBS_O_WORKDIR
+
+    # Run the command or script
+    {script_path}
+    """
+
+    # Save the PBS job script to a file
+    script_path = f"{root_path}/pbs_job_script.sh"
+    with open(script_path, 'w') as script_file:
+        script_file.write(pbs_script)
+    
+    logger.info(f"PBS job script created at: {script_path}")
+    
+    # Submit the job to PBS
+    try:
+        submission_command = f"qsub {script_path}"
+        submission_result = subprocess.run(submission_command, shell=True, check=True, capture_output=True, text=True)
+        logger.info(f"PBS job submitted successfully. Output: {submission_result.stdout}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error submitting PBS job: {e.stderr}")
+        raise
+
+@shared_task
+def handle_sge_requirements(options, root_path,script_path):
+    """
+    Handle SGE related batch processing requirements.
+    ​:param options: job submission options
+    :param root_path: root path of the batch system
+    """
+    logger.info(f"Configuring SGE with options: {options} and root path: {root_path}")
+    # Add specific SGE configuration code here
+
+    job_name = options.get('jobName', 'default_job_name')
+    output_file = options.get('outputFile', 'sge_output.txt')
+    error_file = options.get('errorFile', 'sge_error.txt')
+    queue = options.get('queue', 'default')
+    parallel_env = options.get('parallelEnv', 'default')
+    nodes = options.get('nodes', 1)
+    ppn = options.get('ppn', 1)  # Number of processors per node
+    time_limit = options.get('time', '01:00:00')
+    memory = options.get('memory', '1gb')
+
+    # Create the SGE job script
+    sge_script = f"""#!/bin/bash
+    #$ -N {job_name}
+    #$ -o {output_file}
+    #$ -e {error_file}
+    #$ -q {queue}
+    #$ -pe {parallel_env} {nodes}
+    #$ -l h_rt={time_limit}
+    #$ -l mem_free={memory}
+
+    # Load any necessary modules
+    # module load ...
+
+    # Move to the directory where the job was submitted
+    cd $SGE_O_WORKDIR
+
+    # Run the command or script
+    {script_path}
+    """
+
+    # Save the SGE job script to a file
+    script_path = f"{root_path}/sge_job_script.sh"
+    with open(script_path, 'w') as script_file:
+        script_file.write(sge_script)
+    
+    logger.info(f"SGE job script created at: {script_path}")
+    
+    # Submit the job to SGE
+    try:
+        submission_command = f"qsub {script_path}"
+        submission_result = subprocess.run(submission_command, shell=True, check=True, capture_output=True, text=True)
+        logger.info(f"SGE job submitted successfully. Output: {submission_result.stdout}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error submitting SGE job: {e.stderr}")
+        raise
