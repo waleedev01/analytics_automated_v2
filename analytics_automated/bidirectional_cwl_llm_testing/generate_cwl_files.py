@@ -22,6 +22,18 @@ SUPPORTED_REQUIREMENTS = [
 ]
 
 def generate_cwl_file(prompt):
+    """
+    Generate a CWL file content based on a given prompt using the OpenAI API.
+
+    Args:
+        prompt (str): The prompt to send to the OpenAI API to generate CWL content.
+
+    Returns:
+        str: The generated CWL content as a string.
+
+    Raises:
+        Exception: If there is an error generating the CWL file.
+    """
     try:
         response = client.chat.completions.create(
             messages=[
@@ -42,12 +54,31 @@ def generate_cwl_file(prompt):
         raise
 
 def extract_clt_filenames(workflow_content):
+    """
+    Extract filenames of CommandLineTool files from the given workflow content.
+
+    Args:
+        workflow_content (str): The content of the CWL workflow file.
+
+    Returns:
+        list: A list of filenames of CommandLineTool files referenced in the workflow.
+    """
     # Extract the filenames of the CommandLineTool files from the workflow content
     pattern = r'run:\s*(\S+)'
     matches = re.findall(pattern, workflow_content)
     return matches
 
 def generate_clt_files(clt_filenames, output_dir):
+    """
+    Generate and save CWL CommandLineTool files based on the given filenames.
+
+    Args:
+        clt_filenames (list): A list of filenames for CommandLineTool files.
+        output_dir (str): The directory where the generated CLT files will be saved.
+
+    Returns:
+        None
+    """
     for clt_filename in clt_filenames:
         prompt = f"Generate a valid CWL CommandLineTool file named {clt_filename} with a baseCommand, inputs, and outputs properly defined."
         try:
@@ -59,6 +90,16 @@ def generate_clt_files(clt_filenames, output_dir):
             logging.error(f"Failed to generate CLT file {clt_filename}: {e}")
 
 def generate_cwl_files(output_dir, num_files):
+    """
+    Generate multiple CWL files of different types (valid and invalid) and save them to the specified directory.
+
+    Args:
+        output_dir (str): The directory where the generated CWL files will be saved.
+        num_files (int): The number of files to generate for each prompt type.
+
+    Returns:
+        None
+    """
     os.makedirs(output_dir, exist_ok=True)
 
     prompts = [
