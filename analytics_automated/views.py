@@ -20,6 +20,19 @@ from .workflow_visualization import *
 logger = logging.getLogger(__name__)
 
 def DownloadCWLView(request):
+    """
+    Handles the download of CWL files associated with a specific job.
+
+    This view processes POST requests to download CWL files for a given job as a zip archive. 
+    It reconstructs the CWL files using the job name, compresses them into a zip file, 
+    and returns it as an HTTP response.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: A response with the CWL files in a zip archive or a rendered error page.
+    """
     if request.method == 'POST':
         job_name = request.POST.get('job_name')
         if not job_name:
@@ -56,7 +69,17 @@ def DownloadCWLView(request):
 
 def UploadCWLView(request):
     """
-    Handle the CWL file upload and processing.
+    Handles the upload and processing of CWL files.
+
+    This view processes POST requests for uploading CWL files. It saves the uploaded files, 
+    parses them to differentiate between Workflow and CommandLineTool classes, 
+    and processes the workflows accordingly. After processing, the uploaded files are removed.
+
+    Args:
+        request (HttpRequest): The HTTP request object with uploaded files.
+
+    Returns:
+        JsonResponse: A JSON response with the results of the file processing or error messages.
     """
     if request.method == 'POST':
         logger.info("Handling file upload.")
@@ -116,6 +139,19 @@ def UploadCWLView(request):
     return render(request, 'admin/upload_cwl.html')
 
 class StaticWorkflowGraphView(View):
+    """
+    Generate and display a static workflow graph for a specific job.
+
+    This view generates a static workflow visualization based on tasks associated with a specific job. 
+    It renders the generated graph as an image in a web page.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        job_name (str): The name of the job for which to generate the workflow graph.
+
+    Returns:
+        HttpResponse: A rendered web page with the static workflow graph or an error message.
+    """
     def get(self, request, job_name=None):
         try:
             # Find the job with the given job_name
@@ -141,6 +177,19 @@ class StaticWorkflowGraphView(View):
 
 
 class DashboardView(View):
+    """
+    Display a dashboard with task states for a specific submission.
+
+    This view provides an overview of the current states of tasks associated with a particular submission. 
+    It renders a dashboard showing task details and their states.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        submission_name (str): The name of the submission for which to display the task states.
+
+    Returns:
+        HttpResponse: A rendered web page with the dashboard or an error message.
+    """
     def get(self, request, submission_name):
         logger.info('Fetching data for dashboard.')
 
@@ -164,6 +213,18 @@ class DashboardView(View):
 
 
 class TaskStatesView(View):
+    """
+    Retrieve and display task states for a specific submission.
+
+    This view retrieves the states of tasks related to a given submission and renders them on a dashboard.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        submission_name (str): The name of the submission for which to retrieve task states.
+
+    Returns:
+        HttpResponse: A rendered web page with the task states or an error message.
+    """
     def get(self, request, submission_name):
         logger.info(f'Retrieving task states for submission: {submission_name}')
         try:

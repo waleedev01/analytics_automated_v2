@@ -8,6 +8,19 @@ import yaml
 logger = logging.getLogger(__name__)
 
 def parse_cwl_workflow(cwl_data, filename, messages, cwl_content):
+    """
+    Parse a CWL workflow and save it to the database.
+
+    Args:
+        cwl_data (dict): Parsed CWL workflow data.
+        filename (str): The name of the workflow file.
+        messages (list): A list to store status and error messages.
+        cwl_content (str): The raw content of the CWL workflow.
+
+    Returns:
+        Job: The Job object created or updated in the database.
+        None: If an error occurs during parsing or saving.
+    """
     logging.info(f"Parsing CWL workflow: {filename}")
     steps = cwl_data.get("steps")
     step_source = {}
@@ -171,6 +184,16 @@ def parse_cwl_workflow(cwl_data, filename, messages, cwl_content):
     return job
 
 def set_step_order(order_mapping, step_source):
+    """
+    Set the execution order for each step in the workflow based on dependencies.
+
+    Args:
+        order_mapping (dict): A dictionary mapping step names to their execution order.
+        step_source (dict): A dictionary mapping step names to their dependencies.
+
+    Returns:
+        dict: An updated order mapping with execution orders for all steps.
+    """
     logging.info(f"Setting step order. Step Source: {step_source}")
     try:
         for step_name, source_list in step_source.items():
@@ -192,7 +215,13 @@ def set_step_order(order_mapping, step_source):
 
 def filter_workflow_req(requirements):
     """
-    Remove requirement should not be inherited by task
+    Filter workflow requirements to remove those that should not be inherited by tasks.
+
+    Args:
+        requirements (list): A list of workflow requirements.
+
+    Returns:
+        list: A filtered list of workflow requirements.
     """
     logging.info(f"Filtering workflow requirements: {requirements}")
     try:

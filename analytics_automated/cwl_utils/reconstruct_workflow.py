@@ -11,11 +11,34 @@ yaml.default_flow_style = False
 yaml.indent(mapping=2, sequence=4, offset=2)
 
 def parse_json_field(field):
+    """
+    Parses a string field containing JSON data into a Python object.
+
+    Args:
+        field (str or dict): The JSON field to parse. If already a dictionary, it is returned as is.
+
+    Returns:
+        dict: The parsed JSON data as a dictionary.
+              If the input is already a dictionary, it returns the input unchanged.
+    """
     if isinstance(field, str):
         return json.loads(field)
     return field
 
 def reconstruct_workflow_cwl(job, file_path):
+    """
+    Reconstructs a CWL Workflow file for a given job and saves it to the specified file path.
+
+    Args:
+        job (Job): The job object from the database for which the CWL Workflow file is to be reconstructed.
+        file_path (str): The file path where the reconstructed CWL file will be saved.
+
+    Raises:
+        Exception: If an error occurs during the reconstruction process, it is logged, and the function continues.
+
+    Returns:
+        None
+    """
     logger.info(f"Reconstructing workflow: {job.name}")
 
     workflow_detail = {
@@ -49,6 +72,17 @@ def reconstruct_workflow_cwl(job, file_path):
 
 
 def _build_step_detail(step, task, steps):
+    """
+    Constructs the details for a single step in the CWL workflow, defining its input-output relationships.
+
+    Args:
+        step (Step): The current step object within the workflow.
+        task (Task): The task object associated with the current step.
+        steps (QuerySet[Step]): A queryset containing all steps in the workflow.
+
+    Returns:
+        dict: A dictionary containing the details of the step, including input-output mapping and the task to run.
+    """
     # Construct step input-output relationship
     step_detail = {
         "run": f"{task.name}.cwl",
@@ -71,6 +105,17 @@ def _build_step_detail(step, task, steps):
     return step_detail
 
 def _define_workflow_outputs(job, steps, workflow_detail):
+    """
+    Defines the outputs of the CWL workflow based on the outputs of the last step.
+
+    Args:
+        job (Job): The job object representing the workflow.
+        steps (QuerySet[Step]): A queryset containing all steps in the workflow.
+        workflow_detail (dict): The dictionary containing the CWL Workflow details.
+
+    Returns:
+        None
+    """
     # Use the last step's outputs as the workflow outputs
     last_step = steps.last()
     if last_step:

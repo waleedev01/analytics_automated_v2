@@ -8,6 +8,16 @@ from analytics_automated.cwl_utils.cwl_schema_validator import CWLSchemaValidato
 logger = logging.getLogger(__name__)
 
 def validate_cwl_files(input_dir, output_dir):
+    """
+    Validate CWL files in the specified directory and save the results.
+
+    Args:
+        input_dir (str): Directory containing the CWL files and their expected result files.
+        output_dir (str): Directory where the validation results will be saved.
+
+    Returns:
+        list: A list of results for each validated file, containing validation status and messages.
+    """
     os.makedirs(output_dir, exist_ok=True)
     validator = CWLSchemaValidator()
     results = []
