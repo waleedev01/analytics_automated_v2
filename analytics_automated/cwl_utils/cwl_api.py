@@ -54,6 +54,7 @@ class CWLUploadView(APIView):
                 messages.append(f"Skipped non-CWL file: {file.name}")
                 continue
 
+            file_path = None
             try:
                 if isinstance(file, TemporaryUploadedFile):
                     file_path = file.temporary_file_path()
@@ -78,12 +79,20 @@ class CWLUploadView(APIView):
                 valid_cwl_files[file.name] = cwl_data
 
             except yaml.YAMLError as e:
+                logger.error(f"YAML parsing error in file {file.name}: {str(e)}")
                 messages.append(f"Error parsing YAML in file {file.name}: {str(e)}")
+            except IOError as e:
+                logger.error(f"IO error when processing file {file.name}: {str(e)}")
+                messages.append(f"Error reading file {file.name}: {str(e)}")
             except Exception as e:
+                logger.error(f"Unexpected error processing file {file.name}: {str(e)}")
                 messages.append(f"Error processing file {file.name}: {str(e)}")
             finally:
-                if 'file_path' in locals() and os.path.exists(file_path):
-                    os.unlink(file_path)
+                if file_path and os.path.exists(file_path):
+                    try:
+                        os.unlink(file_path)
+                    except Exception as e:
+                        logger.error(f"Error deleting temporary file {file_path}: {str(e)}")
 
         if not valid_cwl_files:
             return Response({

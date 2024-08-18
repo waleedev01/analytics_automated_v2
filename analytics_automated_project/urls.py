@@ -22,7 +22,7 @@ from django.contrib.auth import views as auth_views
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from analytics_automated import api
-from analytics_automated.api import CWLDownloadView, CWLUploadView
+from analytics_automated.cwl_utils.cwl_api import CWLUploadView, CWLDownloadView
 from analytics_automated.views import UploadCWLView, DownloadCWLView
 
 urlpatterns = [
