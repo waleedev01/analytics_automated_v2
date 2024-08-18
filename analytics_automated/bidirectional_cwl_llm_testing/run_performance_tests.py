@@ -17,6 +17,22 @@ from analytics_automated.bidirectional_cwl_llm_testing.parse_and_save_cwl import
 logger = logging.getLogger(__name__)
 
 def run_pipeline():
+    """
+    Execute the pipeline for parsing and saving CWL files of varying validity to the database, measuring execution times.
+
+    The pipeline performs the following steps:
+    1. Parses and saves 20 valid CWL files to the database.
+    2. Parses and saves 50 valid CWL files to the database.
+    3. Parses and saves 80 valid CWL files to the database.
+    4. Parses and saves 20 invalid CWL files to the database.
+    5. Parses and saves 50 invalid CWL files to the database.
+    6. Parses and saves 80 invalid CWL files to the database.
+
+    This process is repeated 5 times to obtain average execution times for each scenario. 
+    The average execution times are logged for analysis.
+
+    Logs detailed information about each step, including execution times and any errors encountered.
+    """
     results = []
 
     try:

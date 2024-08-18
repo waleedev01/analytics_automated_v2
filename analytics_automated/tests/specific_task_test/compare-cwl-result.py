@@ -9,7 +9,7 @@ from analytics_automated.tasks import task_job_runner
 app = Celery('tasks', broker='pyamqp://guest@localhost//')
 
 # Directory containing the .cwl files
-WORKFLOW_DIR = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/analytics_automated/tests/specific task test/gen-cwl/'
+WORKFLOW_DIR = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/analytics_automated/tests/gen-cwl/'
 
 # Helper function to run cwltool
 def run_cwltool(cwl_file, input_file):

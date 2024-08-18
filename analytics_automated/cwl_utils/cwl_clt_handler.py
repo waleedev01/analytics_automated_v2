@@ -1,7 +1,5 @@
 import logging
 import json
-import re
-import string
 from ..models import Backend, Task, Parameter, Environment, Configuration
 
 logger = logging.getLogger(__name__)
@@ -22,6 +20,16 @@ CONFIGURATION_CHOICES = {
 }
 
 def load_format_mapping(file_path):
+    """
+    Loads a JSON format mapping from a file.
+
+    Args:
+        file_path (str): The path to the JSON file containing the format mapping.
+
+    Returns:
+        dict: A dictionary representing the format mapping. 
+              Returns an empty dictionary if an error occurs.
+    """
     try:
         with open(file_path, 'r') as file:
             format_mapping = json.load(file)
@@ -34,7 +42,15 @@ def load_format_mapping(file_path):
 
 def handle_env_variable_req(requirements: list) -> dict[str, str]:
     """
-    Extract envVarRequirement as environment variable list
+    Extracts environment variable requirements from a CWL requirements list.
+
+    Args:
+        requirements (list): A list of CWL requirements.
+
+    Returns:
+        dict[str, str]: A dictionary of environment variables extracted from 
+                        the EnvVarRequirement. 
+                        Returns an empty dictionary if no environment variables are found or an error occurs.
     """
     logging.info(f"- Handling environment variable requirements -")
     try:
@@ -49,7 +65,14 @@ def handle_env_variable_req(requirements: list) -> dict[str, str]:
 
 def handle_hint_software_hint(requirements: list) -> list:
     """
-    Extract SoftwareRequirement hint as configuration list
+    Extracts software package requirements from a CWL hints list.
+
+    Args:
+        requirements (list): A list of CWL requirements or hints.
+
+    Returns:
+        list: A list of dictionaries representing software package configurations.
+              Returns an empty list if no software packages are found or an error occurs.
     """
     logging.info(f"- Handling hint software package -")
     try:
@@ -77,6 +100,18 @@ def handle_hint_software_hint(requirements: list) -> list:
 
 
 def handle_aa_custom_configuration(configrations: list) -> list:
+    """
+    Validates custom configurations in a list of CWL configurations.
+
+    Args:
+        configrations (list): A list of custom configuration dictionaries.
+
+    Returns:
+        list: The validated list of configurations.
+    
+    Raises:
+        ValueError: If any configuration object is missing the 'name' field.
+    """
     for config in configrations:
         if config.get('name') is None:
             raise ValueError("The name of Configuration object should not be empty!")
@@ -84,6 +119,17 @@ def handle_aa_custom_configuration(configrations: list) -> list:
 
 
 def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
+    """
+    Parses a CWL CommandLineTool and extracts its components into a dictionary.
+
+    Args:
+        cwl_data (dict): The CWL data representing the CommandLineTool.
+        name (str): The name of the task.
+        workflow_req (list, optional): A list of workflow requirements, if any.
+
+    Returns:
+        dict: A dictionary containing the parsed components of the CommandLineTool.
+    """
     def map_format(format_uri, mapping):
         logging.info(f"Mapping format URI: {format_uri}")
         return mapping.get(format_uri, ".input")
@@ -131,7 +177,17 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
         return parsed_outputs
 
     logging.info(f"Parsing CWL command line tool: {name}")
-    base_command = cwl_data.get("baseCommand")
+
+    try:
+        base_command_ini = cwl_data.get("baseCommand")
+        if isinstance(base_command_ini, list):
+            base_command = ' '.join(base_command_ini)
+        else:
+            base_command = base_command_ini
+        del base_command_ini
+    except Exception as e:
+        logging.error(f"Error parsing CWL baseCommand: {e}")
+
     inputs = cwl_data.get("inputs", {})
     outputs = cwl_data.get("outputs", {})
     requirements = cwl_data.get("requirements", [])
@@ -185,10 +241,7 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
     else:
         task['stdout_glob'] = ""
 
-    if isinstance(base_command, list):
-        executable_parts = base_command
-    else:
-        executable_parts = [base_command]
+    executable_parts = [base_command]
 
     try:
         for argument_item in arguments:
@@ -277,6 +330,18 @@ def parse_cwl_clt(cwl_data, name, workflow_req: list = None):
 
 
 def save_task_to_db(task_data, messages, cwl_content=None):
+    """
+    Saves a parsed CWL task to the database, updating if it already exists.
+
+    Args:
+        task_data (dict): The parsed task data to be saved.
+        messages (list): A list to store messages about the saving process.
+        cwl_content (str, optional): The CWL content of the task as a string.
+
+    Returns:
+        Task: The saved or updated Task object.
+        None: If an error occurs during saving.
+    """
     try:
         backend = Backend.objects.get(id=1)  # Assuming a default backend ID
         logging.info(f"Saving task to database: {task_data['name']}")
@@ -417,6 +482,17 @@ def save_task_to_db(task_data, messages, cwl_content=None):
 
 
 def check_existing_task_in_db(task_name, messages):
+    """
+    Checks if a task with the specified name already exists in the database.
+
+    Args:
+        task_name (str): The name of the task to check.
+        messages (list): A list to store messages about the checking process.
+
+    Returns:
+        Task: The existing Task object if found.
+        None: If the task is not found or an error occurs.
+    """
     logging.info(f"Checking existing task in DB: {task_name}")
     try:
         backend = Backend.objects.get(id=1)  # Assuming a default backend ID

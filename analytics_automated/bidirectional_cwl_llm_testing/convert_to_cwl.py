@@ -12,7 +12,14 @@ logger = logging.getLogger(__name__)
 
 def save_cwl_file(cwl_content, file_path):
     """
-    Save CWL content to a file.
+    Save CWL content to a specified file.
+
+    Args:
+        cwl_content (dict): The CWL content to be saved.
+        file_path (str): The path where the CWL file should be saved.
+
+    Returns:
+        None
     """
     logger.debug(f"Saving CWL file: {file_path}")
     yaml = YAML()
@@ -30,6 +37,13 @@ def save_cwl_file(cwl_content, file_path):
 def compare_files(original_file_path, reconstructed_file_path):
     """
     Compare two files and return a list of differences.
+
+    Args:
+        original_file_path (str): Path to the original file.
+        reconstructed_file_path (str): Path to the reconstructed file.
+
+    Returns:
+        list: A list of differences between the original and reconstructed files.
     """
     with open(original_file_path, 'r') as original_file, open(reconstructed_file_path, 'r') as reconstructed_file:
         original_lines = original_file.readlines()
@@ -41,6 +55,12 @@ def compare_files(original_file_path, reconstructed_file_path):
 def read_file_content(file_path):
     """
     Read the content of a file and return it as a string.
+
+    Args:
+        file_path (str): Path to the file to be read.
+
+    Returns:
+        str: The content of the file as a string. Returns an empty string if an error occurs.
     """
     try:
         with open(file_path, 'r') as file:
@@ -52,6 +72,13 @@ def read_file_content(file_path):
 def write_results_to_csv(results, csv_path):
     """
     Write the results of the conversion to a CSV file.
+
+    Args:
+        results (list of dict): List of dictionaries containing results to be written.
+        csv_path (str): Path to the CSV file where results will be saved.
+
+    Returns:
+        None
     """
     fieldnames = [
         'file_name', 'step', 'result', 'expected_is_valid', 'expected_error',
@@ -69,6 +96,12 @@ def write_results_to_csv(results, csv_path):
 def convert_to_cwl_files(output_dir):
     """
     Convert database entries to CWL files and compare them with the original files.
+
+    Args:
+        output_dir (str): Directory where the converted CWL files will be saved.
+
+    Returns:
+        list of dict: Results of the conversion process including comparisons between original and reconstructed files.
     """
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)

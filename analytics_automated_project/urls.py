@@ -14,7 +14,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
 """
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import include
+from django.urls import re_path as url
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
@@ -22,6 +23,7 @@ from django.contrib.auth import views as auth_views
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from analytics_automated import api
+from analytics_automated.cwl_utils.cwl_api import CWLUploadView, CWLDownloadView
 from analytics_automated.views import UploadCWLView, DownloadCWLView
 
 urlpatterns = [
@@ -46,10 +48,10 @@ urlpatterns = [
          api.Endpoints.as_view(), name="endpoints"),
      url(r'^analytics_automated/jobtimes/$',
          api.JobTimes.as_view(), name="jobtimes"),
-     url(r'^analytics_automated/uploadcwl/$',
-         api.CWLUploadView.as_view(), name="uploadcwl"),  # Existing CWL upload pattern
-     url(r'^analytics_automated/admin_upload_cwl/$', UploadCWLView, name="admin_upload_cwl"),  # New view for the admin CWL upload
-     url(r'^analytics_automated/admin_download_cwl/$', DownloadCWLView, name="admin_download_cwl"),  # New view for the admin CWL download
+     url(r'^analytics_automated/uploadcwl/$', CWLUploadView.as_view(), name="api_upload_cwl"),
+     url(r'^analytics_automated/admin_upload_cwl/$', UploadCWLView, name="admin_upload_cwl"),  
+     url(r'^analytics_automated/admin_download_cwl/$', DownloadCWLView, name="admin_download_cwl"),  
+     url(r'^analytics_automated/downloadcwl/$', CWLDownloadView.as_view(), name="api_download_cwl"),
      url(r'^login/$', auth_views.LoginView.as_view(), name='login'),
      url(r'^logout/$', auth_views.LogoutView.as_view(), name='logout'),
 ]

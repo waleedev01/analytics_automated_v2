@@ -196,7 +196,7 @@ class APIPrivateFunctionTests(APITestCase):
         sd = SubmissionDetails()
         bool = sd._SubmissionDetails__test_params(steps, {'task1_that': 123,
                                                           'task1_this': 69})
-        self.assertEqual(bool, True)
+        self.assertEqual(bool[0], True)
 
     def test__test_params_returns_false_when_set_is_not_complete(self):
         p1 = ParameterFactory.create(task=self.t, flag="-t", bool_valued=False,
@@ -207,7 +207,7 @@ class APIPrivateFunctionTests(APITestCase):
         steps = self.j1.steps.all()
         sd = SubmissionDetails()
         bool = sd._SubmissionDetails__test_params(steps, {'task1_that': 123, })
-        self.assertEqual(bool, False)
+        self.assertEqual(bool[0], False)
 
     def test__test_params_returns_true_when_too_many_items_passed(self):
         p1 = ParameterFactory.create(task=self.t, flag="-t", bool_valued=False,
@@ -216,13 +216,13 @@ class APIPrivateFunctionTests(APITestCase):
         sd = SubmissionDetails()
         bool = sd._SubmissionDetails__test_params(steps, {'task1_that': 123,
                                                           'task1_this': 69})
-        self.assertEqual(bool, True)
+        self.assertEqual(bool[0], True)
 
     def test__test_params_returns_true_with_nothing(self):
         steps = self.j1.steps.all()
         sd = SubmissionDetails()
         bool = sd._SubmissionDetails__test_params(steps, {})
-        self.assertEqual(bool, True)
+        self.assertEqual(bool[0], True)
 
     def test_params_rejected_with_punctuation(self):
         p1 = ParameterFactory.create(task=self.t, flag="-t", bool_valued=False,
@@ -231,7 +231,7 @@ class APIPrivateFunctionTests(APITestCase):
         sd = SubmissionDetails()
         bool = sd._SubmissionDetails__test_params(steps, {'task1_this':
                                                           'asd|:'})
-        self.assertEqual(bool, False)
+        self.assertEqual(bool[0], False)
 
     def test_params_reject_with_unix_commands(self):
         p1 = ParameterFactory.create(task=self.t, flag="-t", bool_valued=False,
@@ -240,7 +240,7 @@ class APIPrivateFunctionTests(APITestCase):
         sd = SubmissionDetails()
         bool = sd._SubmissionDetails__test_params(steps, {'task1_this':
                                                           'rm'})
-        self.assertEqual(bool, False)
+        self.assertEqual(bool[0], False)
 
     def test_params_rejected_with_python_reserved_words(self):
         p1 = ParameterFactory.create(task=self.t, flag="-t", bool_valued=False,
@@ -249,7 +249,7 @@ class APIPrivateFunctionTests(APITestCase):
         sd = SubmissionDetails()
         bool = sd._SubmissionDetails__test_params(steps, {'task1_this':
                                                           'import'})
-        self.assertEqual(bool, False)
+        self.assertEqual(bool[0], False)
 
     def test_params_rejected_with_r_reserved_words(self):
         p1 = ParameterFactory.create(task=self.t, flag="-t", bool_valued=False,
@@ -258,7 +258,7 @@ class APIPrivateFunctionTests(APITestCase):
         sd = SubmissionDetails()
         bool = sd._SubmissionDetails__test_params(steps, {'task1_this':
                                                           'format.packageInfo'})
-        self.assertEqual(bool, False)
+        self.assertEqual(bool[0], False)
 
     #
     # TEST FOR __submit_job needed here
