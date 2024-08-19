@@ -3,6 +3,26 @@ import requests
 import time
 
 def test_cwl_files(directory, api_url, response_file):
+     """
+    Tests all CWL (Common Workflow Language) files in the specified directory by sending them to a given API and 
+    recording the response time.
+
+    Args:
+        directory (str): Path to the directory containing CWL files.
+        api_url (str): URL of the API endpoint to which CWL files will be sent.
+        response_file (str): Path to the file where the response times will be logged.
+
+    Returns:
+        None
+
+    The function:
+        - Iterates over all files in the given directory.
+        - For each `.cwl` file, it sends a POST request with the file to the API.
+        - Measures the response time for each request.
+        - Logs the response times to the specified response file.
+        - Tracks the number of files processed in 500ms or less and calculates a success rate.
+        - If no CWL files are found, a message is printed to indicate this.
+    """
     all_times = []
     valid_count = 0
     total_files = 0

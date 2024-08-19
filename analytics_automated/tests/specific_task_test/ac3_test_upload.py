@@ -7,6 +7,30 @@ import time
 logger = logging.getLogger(__name__)
 
 def parse_and_save_cwl_files(input_dir, num_files = None, valid = None):
+    """
+    Parse and save CWL files from the given directory. The function processes
+    the CWL files in the specified directory, filters them based on validity, 
+    and limits the number of files processed if specified. Each file is parsed
+    using the `read_cwl_file` function, and the results are logged.
+
+    Args:
+        input_dir (str): Directory path containing the CWL files to be processed.
+        num_files (int, optional): Maximum number of files to process. If None, 
+                                   all files in the directory are processed.
+        valid (bool, optional): If True, only valid files (containing '_valid_' 
+                                in the name) are processed. If False, only invalid
+                                files ('_invalid_' in the name) are processed. 
+                                If None, both valid and invalid files are processed.
+
+    Returns:
+        results (list): A list of dictionaries containing details about the processing 
+                        result for each file (file name, step, result, message).
+        execution_time (float): The time taken to process the files in milliseconds.
+
+    Raises:
+        Exception: Logs any exceptions that occur during file processing and includes 
+                   them in the result message for the corresponding file.
+    """
     results = []
     file_list = os.listdir(input_dir)
     

@@ -13,6 +13,17 @@ WORKFLOW_DIR = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/a
 
 # Helper function to run cwltool
 def run_cwltool(cwl_file, input_file):
+    """
+    Runs the cwltool command for a given CWL file and input file.
+
+    Args:
+        cwl_file (str): Path to the CWL workflow file.
+        input_file (str): Path to the input file for the CWL workflow.
+
+    Returns:
+        str: The standard output from running the cwltool command if successful.
+        None: If the `cwltool` command encounters an error, logs the error, and returns None.
+    """
     try:
         result = subprocess.run(
             ['cwltool', cwl_file, input_file],
@@ -28,11 +39,31 @@ def run_cwltool(cwl_file, input_file):
 # Task to execute a CWL file and return the result
 @shared_task
 def run_cwl_task(cwl_file, input_file):
+    """
+    Celery task to execute a CWL file with the provided input file using the `run_cwltool` function.
+
+    Args:
+        cwl_file (str): Path to the CWL workflow file.
+        input_file (str): Path to the input file for the CWL workflow.
+
+    Returns:
+        str: The standard output from running the cwltool command if successful.
+        None: If an error occurs, logs the error and returns None.
+    """
     output = run_cwltool(cwl_file, input_file)
     return output
 
 # Function to run all CWL files and compare results
 def run_and_compare_all_cwls(input_file):
+    """
+    Runs all CWL files in the workflow directory asynchronously using Celery tasks, and compares their results.
+
+    Args:
+        input_file (str): Path to the input file for the CWL workflows.
+
+    Returns:
+        bool: True if all results are identical, False if the results differ.
+    """
     cwl_files = [f for f in os.listdir(WORKFLOW_DIR) if f.endswith('.cwl')]
     tasks = []
     
@@ -56,10 +87,13 @@ def run_and_compare_all_cwls(input_file):
 
 def run_cwl_files_and_compare_results(directory_path):
     """
-    Run all .cwl files in the given directory and compare their results.
+    Runs all .cwl files in the specified directory, compares their results, and checks if they are identical.
 
-    :param directory_path: The path to the directory containing .cwl files.
-    :return: A boolean indicating if all results are identical.
+    Args:
+        directory_path (str): The path to the directory containing CWL workflow files.
+
+    Returns:
+        bool: True if all results are identical, False if any results differ.
     """
     # List to store the results
     results = []
@@ -94,20 +128,26 @@ def run_cwl_files_and_compare_results(directory_path):
 
 def create_job_id_from_file(file_path):
     """
-    Generate a job ID based on the .cwl file path.
+    Generates a job ID based on the CWL file path, typically by extracting the file name.
 
-    :param file_path: The path to the .cwl file.
-    :return: A job ID.
+    Args:
+        file_path (str): The path to the CWL file.
+
+    Returns:
+        str: The generated job ID, typically the file name without the extension.
     """
     # Example: use the file name (without extension) as job ID
     return os.path.splitext(os.path.basename(file_path))[0]
 
 def get_result_by_job_id(job_id):
     """
-    Retrieve the result for a given job ID.
+    Retrieves the result for a given job ID from the result store.
 
-    :param job_id: The job ID.
-    :return: The result of the job.
+    Args:
+        job_id (str): The unique ID of the job (generated from the CWL file).
+
+    Returns:
+        Any: The result of the job. This can be a string, dictionary, or any data structure representing the job's output.
     """
     # Implement this function to retrieve the result
     # For example, querying your result database or using Celery result backends

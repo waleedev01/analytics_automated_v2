@@ -6,6 +6,16 @@ app = Celery('tasks', broker='pyamqp://guest@localhost//')
 
 @app.task
 def run_memembed_task(input_file, output_file):
+    """
+    Runs the MemEmbed task with the given input file and stores the result in the output file.
+
+    Args:
+        input_file (str): Path to the original file to be processed by MemEmbed.
+        output_file (str): Path where the output from MemEmbed will be written.
+
+    Returns:
+        int: The return code of the MemEmbed process. 0 if successful, -1 if an exception occurs.
+    """
     
     work_dir = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/tasks/MemEmbed-master/bin'
     
