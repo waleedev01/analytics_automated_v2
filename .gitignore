@@ -9,6 +9,7 @@ static/example*
 submissions/*
 !submissions/files/
 __pycache__/
+cwl_docs_for_sse/
 tasks/
 *.log
 logs/*
