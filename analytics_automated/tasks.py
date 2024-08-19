@@ -748,6 +748,21 @@ def task_runner(self, uuid, step_id, current_step, step_counter,
 
 @shared_task(bind=True, default_retry_delay=5 * 60, rate_limit=40)
 def chord_end(self, uuid, step_id, current_step):
+    """
+    End task for a Celery chord, marking the Submission as complete.
+    
+    Args:
+        self: The Celery task instance.
+        uuid (str): Unique identifier for the Submission.
+        step_id (str): Step identifier for tracking the specific step in the workflow.
+        current_step (int): Current step number of the task sequence.
+        
+    Returns:
+        None
+        
+    Logs the completion of the task and updates the database state accordingly. 
+    In case of errors, logs the error and ensures batch email notifications are sent.
+    """
     try:
         # Get the Submission from the database
         s = Submission.objects.get(UUID=uuid)
@@ -781,6 +796,19 @@ def chord_end(self, uuid, step_id, current_step):
 
 @shared_task
 def handle_initial_workdir_requirement(requirements,step_id,src):
+    """
+    Handle the InitialWorkDirRequirement by setting up necessary files in the work directory.
+    
+    Args:
+        requirements (list): A list of requirements for the task, including InitialWorkDirRequirement.
+        step_id (str): Step identifier for tracking the current step in the workflow.
+        src (str): The source directory where files should be written.
+        
+    Returns:
+        str: Message indicating the outcome of the workdir setup (whether successful or not).
+        
+    This task reads the InitialWorkDirRequirement from the requirements list and writes the files to the specified work directory.
+    """
     if requirements is None:
         return f"No initial workdir setup in this step"
     initial_workdir_requirement = next((req for req in requirements if req['class'] == 'InitialWorkDirRequirement'), None)
@@ -804,6 +832,18 @@ def handle_initial_workdir_requirement(requirements,step_id,src):
 
 @shared_task
 def check_software_requirement(requirements):
+    """
+    Check the SoftwareRequirement and validate the presence and version of required software packages.
+    
+    Args:
+        requirements (list): A list of requirements for the task, including SoftwareRequirement.
+        
+    Returns:
+        str: Message indicating the outcome of the software requirement check (whether successful or not).
+        
+    This task validates the installed software packages based on the requirements and their versions.
+    If the required package or version is not installed, it raises an error.
+    """
     if requirements is None:
         return f"No software_requirement in this step"
     software_requirement = next((req for req in requirements if req['class'] == 'SoftwareRequirement'), None)
@@ -834,10 +874,16 @@ def check_software_requirement(requirements):
 @shared_task
 def handle_batch_requirements(task_requirements, backend_root_path):
     """
-    Handle the BatchRequirement configuration and apply it to the task.
-    ​:param task_requirements: task requirements, including BatchRequirement
-    :param backend_root_path: indicates the root path of the batch system
-    :return: None
+    Handle BatchRequirement configuration and apply it to the task.
+    
+    Args:
+        task_requirements (list): A list of requirements, including BatchRequirement.
+        backend_root_path (str): The root path of the batch system.
+        
+    Returns:
+        str: Message indicating the status of handling the batch requirements.
+        
+    This task processes the BatchRequirement, sets up batch systems (SLURM, PBS, SGE), and configures job submissions based on the requirements.
     """
     if task_requirements is None:
         return f"No software_requirement in this step"
@@ -879,8 +925,16 @@ def handle_batch_requirements(task_requirements, backend_root_path):
 def handle_slurm_requirements(options, root_path, script_path):
     """
     Handle SLURM-related batch processing requirements.
-​    :param options: job submission options
-    :param root_path: root path of the batch system
+    
+    Args:
+        options (dict): Job submission options including job name, time, memory, etc.
+        root_path (str): The root path of the batch system.
+        script_path (str): The path to the job script.
+        
+    Returns:
+        None
+        
+    This task creates a SLURM job script based on the provided options and submits it to the SLURM scheduler.
     """
     logger.info(f"Configuring SLURM with options: {options} and root path: {root_path}")
     # Add specific SLURM configuration code here
@@ -931,8 +985,16 @@ def handle_slurm_requirements(options, root_path, script_path):
 def handle_pbs_requirements(options, root_path, script_path):
     """
     Handle PBS-related batch processing requirements.
-    :param options: job submission options
-    :param root_path: root path of the batch system
+    
+    Args:
+        options (dict): Job submission options including job name, time, memory, etc.
+        root_path (str): The root path of the batch system.
+        script_path (str): The path to the job script.
+        
+    Returns:
+        None
+        
+    This task creates a PBS job script based on the provided options and submits it to the PBS scheduler.
     """
     logger.info(f"Configuring PBS with options: {options} and root path: {root_path}")
     # Add specific PBS configuration code here
@@ -990,8 +1052,16 @@ def handle_pbs_requirements(options, root_path, script_path):
 def handle_sge_requirements(options, root_path,script_path):
     """
     Handle SGE related batch processing requirements.
-    ​:param options: job submission options
-    :param root_path: root path of the batch system
+    
+    Args:
+        options (dict): Job submission options including job name, time, memory, etc.
+        root_path (str): The root path of the batch system.
+        script_path (str): The path to the job script.
+        
+    Returns:
+        None
+        
+    This task creates an SGE job script based on the provided options and submits it to the SGE scheduler.
     """
     logger.info(f"Configuring SGE with options: {options} and root path: {root_path}")
     # Add specific SGE configuration code here

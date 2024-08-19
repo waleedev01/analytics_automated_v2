@@ -23,12 +23,27 @@ CWL_DIR = '/home/gty/vv-project/celery-requirement/analytics_automated_v2/analyt
 
 @pytest.fixture(scope='module')
 def setup_cwl_files():
-    # Assuming this function is used to set up any required test fixtures
-    # For example, initializing any mock data or test environment
+    """
+    Set up any required test fixtures for CWL file execution.
+    This function can be used to initialize mock data, prepare the test environment,
+    or configure necessary files and settings.
+    
+    Note: This function is currently a placeholder and does not perform any operations.
+    """
     pass
 
 def execute_cwl_file(cwl_file_path):
-    """ Execute a CWL file using Celery and check if it completes successfully. """
+    """
+    Execute a CWL file using Celery and check if it completes successfully.
+    
+    Args:
+        cwl_file_path (str): Path to the CWL file to be executed.
+        
+    Returns:
+        tuple: A tuple containing:
+            - bool: Indicates whether the CWL file was executed successfully.
+            - str: Message providing the result of the execution or the error encountered.
+    """
     with open(cwl_file_path, 'r') as f:
         cwl_data = f.read()
     test = []
@@ -60,7 +75,22 @@ def execute_cwl_file(cwl_file_path):
         return False, str(e)
 
 def test_cwl_execution():
-    """ Test execution of all CWL files in the specified directory. """
+    """
+    Test execution of all CWL files in the specified directory.
+    
+    Args:
+        None
+    
+    Returns:
+        None
+    
+    This function:
+        - Iterates through all CWL files in the specified directory.
+        - Executes each CWL file using the `execute_cwl_file` function.
+        - Logs the results to a JSON file.
+        - Prints a summary of the test results including total files tested, 
+          number of successful executions, and failure rate.
+    """
     cwl_files = [f for f in os.listdir(CWL_DIR) if f.endswith('.cwl')]
     results = {}
     

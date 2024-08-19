@@ -24,6 +24,13 @@ app = Flask(__name__)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+     """
+    Uploads a CWL file, processes it, and returns the response time.
+
+    Returns:
+        JSON response containing a success message and the response time if the file is processed.
+        If no file or an invalid file type is provided, returns an error message and a 400 status code.
+    """
     start_time = time.time()
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400

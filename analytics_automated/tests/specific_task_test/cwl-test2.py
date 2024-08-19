@@ -5,14 +5,36 @@ import pandas as pd
 import re
 
 def sanitize_text(text):
-    """Sanitize text by removing characters that are not allowed in Excel cells."""
+    """
+    Sanitizes the input text by removing non-ASCII characters, making it safe for use in Excel cells.
+
+    Args:
+        text (str): The input text to sanitize.
+
+    Returns:
+        str: The sanitized version of the input text, with non-ASCII characters replaced by spaces.
+    """
     # Replace invalid characters with spaces
     sanitized = re.sub(r'[^\x20-\x7E]', ' ', text)  # Remove non-ASCII characters
     return sanitized
 
 
 def run_cwl(cwl_file, input_file):
-    # Ensure the CWL tool is installed and accessible
+    """
+    Runs a CWL file using cwltool with the specified input file and captures the output, error, and return code.
+
+    Args:
+        cwl_file (str): Path to the CWL workflow file to run.
+        input_file (str): Path to the input file to pass to the CWL workflow.
+
+    Returns:
+        dict: A dictionary containing:
+            - `cwl_file`: The CWL file that was run.
+            - `input_file`: The input file used in the CWL run.
+            - `stdout`: The sanitized standard output from the cwltool command.
+            - `stderr`: The sanitized standard error output from the cwltool command.
+            - `returncode`: The return code from the cwltool command.
+    """
     cwltool_path = "cwltool"
 
     # Check if cwltool is available
@@ -38,6 +60,16 @@ def run_cwl(cwl_file, input_file):
     }
 
 def main():
+    """
+    Main function that runs a series of CWL workflows with corresponding input files, 
+    captures the output, and writes the results to an Excel file.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     # Define the paths to CWL files and input JSON files
     cwl_files = [
         '/home/gty/vv-project/celery-requirement/analytics_automated_v2/analytics_automated/tests/gen_cwl/echo_tool.cwl',
