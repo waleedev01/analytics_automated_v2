@@ -23,7 +23,8 @@ from django.contrib.auth import views as auth_views
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from analytics_automated import api
-from analytics_automated.views import * 
+from analytics_automated.cwl_utils.cwl_api import CWLUploadView, CWLDownloadView
+from analytics_automated.views import UploadCWLView, DownloadCWLView
 
 urlpatterns = [
      url(r'^admin/', include('smuggler.urls')),
@@ -47,16 +48,10 @@ urlpatterns = [
          api.Endpoints.as_view(), name="endpoints"),
      url(r'^analytics_automated/jobtimes/$',
          api.JobTimes.as_view(), name="jobtimes"),
-     url(r'^analytics_automated/uploadcwl/$',
-         api.CWLUploadView.as_view(), name="uploadcwl"),  # Existing CWL upload pattern
-     url(r'^analytics_automated/admin_upload_cwl/$', UploadCWLView, name="admin_upload_cwl"),  # New view for the admin CWL upload
-     url(r'^analytics_automated/admin_download_cwl/$', DownloadCWLView, name="admin_download_cwl"),  # New view for the admin CWL download
-     url(r'^analytics_automated/dynamic-visualize/(?P<submission_name>.+)$',
-         DashboardView.as_view(), name='dynamic_visualize'),
-     url(r'^analytics_automated/static-visualize/$',
-         StaticWorkflowGraphView.as_view(), name='static_visualize'),
-     url(r'^analytics_automated/api/task-states/(?P<submission_name>.+)',
-         api.TaskStatesView.as_view(), name='task_states'),   
+     url(r'^analytics_automated/uploadcwl/$', CWLUploadView.as_view(), name="api_upload_cwl"),
+     url(r'^analytics_automated/admin_upload_cwl/$', UploadCWLView, name="admin_upload_cwl"),  
+     url(r'^analytics_automated/admin_download_cwl/$', DownloadCWLView, name="admin_download_cwl"),  
+     url(r'^analytics_automated/downloadcwl/$', CWLDownloadView.as_view(), name="api_download_cwl"),
      url(r'^login/$', auth_views.LoginView.as_view(), name='login'),
      url(r'^logout/$', auth_views.LogoutView.as_view(), name='logout'),
 ]

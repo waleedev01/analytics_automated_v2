@@ -90,3 +90,13 @@ class JobSerializer (serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = ('pk', 'name',)
+
+
+class CWLUploadSerializer(serializers.Serializer):
+    files = serializers.ListField(
+        child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
+        write_only=True
+    )
+
+class CWLDownloadSerializer(serializers.Serializer):
+    job_name = serializers.CharField(max_length=255)

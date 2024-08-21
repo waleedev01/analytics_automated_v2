@@ -21,6 +21,19 @@ from analytics_automated.bidirectional_cwl_llm_testing.convert_to_cwl import con
 logger = logging.getLogger(__name__)
 
 def run_pipeline():
+    """
+    Execute the pipeline for generating, validating, parsing, saving, and converting CWL files.
+    
+    This function performs the following steps:
+    1. Generates CWL files.
+    2. Validates the generated CWL files.
+    3. Parses and saves the CWL files to a database.
+    4. Converts database entries back to CWL files.
+    
+    Results from each step are collected and written to a CSV file.
+    
+    Logs detailed information about the process and any errors encountered.
+    """
     results = []
 
     try:
@@ -58,6 +71,19 @@ def run_pipeline():
     write_results_to_csv(results, 'analytics_automated/bidirectional_cwl_llm_testing/validation_results/validation_results.csv')
 
 def write_results_to_csv(results, csv_path):
+    """
+    Write the results of each step of the pipeline to a CSV file and a summary file.
+
+    Args:
+        results (list): A list of dictionaries containing the results from the pipeline steps.
+        csv_path (str): The file path where the results should be written.
+
+    Raises:
+        Exception: If there is an error writing to the CSV file.
+    
+    The CSV file contains columns for file details, validation results, and error matches.
+    An additional summary text file is created with overall statistics.
+    """
     """
     Writes the results of each step of the pipeline to a CSV file.
     """

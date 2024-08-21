@@ -14,6 +14,15 @@ FORMAT_MAP = r"analytics_automated/cwl_utils/uri_format_mapping.json"
 
 
 def python_type_to_cwl_type(py_type):
+    """
+    Maps Python types to their equivalent CWL types.
+
+    Args:
+        py_type (type): A Python type (e.g., str, int, float, bool).
+
+    Returns:
+        str: The corresponding CWL type as a string. Returns 'unknown' if the type is not mapped.
+    """
     type_mapping = {
         str: "string",
         int: "int",
@@ -27,6 +36,16 @@ def python_type_to_cwl_type(py_type):
 
 
 def load_format_mapping(file_path):
+    """
+    Loads a JSON file containing format mappings for file types and returns it as a dictionary.
+
+    Args:
+        file_path (str): The path to the JSON file containing the format mappings.
+
+    Returns:
+        dict: A dictionary containing the format mappings. 
+              If the file cannot be loaded, returns an empty dictionary and logs an error.
+    """
     try:
         with open(file_path, 'r') as file:
             format_mapping = json.load(file)
@@ -38,11 +57,34 @@ def load_format_mapping(file_path):
 
 
 def parse_json_field(field):
+    """
+    Parses a string field containing JSON data into a Python object.
+
+    Args:
+        field (str or dict): The JSON field to parse. If already a dictionary, it is returned as is.
+
+    Returns:
+        dict: The parsed JSON data as a dictionary. 
+              If the input is already a dictionary, it returns the input unchanged.
+    """
     if isinstance(field, str):
         return json.loads(field)
     return field
 
 def reconstruct_task_cwl(task, file_path):
+    """
+    Reconstructs a CommandLineTool CWL file for a given task and saves it to the specified file path.
+
+    Args:
+        task (Task): The task object from the database for which the CWL file is to be reconstructed.
+        file_path (str): The file path where the reconstructed CWL file will be saved.
+
+    Raises:
+        Exception: If an error occurs during the reconstruction process, it's logged, and the function continues.
+
+    Returns:
+        None
+    """
     logger.info(f"Reconstructing task: {task.name}")
     task_detail = {
         "cwlVersion": "v1.2",
@@ -108,9 +150,6 @@ def reconstruct_task_cwl(task, file_path):
 
     _add_outputs(task, task_detail)
 
-    # Add environment variables
-    _add_environment(task, task_detail)
-
     # Save the CWL file
     try:
         with open(file_path, 'w') as file:
@@ -121,6 +160,17 @@ def reconstruct_task_cwl(task, file_path):
 
 
 def _add_input_parameters(task, task_detail, positions_P):
+    """
+    Adds input parameters to the CWL task based on the associated task parameters.
+
+    Args:
+        task (Task): The task object containing the parameters to be added.
+        task_detail (dict): The dictionary containing the CWL CommandLineTool details.
+        positions_P (list[int]): The list of positions for input parameters in the base command.
+
+    Returns:
+        None
+    """
     # Define inputs based on task parameters
     parameters = Parameter.objects.filter(task=task)
     idx = 0
@@ -130,13 +180,14 @@ def _add_input_parameters(task, task_detail, positions_P):
             "position": positions_P[idx],
         }
         idx += 1
-        if p.switchless:
+        if not p.switchless:
             p_input_binding["prefix"] = p.flag
 
         p_attr_dict = {
-            "default": p.default,
             "inputBinding": p_input_binding,
         }
+        if p.default:
+            p_attr_dict["default"] = p.default
         if p.bool_valued:
             p_attr_dict["type"] = "boolean"
             p_attr_dict["default"] = True if p.default == "True" else False
@@ -147,10 +198,21 @@ def _add_input_parameters(task, task_detail, positions_P):
 
 
 def _add_inputs(task, task_detail, positions_I: dict[str, int]):
+    """
+    Adds input file references to the CWL task based on the in_globs field and their positions in the base command.
+
+    Args:
+        task (Task): The task object containing the input file globs.
+        task_detail (dict): The dictionary containing the CWL CommandLineTool details.
+        positions_I (dict[str, int]): A dictionary mapping input placeholders in the base command to their positions.
+
+    Returns:
+        None
+    """
     # Define inputs based on in_globs and executable
     def map_format(format_uri, mapping):
         logging.info(f"Mapping format URI: {format_uri}")
-        return mapping.get(format_uri, "unknown")
+        return mapping.get(format_uri, "Any")
 
     # Detect file format
     format_mapping = load_format_mapping(FORMAT_MAP)
@@ -177,6 +239,16 @@ def _add_inputs(task, task_detail, positions_I: dict[str, int]):
         }
 
 def _add_outputs(task, task_detail):
+    """
+    Adds output file references to the CWL task based on the out_globs field and other output-related fields.
+
+    Args:
+        task (Task): The task object containing the output file globs.
+        task_detail (dict): The dictionary containing the CWL CommandLineTool details.
+
+    Returns:
+        None
+    """
     # Define outputs based on task outputs
     out_globs = task.out_glob.split(',')
     if task.stdout:
@@ -188,10 +260,21 @@ def _add_outputs(task, task_detail):
         if output.strip():  # Skip empty outputs
             task_detail["outputs"][f"output_{i}"] = {
                 "type": "File",
-                "outputBinding": {"glob": output}
+                "outputBinding": {"glob": "*" + output}
             }
 
+
 def _add_environment(task, task_detail):
+    """
+    Adds environment variables to the CWL task based on the task's environment field.
+
+    Args:
+        task (Task): The task object containing the environment variables.
+        task_detail (dict): The dictionary containing the CWL CommandLineTool details.
+
+    Returns:
+        None
+    """
     # Add environment variables
     environments = task.environment.all()
     if environments.exists():

@@ -3,6 +3,7 @@ import string
 import factory
 import uuid
 import os
+import json
 from unipath import Path
 
 from django.test import TestCase
@@ -55,8 +56,7 @@ class TaskFactory(factory.django.DjangoModelFactory):
     out_glob = factory.LazyAttribute(lambda t: random_string())
     executable = factory.LazyAttribute(lambda t: random_string())
     incomplete_outputs_behaviour = Task.CONTINUE
-    custom_exit_status = None
-    custom_exit_behaviour = None
+    
 
     class Meta:
         model = Task

@@ -78,10 +78,10 @@ class TaskCustomExitBehaviours(TestCase):
         t2 = TaskFactory.create(backend=self.b, name="test_custom_continue",
                                 executable="grep 'previous' /tmp/",
                                 in_glob="in", out_glob="out",
-                                custom_exit_status="123",
-                                custom_exit_behaviour=Task.CONTINUE)
+                                custom_success_exit="123",
+                                )
         task_runner.delay(self.uuid1, 0, 1, 1, 2, "test_custom_continue", [],
-                          {}, None, 1, {})
+                          {}, None, 1, {},'')
         self.sub = Submission.objects.get(UUID=self.uuid1)
         self.assertEqual(self.sub.last_message, "Completed step: 1")
 
@@ -100,10 +100,10 @@ class TaskCustomExitBehaviours(TestCase):
         t2 = TaskFactory.create(backend=self.b, name="test_custom_continue",
                                 executable="grep 'previous' /tmp/",
                                 in_glob="in", out_glob="out",
-                                custom_exit_status="123,500",
-                                custom_exit_behaviour=Task.CONTINUE)
+                                custom_success_exit="123,500",
+                                )
         task_runner.delay(self.uuid1, 0, 1, 1, 2, "test_custom_continue", [],
-                          {}, None, 1, {})
+                          {}, None, 1, {},'')
         self.sub = Submission.objects.get(UUID=self.uuid1)
         self.assertEqual(self.sub.last_message, "Completed step: 1")
 
@@ -122,10 +122,10 @@ class TaskCustomExitBehaviours(TestCase):
         t2 = TaskFactory.create(backend=self.b, name="test_custom_continue",
                                 executable="grep 'previous' /tmp/",
                                 in_glob="in", out_glob="out",
-                                custom_exit_status="123,500",
-                                custom_exit_behaviour=Task.CONTINUE)
+                                custom_success_exit="123,500",
+                                )
         task_runner.delay(self.uuid1, 0, 1, 1, 2, "test_custom_continue", [],
-                          {}, None, 1, {})
+                          {}, None, 1, {},'')
         self.sub = Submission.objects.get(UUID=self.uuid1)
         self.assertEqual(self.sub.last_message, "Completed step: 1")
 
@@ -144,10 +144,10 @@ class TaskCustomExitBehaviours(TestCase):
         t2 = TaskFactory.create(backend=self.b, name="test_custom_continue",
                                 executable="grep 'previous' /tmp/",
                                 in_glob="in", out_glob="out",
-                                custom_exit_status="123",
-                                custom_exit_behaviour=Task.FAIL)
+                                custom_success_exit="123",
+                                incomplete_outputs_behaviour=Task.FAIL)
         self.assertRaises(OSError, task_runner, self.uuid1, 0, 1, 1, 1,
-                          "test_custom_continue", [], {}, None, 1, {})
+                          "test_custom_continue", [], {}, None, 1, {},'')
 
     @override_settings(
         task_eager_propagates=True,
@@ -164,10 +164,10 @@ class TaskCustomExitBehaviours(TestCase):
         t2 = TaskFactory.create(backend=self.b, name="test_custom_continue",
                                 executable="grep 'previous' /tmp/",
                                 in_glob="in", out_glob="out",
-                                custom_exit_status="123,ARGHEL",
-                                custom_exit_behaviour=Task.FAIL)
+                                custom_success_exit="123,ARGHEL",
+                                incomplete_outputs_behaviour=Task.FAIL)
         self.assertRaises(OSError, task_runner, self.uuid1, 0, 1, 1, 1,
-                          "test_custom_continue", [], {}, None, 1, {})
+                          "test_custom_continue", [], {}, None, 1, {},'')
 
     @override_settings(
         task_eager_propagates=True,
@@ -184,9 +184,9 @@ class TaskCustomExitBehaviours(TestCase):
         t2 = TaskFactory.create(backend=self.b, name="test_custom_continue",
                                 executable="grep 'previous' /tmp/",
                                 in_glob="in", out_glob="out",
-                                custom_exit_status="123",
-                                custom_exit_behaviour=Task.TERMINATE)
+                                custom_success_exit="123",
+                                incomplete_outputs_behaviour=Task.TERMINATE)
         task_runner.delay(self.uuid1, 0, 1, 1, 2, "test_custom_continue", [],
-                          {}, None, 1, {})
+                          {}, None, 1, {},'')
         self.sub = Submission.objects.get(UUID=self.uuid1)
         self.assertEqual(self.sub.last_message, "Completed job at step #1")

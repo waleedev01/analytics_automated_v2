@@ -1,13 +1,24 @@
 import networkx as nx
 import io
 import base64
+import matplotlib
+matplotlib.use('Agg')  
 import matplotlib.pyplot as plt
 import logging
 from .models import Submission, Task, Result, Step # Adjust if Task and Submission are in different files
 
 logger = logging.getLogger(__name__)
 
-def extract_workflow_data(cwl_data): # not sure about implementation
+def extract_workflow_data(cwl_data):
+    """
+    Extract task data from CWL workflow data.
+
+    Args:
+        cwl_data (dict): The CWL workflow data in dictionary format.
+
+    Returns:
+        dict: A dictionary where keys are task names and values are dictionaries containing inputs, outputs, and requirements.
+    """ 
     tasks = {}
     for step in cwl_data.get('steps', []):
         task_name = step.get('id', step.get('name', 'Unnamed Step'))
@@ -24,6 +35,15 @@ def extract_workflow_data(cwl_data): # not sure about implementation
 
 
 def plot_static_workflow2(tasks):
+    """
+    Generate a static workflow visualization plot.
+
+    Args:
+        tasks (dict): A dictionary where keys are task names and values are task details.
+
+    Returns:
+        str: The base64 encoded PNG image of the workflow visualization.
+    """
     try:
         G_static = nx.DiGraph()
 
@@ -94,7 +114,16 @@ def plot_static_workflow2(tasks):
         raise
 
 
-def plot_static_workflow_old(tasks):    # OLD FUNCTION
+def plot_static_workflow_old(tasks):   # OLD FUNCTION
+    """
+    Generate a basic static workflow visualization plot (older version).  
+
+    Args:
+        tasks (dict): A dictionary where keys are task names and values are task details.
+
+    Returns:
+        str: The base64 encoded PNG image of the workflow visualization.
+    """   
     G_static = nx.DiGraph()
     for task, details in tasks.items():
         G_static.add_node(task, type='task')
@@ -120,8 +149,17 @@ def plot_static_workflow_old(tasks):    # OLD FUNCTION
     
     return img_data
 
-def plot_static_workflow(tasks):  # OLD FUNCTION
-    G_static = nx.DiGraph()
+def plot_static_workflow(tasks):   # OLD FUNCTION
+    """
+    Generate a static workflow visualization plot (improved version).
+
+    Args:
+        tasks (dict): A dictionary where keys are task names and values are task details.
+
+    Returns:
+        str: The base64 encoded PNG image of the workflow visualization.
+    """  
+    G_static = nx.DiGraph()  
     for task, details in tasks.items():
         G_static.add_node(task, type='task')
         for inp in details['inputs']:
@@ -147,6 +185,15 @@ def plot_static_workflow(tasks):  # OLD FUNCTION
 
 
 def plot_dynamic_workflow(tasks):  # OLD FUNCTION
+    """
+    Generate a dynamic workflow visualization plot.
+
+    Args:
+        tasks (dict): A dictionary where keys are task names and values are task details.
+
+    Returns:
+        str: The base64 encoded PNG image of the workflow visualization.
+    """  
     G_dynamic = nx.DiGraph()
     for task, details in tasks.items():
         G_dynamic.add_node(task, type='task', state=details['state'])
@@ -174,6 +221,15 @@ def plot_dynamic_workflow(tasks):  # OLD FUNCTION
 
 
 def get_current_task_states2(submission_name):
+    """
+    Retrieve the current states of tasks in a submission.
+
+    Args:
+        submission_name (str): The name of the submission.
+
+    Returns:
+        dict: A dictionary where keys are task names and values are dictionaries containing task details and state.
+    """
     task_states = {}
 
     try:
@@ -205,6 +261,15 @@ def get_current_task_states2(submission_name):
 
 
 def get_current_task_states(submission_id):   # OLD FUNCTION
+    """
+    Retrieve the current states of tasks in a submission.
+
+    Args:
+        submission_id (int): The ID of the submission.
+
+    Returns:
+        dict: A dictionary where keys are task IDs and values are dictionaries containing task details and state.
+    """   
 
     task_states = {}
 

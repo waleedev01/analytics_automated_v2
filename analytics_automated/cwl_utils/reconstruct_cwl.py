@@ -8,6 +8,19 @@ from ..models import Job
 logger = logging.getLogger(__name__)
 
 def reconstruct_cwl_files(job_name, output_directory):
+    """
+    Reconstruct the CWL files for a given job (workflow) and save them to the specified output directory.
+
+    Args:
+        job_name (str): The name of the job (workflow) to reconstruct CWL files for.
+        output_directory (str): The directory where the reconstructed CWL files will be saved.
+
+    Raises:
+        ValueError: If the specified job does not exist in the database.
+
+    Returns:
+        None
+    """
     logger.info(f"Reconstructing CWL files for job: {job_name}")
 
     # Explicitly check if the provided name corresponds to a workflow (Job) and not a task
