@@ -1,41 +1,35 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Building Jobs Overview &mdash; analytics_automated 1.0 documentation</title>
-    
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="analytics_automated 1.0 documentation" href="index.html" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Building Jobs Overview &#8212; analytics_automated 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Configuring A Basic Job" href="configuring_a_basic_job.html" />
-    <link rel="prev" title="How The System Works" href="how_it_works.html" />
+    <link rel="prev" title="CWL Upload and Download" href="CWL_upload_and_download.html" />
    
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">  
+  </head><body>
+  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="building-jobs-overview">
@@ -47,25 +41,25 @@ job configuration. Additionally it is possible to define jobs using yaml and
 upload those to the system</p>
 <p>To define a job first you need to define a <strong>Backend</strong> and a series of
 <strong>Tasks</strong> and then these <strong>Tasks</strong> can be plugged together as a <strong>Job</strong>.</p>
-<p>Assuming you correctly followed the dev installation instructions, you&#8217;ll need
+<p>Assuming you correctly followed the dev installation instructions, you’ll need
 to log in by pointing your browser at <a class="reference external" href="http://127.0.0.1:8000/admin/">http://127.0.0.1:8000/admin/</a> and log in
 using the superuser details you set during installation.</p>
 <div class="section" id="define-a-backend">
-<h2>Define a Backend<a class="headerlink" href="#define-a-backend" title="Permalink to this headline">¶</a></h2>
+<span id="define-backend"></span><h2>Define a Backend<a class="headerlink" href="#define-a-backend" title="Permalink to this headline">¶</a></h2>
 <p>The first thing to do is to define the details for each <strong>Backend</strong> your
 tasks will use. A backend is the location where a computational task is
 executed. In the most basic configuration you would start only one set of workers
 watching only the task queues for the LOCALHOST backend so for this example
-we&#8217;ll only configure one LOCALHOST backend.</p>
+we’ll only configure one LOCALHOST backend.</p>
 <p>In the admin interface click on the Backends option.</p>
 <img alt="_images/backend_config.png" src="_images/backend_config.png" />
 <p><strong>Name</strong>: Gives your backend a useful memorable name</p>
-<dl class="docutils">
-<dt><strong>Server Type</strong>: Tells A_A what kind of execution location this is.</dt>
-<dd>&#8216;localhost&#8217;: executes the computation on the machine that the celery worker is
+<dl class="simple">
+<dt><strong>Server Type</strong>: Tells A_A what kind of execution location this is.</dt><dd><p>‘localhost’: executes the computation on the machine that the celery worker is
 running on
-&#8216;GridEngine&#8217;: uses python DRMAA to submit jobs to a Grid Engine head node running on the same machine the celery work is running on
-&#8216;Rserver&#8217;: This option is not currently supported</dd>
+‘GridEngine’: uses python DRMAA to submit jobs to a Grid Engine head node running on the same machine the celery work is running on
+‘Rserver’: This option is not currently supported</p>
+</dd>
 </dl>
 <p><strong>Root Path</strong>: This is a location on a disk (or network drive) which the backend
 celery workers can write to and will be used to store temporary files which the
@@ -79,12 +73,12 @@ THIS VERSION OF A_A</strong></p>
 <div class="section" id="defining-a-task">
 <h2>Defining a Task<a class="headerlink" href="#defining-a-task" title="Permalink to this headline">¶</a></h2>
 <p>Return to the admin interface at <a class="reference external" href="http://127.0.0.1:8000/admin/">http://127.0.0.1:8000/admin/</a>.
-Click on the Tasks link and then select &#8220;Add Task&#8221;.</p>
+Click on the Tasks link and then select “Add Task”.</p>
 <p><strong>Task 1</strong></p>
 <img alt="_images/task1.png" src="_images/task1.png" />
 <p><strong>Name</strong>: A useful memorable name for this task. It is convenient if you avoid
 using spaces</p>
-<p><strong>Backend</strong>: The backend where this task will run, you&#8217;ll select from one of
+<p><strong>Backend</strong>: The backend where this task will run, you’ll select from one of
 the choices you created previously</p>
 <p><strong>Description</strong>: This allows you to enter a short description of the task.</p>
 <p><strong>In Glob</strong>: A comma separated list of file endings (i.e. .txt, .pdf, etc..)
@@ -96,10 +90,10 @@ can be refered to in the Executable field (see below), the first one is called
 $I1, the second $I2 and so forth.</p>
 <p><strong>Out Glob</strong>: A comma separated list of file endings (i.e. .txt, .pdf, etc..)
 This defines the file endings for all files that will be gathered up and
-returned to the database when the task completes. As per the &#8216;In Glob&#8217; field
+returned to the database when the task completes. As per the ‘In Glob’ field
 each of these output files creates a name as per UUID.[ENDING] and
-these are made available to the Executable fields as $O1, $O2 etc...</p>
-<p><strong>stdout glob</strong>: If you wish to record the task&#8217;s stdout then you can provide a
+these are made available to the Executable fields as $O1, $O2 etc…</p>
+<p><strong>stdout glob</strong>: If you wish to record the task’s stdout then you can provide a
 file suffix. The task will now perform as though you had used a standard unix
 file redirect.</p>
 <p><strong>Executable</strong>: This is the program the worker will execute with any default
@@ -112,19 +106,17 @@ parameters that the user provides (see below) as $Px.</p>
 whole job running and push a message to the user. These options provide
 some limited control for other type of behaviour</p>
 <p><strong>Incomplete Outputs Behaviour</strong>: By default the system expect to find at least
-one output file with each of the file endings provided in &#8220;Out glob&#8221;. If this
-isn&#8217;t the case then the system will stop future tasks and raise an error.
+one output file with each of the file endings provided in “Out glob”. If this
+isn’t the case then the system will stop future tasks and raise an error.
 Alternatively you can, stop running task and not raise an error, or silently
 continue on to the next task in the job.</p>
-<p><strong>Custom exit status</strong>: Some tasks will output non zero exits statuses that
-are not failure states. You can provided a comma separated list of these
-&#8220;acceptable&#8221; exit status.</p>
-<p><strong>Custom exit behaviour</strong>: If you provide a custom exit status, you must provide
-a behaviour. Either when the task detects these values is halts the job throwing an
-error, it halts job and doesn&#8217;t throw and error or it silently continues to the
-next task. Note the default behaviour of exit status 0 is to move on to the next
-task, if you add 0 to the &#8220;Custom exit status&#8221; field you can change this default
-behaviour</p>
+<p><strong>Custom success exit</strong>: Exit codes that indicate the process completed successfully.</p>
+<p><strong>Custom fail exit</strong>: Exit codes that indicate the process failed due to a possibly
+temporary condition, where executing the process with the same runtime environment and
+inputs may produce different results.</p>
+<p><strong>Custom terminate exit</strong>: Exit codes that indicate the process failed due to a permanent logic
+error, where executing the process with the same runtime environment and same inputs is
+expected to always fail.</p>
 </div>
 <div class="section" id="parameters">
 <h3>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h3>
@@ -133,7 +125,7 @@ absent in the command or valued parameters which may of may not have switches</p
 <p><strong>Flag</strong>: This string is the value that will be inserted in command if required
 each parameter is made available to the executable string as $P[INTEGER],
 numbered in order from top to bottom (i.e. $P1, $P2 etc..). Any flag named
-&#8216;VALUE&#8217; is a special case and  a user provided value will be made available in
+‘VALUE’ is a special case and  a user provided value will be made available in
 the executable string as $VALUE</p>
 <p><strong>Default</strong>: This is a default value for the parameter if the Bool Valued is
 set to false.</p>
@@ -147,9 +139,9 @@ REST call the user makes. The string will have the name of the task prepended to
 it in the REST call.</p>
 <p><strong>Spacing</strong>: If the param takes a value (or default) this controls whether
 there should be a space between the flat and the value (i.e flat is -t and
-value is 12, if true this will be rendered as &#8216;-t 12&#8217;, if false as &#8216;-t12&#8217;)</p>
+value is 12, if true this will be rendered as ‘-t 12’, if false as ‘-t12’)</p>
 <p><strong>Switchless</strong>: Controls whether the flag should be included or just the value
-(i.e if true &#8220;12&#8221;, if false &#8216;-t 12&#8217;)</p>
+(i.e if true “12”, if false ‘-t 12’)</p>
 </div>
 <div class="section" id="environments">
 <h3>Environments<a class="headerlink" href="#environments" title="Permalink to this headline">¶</a></h3>
@@ -157,44 +149,54 @@ value is 12, if true this will be rendered as &#8216;-t 12&#8217;, if false as &
 <p><strong>Env</strong>: A string for the name of the environment variable</p>
 <p><strong>Value</strong>: A string for the contents of that environment variable</p>
 </div>
+<div class="section" id="configurations">
+<h3>Configurations<a class="headerlink" href="#configurations" title="Permalink to this headline">¶</a></h3>
+<p>Users can use the configration table to notify specific execution software
+information.</p>
+<p><strong>Type</strong>: This field specifies the type of configuration. The available options
+are Software, Dataset and  Miscellaneous (Misc.)</p>
+<p><strong>Name</strong>: The name of the configuration.</p>
+<p><strong>Parameters</strong>: Parameter when the configration object is used.</p>
+<p><strong>Version</strong>: The version of the configuration object.</p>
+</div>
 <div class="section" id="executable-syntax">
 <h3>Executable Syntax<a class="headerlink" href="#executable-syntax" title="Permalink to this headline">¶</a></h3>
-<p>It is worth noting that tasks use the Python package commandRunner to execute
+<p>It is worth mention that tasks use the Python package commandRunner to execute
 (<a class="reference external" href="https://pypi.python.org/pypi/commandRunner/">https://pypi.python.org/pypi/commandRunner/</a>). So it is worth reading those
 docs for the API.</p>
 <p>The executable line can be any arbitrarily long command line statement even
-including &#8216;;&#8217; and pipes. It must not contain any redirection controls for stdout or
+including ‘;’ and pipes. It must not contain any redirection controls for stdout or
 stderr. The system makes available a number of control sequences which can be
 inserted in to the executable string.</p>
 <p><strong>IN GLOBS</strong>: These are available in the sequenctial order they appear in
-the &#8216;in glob&#8217; field as $I1, $I2, $I3 etc...</p>
+the ‘in glob’ field as $I1, $I2, $I3 etc…</p>
 <p><strong>OUT GLOBS</strong>: These are available in the sequenctial order they appear in
-the &#8216;out glob&#8217; field as $O1, $O2, $O3 etc...</p>
+the ‘out glob’ field as $O1, $O2, $O3 etc…</p>
 <p><strong>PARAMETERS</strong>: These are available in the sequenctial order they appear in
-the &#8216;Parameters&#8217; table field as $P1, $P2, $P3 etc...</p>
+the ‘Parameters’ table field as $P1, $P2, $P3 etc…</p>
 <p><strong>TEMPORARY WORKING DIRECTORY</strong>: This path is available as a string using $TMP</p>
 <p><strong>JOB ID</strong>: $ID represents the UUID that the files are named with</p>
 <p><strong>VALUE</strong>: A special parameters called VALUE is made available as $VALUE</p>
 <p>Command construction proceeds by first tokenising the Executable string.
 Control strings are then interpolated. The following example should explain:</p>
-<div class="highlight-python"><div class="highlight"><pre>Job ID: f7a314fe
-Executable: &quot;/usr/bin/example_binary $P1 -u 123 -la $P2 -input $I1 -out $O1&quot;
-Parameter1: &quot;-z&quot;; bool valued False; default 12; spacing True, switchless False
-Parameter2: &quot;-lm&quot; bool valued True
-in_glob: &quot;.input&quot;
-out_glob: &quot;.out, .stdout&quot;
-stdout_glob: &quot;.stdout&quot;
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Job</span> <span class="n">ID</span><span class="p">:</span> <span class="n">f7a314fe</span>
+<span class="n">Executable</span><span class="p">:</span> <span class="s2">&quot;/usr/bin/example_binary $P1 -u 123 -la $P2 -input $I1 -out $O1&quot;</span>
+<span class="n">Parameter1</span><span class="p">:</span> <span class="s2">&quot;-z&quot;</span><span class="p">;</span> <span class="nb">bool</span> <span class="n">valued</span> <span class="kc">False</span><span class="p">;</span> <span class="n">default</span> <span class="mi">12</span><span class="p">;</span> <span class="n">spacing</span> <span class="kc">True</span><span class="p">,</span> <span class="n">switchless</span> <span class="kc">False</span>
+<span class="n">Parameter2</span><span class="p">:</span> <span class="s2">&quot;-lm&quot;</span> <span class="nb">bool</span> <span class="n">valued</span> <span class="kc">True</span>
+<span class="n">in_glob</span><span class="p">:</span> <span class="s2">&quot;.input&quot;</span>
+<span class="n">out_glob</span><span class="p">:</span> <span class="s2">&quot;.out, .stdout&quot;</span>
+<span class="n">stdout_glob</span><span class="p">:</span> <span class="s2">&quot;.stdout&quot;</span>
 </pre></div>
 </div>
 <p>Given these settings the following internal strings will be constructed
 $I1: f7a314fe.input
 $O1: f7a314fe.out
 $O2: f7a314fe.stdout
-$P1: &#8220;-z 12&#8221;
-$P2: &#8220;-lm&#8221;</p>
+$P1: “-z 12”
+$P2: “-lm”</p>
 <p>The final command which will be executed will be equivalent to the following
 command line call:</p>
-<div class="highlight-python"><div class="highlight"><pre>/usr/bin/example_binary -z 12 -u 123 -la -lm -input f7a314fe.input -out f7a314fe.out &gt; f7a314fe.stdout
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">example_binary</span> <span class="o">-</span><span class="n">z</span> <span class="mi">12</span> <span class="o">-</span><span class="n">u</span> <span class="mi">123</span> <span class="o">-</span><span class="n">la</span> <span class="o">-</span><span class="n">lm</span> <span class="o">-</span><span class="nb">input</span> <span class="n">f7a314fe</span><span class="o">.</span><span class="n">input</span> <span class="o">-</span><span class="n">out</span> <span class="n">f7a314fe</span><span class="o">.</span><span class="n">out</span> <span class="o">&gt;</span> <span class="n">f7a314fe</span><span class="o">.</span><span class="n">stdout</span>
 </pre></div>
 </div>
 <p>Note that if this is the first task in a job the data sent by the user is
@@ -204,11 +206,18 @@ made available as a file called [ID].input</p>
 <div class="section" id="define-a-job">
 <h2>Define a Job<a class="headerlink" href="#define-a-job" title="Permalink to this headline">¶</a></h2>
 <p>Once you have defined one or more tasks you can define a <strong>Job</strong>. Return to
-<a class="reference external" href="http://127.0.0.1:8000/admin/">http://127.0.0.1:8000/admin/</a> and click on Jobs then select &#8220;Add Job&#8221;</p>
+<a class="reference external" href="http://127.0.0.1:8000/admin/">http://127.0.0.1:8000/admin/</a> and click on Jobs then select “Add Job”</p>
 <img alt="_images/job.png" src="_images/job.png" />
 <p><strong>Name</strong>: A useful name for the job. Users will use this when submitting data
 to the API</p>
 <p><strong>Runnable</strong>: Whether the user can POST data and run this job</p>
+<p>If you define the Job by uploading cwl files at
+<a class="reference external" href="http://127.0.0.1:8000/analytics_automated/admin_upload_cwl/">http://127.0.0.1:8000/analytics_automated/admin_upload_cwl/</a>, these three
+items are autofilled. Please refer to
+<a class="reference internal" href="supported_cwl_feature.html#supported-cwl-feature"><span class="std std-ref">CWL File Requirements and Specifications</span></a> for more details.</p>
+<p><strong>Requirements</strong>: The requirement JSON payload of <a class="reference external" href="https://www.commonwl.org/user_guide/topics/workflows.html">CWL workflow</a>.</p>
+<p><strong>Cwl version</strong>: The version number of the uploaded CWL file.</p>
+<p><strong>Cwl content</strong>: The content of the uploaded CWL file.</p>
 <div class="section" id="validators">
 <h3>Validators<a class="headerlink" href="#validators" title="Permalink to this headline">¶</a></h3>
 <p>You can set one or more data validators for the jobs. Validators are blocks
@@ -234,7 +243,7 @@ up to you to understand task dependency and order your task appropriately.</p>
 POST request to <a class="reference external" href="http://127.0.0.1:8000/analytics_automated/submission">http://127.0.0.1:8000/analytics_automated/submission</a> and
 passing all the correct values.</p>
 <p>Users <em>must</em> at a minimum pass the following information in</p>
-<p><strong>job</strong>: The name of the job as defined in the <strong>Job</strong> form in this example &#8216;job1&#8217;</p>
+<p><strong>job</strong>: The name of the job as defined in the <strong>Job</strong> form in this example ‘job1’</p>
 <p><strong>submission_name</strong>: A string by which the user will remember thier submission</p>
 <p><strong>email</strong>: An email address (currently required even if A_A is not set to return emails)</p>
 <p>The job described above has 2 parameters and values for these must be provided
@@ -259,63 +268,72 @@ request will return a json with the current state of the job.</p>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Building Jobs Overview</a><ul>
-<li><a class="reference internal" href="#define-a-backend">Define a Backend</a></li>
-<li><a class="reference internal" href="#defining-a-task">Defining a Task</a><ul>
-<li><a class="reference internal" href="#job-termination-behaviour">Job termination behaviour</a></li>
-<li><a class="reference internal" href="#parameters">Parameters</a></li>
-<li><a class="reference internal" href="#environments">Environments</a></li>
-<li><a class="reference internal" href="#executable-syntax">Executable Syntax</a></li>
+<h1 class="logo"><a href="index.html">analytics_automated</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Basic Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_it_works.html">How The System Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supported_cwl_feature.html">CWL File Requirements and Specifications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CWL_upload_and_download.html">CWL Upload and Download</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Building Jobs Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#define-a-backend">Define a Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#defining-a-task">Defining a Task</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#define-a-job">Define a Job</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-your-job">Using Your Job</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#define-a-job">Define a Job</a><ul>
-<li><a class="reference internal" href="#validators">Validators</a></li>
-<li><a class="reference internal" href="#steps">Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuring_a_basic_job.html">Configuring A Basic Job</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_a_basic_job.html">Using A Basic Job</a></li>
+<li class="toctree-l1"><a class="reference internal" href="job_admin.html">Administration Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes.html">Recipes for more advanced use-cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced Uses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="periodic_tasks.html">Periodic Tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration_settings.html">Configurations Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_installation.html">Development Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="todo.html">TODO</a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#using-your-job">Using Your Job</a><ul>
-<li><a class="reference internal" href="#checking-what-jobs-are-available">Checking what jobs are available</a></li>
-<li><a class="reference internal" href="#submitting-data">Submitting Data</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
+
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="how_it_works.html" title="previous chapter">How The System Works</a></li>
+      <li>Previous: <a href="CWL_upload_and_download.html" title="previous chapter">CWL Upload and Download</a></li>
       <li>Next: <a href="configuring_a_basic_job.html" title="next chapter">Configuring A Basic Job</a></li>
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/the_Job_UI.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
+    </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -324,11 +342,11 @@ request will return a json with the current state of the job.</p>
       &copy;2015, Daniel Buchan.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
-      <a href="_sources/the_Job_UI.txt"
+      <a href="_sources/the_Job_UI.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

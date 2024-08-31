@@ -1,0 +1,409 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CWL File Requirements and Specifications &#8212; analytics_automated 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="CWL Upload and Download" href="CWL_upload_and_download.html" />
+    <link rel="prev" title="How The System Works" href="how_it_works.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="cwl-file-requirements-and-specifications">
+<span id="supported-cwl-feature"></span><h1>CWL File Requirements and Specifications<a class="headerlink" href="#cwl-file-requirements-and-specifications" title="Permalink to this headline">¶</a></h1>
+<p>The AAv2 platform allows users to upload specific CWL files. Besides all the required fields specified in the Common Workflow Language Standards, AAv2 covers a subset of them with additional constraints and requirements to ensure proper functionality within the system.</p>
+<div class="section" id="supported-cwl-features">
+<h2>Supported CWL Features<a class="headerlink" href="#supported-cwl-features" title="Permalink to this headline">¶</a></h2>
+<p><strong>Supported CWL Version</strong>: <a class="reference external" href="https://www.commonwl.org/v1.2/">1.2</a></p>
+<p><strong>Supported CWL Classes</strong>:</p>
+<p><a class="reference external" href="https://www.commonwl.org/v1.2/Workflow.html#Workflow">Workflow</a>: Workflow class as defined in CWL v1.2</p>
+<p><a class="reference external" href="https://www.commonwl.org/v1.2/CommandLineTool.html#CommandLineTool">CommandLineTool</a>: CommandLineTool class as defined in CWL v1.2</p>
+<p><strong>Supported CWL Requirement List</strong>:</p>
+<p>ShellCommandRequirement: Enables the use of shell commands within the CWL tool.</p>
+<p>EnvVarRequirement: Allows the specification of environment variables.</p>
+<p>InitialWorkDirRequirement: Specifies files that must be staged into the initial working directory.</p>
+<p>InlineJavascriptRequirement: Only for <a class="reference external" href="#conditional-workflow-type">conditional workflows</a>, allows the use of inline JavaScript expressions.</p>
+<p><strong>Supported Hint Field</strong>:</p>
+<p>SoftwareRequirement: Specifies software packages that are required.</p>
+<div class="section" id="additional-cwl-requirements">
+<h3>Additional CWL Requirements<a class="headerlink" href="#additional-cwl-requirements" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic">
+<li><p>Requirements must be defined as a list/array:</p>
+<ul>
+<li><p>Even if there is only one requirement, it must be defined as a list.</p></li>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">requirements</span><span class="p">:</span>
+
+  <span class="p p-Indicator">-</span> <span class="nt">class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ShellCommandRequirement</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p>Inputs of CommandLineTool must be defined as a <a class="reference external" href="https://www.commonwl.org/v1.2/CommandLineTool.html#map">dictionary/map</a>:</p>
+<ul>
+<li><p>Inputs should be specified using a dictionary format.</p></li>
+<li><p>For non-file input types, a <strong>default value must be provided</strong> since the current submission system does not allow users to upload an input.yaml file.</p></li>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">inputs</span><span class="p">:</span>
+
+  <span class="nt">input_file</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">File</span>
+
+    <span class="nt">inputBinding</span><span class="p">:</span>
+
+      <span class="nt">position</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+
+  <span class="nt">message</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+
+    <span class="nt">inputBinding</span><span class="p">:</span>
+
+      <span class="nt">position</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
+
+    <span class="nt">default</span><span class="p">:</span> <span class="s">&quot;Hello,</span><span class="nv"> </span><span class="s">World!&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p>We do not support any composite types of inputs and outputs (<a class="reference external" href="https://www.commonwl.org/v1.2/CommandLineTool.html#CommandInputParameter">array or record</a>). Supported input types are: int, boolean, long, double, string, File.</p></li>
+</ul>
+</li>
+<li><p>Outputs should also be defined using a dictionary.</p>
+<p>Currently, we only support output type <code class="docutils literal notranslate"><span class="pre">File</span></code>, and the user must specify the content of <code class="docutils literal notranslate"><span class="pre">glob</span></code> in the output. Other optional fields like <code class="docutils literal notranslate"><span class="pre">label</span></code>, <code class="docutils literal notranslate"><span class="pre">secondaryFiles</span></code>, <code class="docutils literal notranslate"><span class="pre">streamable</span></code>, <code class="docutils literal notranslate"><span class="pre">doc</span></code>, <code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">format</span></code> will not be used.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">outputs</span><span class="p">:</span>
+
+  <span class="nt">output_file</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">File</span>
+
+    <span class="nt">outputBinding</span><span class="p">:</span>
+
+      <span class="nt">glob</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">output.txt</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p>baseCommand cannot be empty.</p>
+<ul>
+<li><p>baseCommand: The command to be executed.</p></li>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">baseCommand</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">echo</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p>doc and label</p>
+<p>We only support using <code class="docutils literal notranslate"><span class="pre">doc</span></code> and <code class="docutils literal notranslate"><span class="pre">label</span></code> parameters at the root level of <code class="docutils literal notranslate"><span class="pre">CommandLineTool</span></code> to describe task content.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">doc</span><span class="p">:</span> <span class="s">&quot;This</span><span class="nv"> </span><span class="s">tool</span><span class="nv"> </span><span class="s">prints</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">message&quot;</span>
+
+<span class="nt">label</span><span class="p">:</span> <span class="s">&quot;Echo</span><span class="nv"> </span><span class="s">Tool&quot;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+</ol>
+<div class="section" id="conditional-workflow">
+<h4>Conditional Workflow<a class="headerlink" href="#conditional-workflow" title="Permalink to this headline">¶</a></h4>
+<p>AAv2 supports conditional workflows using the <code class="docutils literal notranslate"><span class="pre">InlineJavascriptRequirement</span></code>. This feature allows the workflow to execute steps based on certain conditions, and the conditional execution is defined using the <code class="docutils literal notranslate"><span class="pre">when</span></code> field in a workflow step.</p>
+<p><strong>Key Points for Conditional Workflows</strong>:</p>
+<ul class="simple">
+<li><p>InlineJavascriptRequirement: This requirement must be specified to enable conditional execution.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">when</span></code> Field Format: The <code class="docutils literal notranslate"><span class="pre">when</span></code> field must follow the format <code class="docutils literal notranslate"><span class="pre">$(inputs.&lt;input_name&gt;</span> <span class="pre">&lt;condition&gt;)</span></code>. Currently, the supported condition is based on the <code class="docutils literal notranslate"><span class="pre">exit_code</span></code> of previous steps.</p></li>
+<li><p>CWL Version Compatibility: The <code class="docutils literal notranslate"><span class="pre">when</span></code> field is supported in CWL version 1.2 and above.</p></li>
+<li><p>Custom Codes: We support custom <code class="docutils literal notranslate"><span class="pre">successCodes</span></code> and <code class="docutils literal notranslate"><span class="pre">permanentFailCodes</span></code>.</p></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="simple-cwl-guidance">
+<h2>Simple CWL Guidance<a class="headerlink" href="#simple-cwl-guidance" title="Permalink to this headline">¶</a></h2>
+<p>For users who are not familiar with CWL and want a quick overview, this section provides a simple and straightforward guide to creating CWL files compatible with the AAv2 platform. The following examples and explanations will help you understand the basic structure and required attributes of CWL files, making it easier to get started.</p>
+<p><strong>General Structure</strong>:</p>
+<p>cwlVersion: Indicates the version of the CWL used.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">cwlVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1.2</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>class: Specifies whether the document is a Workflow or CommandLineTool.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CommandLineTool</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<div class="section" id="commandlinetool-attributes">
+<h3>CommandLineTool Attributes<a class="headerlink" href="#commandlinetool-attributes" title="Permalink to this headline">¶</a></h3>
+<p><strong>baseCommand</strong>: The command to be executed.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">baseCommand</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">echo</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>inputs</strong>: Defined as a dictionary, each input must specify the type and may include inputBinding.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">inputs</span><span class="p">:</span>
+
+  <span class="nt">message</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+
+    <span class="nt">inputBinding</span><span class="p">:</span>
+
+      <span class="nt">position</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>outputs</strong>: Outputs should also be defined using a dictionary.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">outputs</span><span class="p">:</span>
+
+  <span class="nt">output_file</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">File</span>
+
+    <span class="nt">outputBinding</span><span class="p">:</span>
+
+      <span class="nt">glob</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">output.txt</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>requirements</strong>: Must be a list of supported requirements.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">requirements</span><span class="p">:</span>
+
+  <span class="p p-Indicator">-</span> <span class="nt">class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ShellCommandRequirement</span>
+
+  <span class="p p-Indicator">-</span> <span class="nt">class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">EnvVarRequirement</span>
+
+    <span class="nt">envDef</span><span class="p">:</span>
+
+      <span class="p p-Indicator">-</span> <span class="nt">envName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">HOME</span>
+
+        <span class="nt">envValue</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/home/user</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>hints</strong>: Specifically for SoftwareRequirement, defined as a list.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">hints</span><span class="p">:</span>
+
+  <span class="p p-Indicator">-</span> <span class="nt">class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">SoftwareRequirement</span>
+
+    <span class="nt">packages</span><span class="p">:</span>
+
+      <span class="p p-Indicator">-</span> <span class="nt">package</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">python</span>
+
+        <span class="nt">version</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">2.7</span><span class="p p-Indicator">,</span> <span class="nv">3.5+</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>arguments</strong>: Additional command-line arguments (optional).</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">arguments</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="s">&quot;--verbose&quot;</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>stdout</strong>: Standard output specifications (optional).</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">stdout</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">output.txt</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="workflow-attributes">
+<h3>Workflow Attributes<a class="headerlink" href="#workflow-attributes" title="Permalink to this headline">¶</a></h3>
+<p><strong>steps</strong>: Define the steps in the workflow, each step may run a CommandLineTool or another Workflow.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">steps</span><span class="p">:</span>
+
+  <span class="nt">step1</span><span class="p">:</span>
+
+    <span class="nt">run</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">tool.cwl</span>
+
+    <span class="nt">in</span><span class="p">:</span>
+
+      <span class="nt">message</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">input_message</span>
+
+    <span class="nt">out</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">output_file</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>requirements</strong>: Similar to CommandLineTool, must be defined as a list.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">requirements</span><span class="p">:</span>
+
+  <span class="p p-Indicator">-</span> <span class="nt">class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">InlineJavascriptRequirement</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>inputs</strong>: Workflow inputs defined as a dictionary.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">inputs</span><span class="p">:</span>
+
+  <span class="nt">input_message</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>outputs</strong>: Workflow outputs defined as a dictionary.</p>
+<ul>
+<li><p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">outputs</span><span class="p">:</span>
+
+  <span class="nt">result</span><span class="p">:</span>
+
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">File</span>
+
+    <span class="nt">outputSource</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">step1/output_file</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">analytics_automated</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Basic Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_it_works.html">How The System Works</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">CWL File Requirements and Specifications</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#supported-cwl-features">Supported CWL Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#simple-cwl-guidance">Simple CWL Guidance</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="CWL_upload_and_download.html">CWL Upload and Download</a></li>
+<li class="toctree-l1"><a class="reference internal" href="the_Job_UI.html">Building Jobs Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuring_a_basic_job.html">Configuring A Basic Job</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_a_basic_job.html">Using A Basic Job</a></li>
+<li class="toctree-l1"><a class="reference internal" href="job_admin.html">Administration Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes.html">Recipes for more advanced use-cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced Uses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="periodic_tasks.html">Periodic Tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration_settings.html">Configurations Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_installation.html">Development Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="todo.html">TODO</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="how_it_works.html" title="previous chapter">How The System Works</a></li>
+      <li>Next: <a href="CWL_upload_and_download.html" title="next chapter">CWL Upload and Download</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Daniel Buchan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/supported_cwl_feature.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

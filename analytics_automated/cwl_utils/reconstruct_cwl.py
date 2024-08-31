@@ -45,4 +45,3 @@ def reconstruct_cwl_files(job_name, output_directory):
         reconstruct_task_cwl(task, task_file_path)
 
     logger.info(f"Reconstruction completed for job: {job_name}")
-
